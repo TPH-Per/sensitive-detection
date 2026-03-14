@@ -9,19 +9,20 @@ import { commentSchema, CommentFormValues } from '../../../utils/validation';
 import { insertTextAtCursor } from '../../../utils/uiUtils';
 import { useAutoResizeTextarea } from '../../../hooks/utils';
 import { MEDIA_CONSTRAINTS } from '../../../constants';
+import { MediaObject } from '../../../types';
 
 interface CommentInputProps {
   user: {
     id: string;
-    name: string;
-    avatar?: string;
+    fullName: string;
+    avatar?: MediaObject;
   };
   placeholder?: string;
   initialValue?: string;
-  initialImage?: string;
-  onSubmit: (content: string, image?: string) => Promise<void>;
+  initialImage?: MediaObject;
+  onSubmit: (content: string, image?: MediaObject) => Promise<void>;
   onCancel?: () => void;
-  onUploadMedia: (file: File) => Promise<string>;
+  onUploadMedia: (file: File) => Promise<MediaObject>;
   autoFocus?: boolean;
 }
 
@@ -49,7 +50,7 @@ export const CommentInput: React.FC<CommentInputProps> = ({
     resolver: zodResolver(commentSchema),
     defaultValues: {
       content: initialValue,
-      image: initialImage
+      image: initialImage?.url || undefined
     }
   });
 
@@ -65,6 +66,13 @@ export const CommentInput: React.FC<CommentInputProps> = ({
       textareaRef.current.focus();
     }
   }, [autoFocus]);
+
+  // Initialize preview from initialImage if it's a MediaObject
+  useEffect(() => {
+    if (initialImage && typeof initialImage === 'object' && 'url' in initialImage) {
+      setValue('image', initialImage.url);
+    }
+  }, [initialImage, setValue]);
 
   // Adjust textarea height
   useAutoResizeTextarea(textareaRef, formData.content || '');
@@ -99,17 +107,23 @@ export const CommentInput: React.FC<CommentInputProps> = ({
     const submittedData = { ...data };
 
     // Upload pending image khi submit
-    let imageUrl = submittedData.image;
+    let imageMedia: MediaObject | undefined = undefined;
     if (pendingImage) {
       setIsUploading(true);
       try {
-        imageUrl = await onUploadMedia(pendingImage);
+        imageMedia = await onUploadMedia(pendingImage);
       } catch (error) {
         setIsUploading(false);
         return;
       } finally {
         setIsUploading(false);
       }
+    } else if (submittedData.image) {
+      // If there's an existing image URL (from initialImage), wrap it as MediaObject
+      // This is a fallback - ideally initialImage should already be MediaObject
+      imageMedia = typeof initialImage === 'object' && 'url' in initialImage
+        ? initialImage
+        : undefined;
     }
 
     // Cleanup
@@ -121,7 +135,7 @@ export const CommentInput: React.FC<CommentInputProps> = ({
     reset();
 
     try {
-      await onSubmit(submittedData.content || '', imageUrl);
+      await onSubmit(submittedData.content || '', imageMedia);
     } catch (error) {
       console.error('Lỗi gửi bình luận:', error);
     }
@@ -138,7 +152,7 @@ export const CommentInput: React.FC<CommentInputProps> = ({
 
   return (
     <div className="flex gap-3">
-      <UserAvatar userId={user.id} src={user.avatar} name={user.name} size="xs" />
+      <UserAvatar userId={user.id} src={user.avatar?.url} name={user.fullName} size="xs" />
       <div className="flex-1 min-w-0">
         <form
           onSubmit={handleSubmit(handleFormSubmit)}

@@ -16,3 +16,4 @@ export { useUserPosts } from './useUserPosts';
 export { useAdminReports } from './useAdminReports';
 export { useLoading } from './useLoading';
 export { usePresence } from './usePresence';
+export { useFilteredReactions } from './useFilteredReactions';

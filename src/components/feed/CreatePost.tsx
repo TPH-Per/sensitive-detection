@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { Image as ImageIcon, Video } from 'lucide-react';
 import { PostModal } from './modals/PostModal';
-import { User, Visibility } from '../../types';
+import { User, Visibility, MediaObject } from '../../types';
 import { Avatar, Button, Skeleton } from '../ui';
 import { usePostStore } from '../../store/postStore';
 import { postService } from '../../services/postService';
@@ -29,13 +29,11 @@ export const CreatePost: React.FC<CreatePostProps> & { Skeleton: React.FC } = ({
 
   const handleCreatePost = async (
     content: string,
-    images: string[],
-    videos: string[],
+    media: MediaObject[],
     visibility: Visibility,
-    videoThumbnails?: Record<string, string>,
     pendingFiles?: File[]
   ) => {
-    await createPost(currentUser.id, content, images, videos, visibility, videoThumbnails, pendingFiles);
+    await createPost(currentUser.id, content, media, visibility, pendingFiles);
     setPendingFiles([]);
   };
 
@@ -49,13 +47,13 @@ export const CreatePost: React.FC<CreatePostProps> & { Skeleton: React.FC } = ({
     <>
       <div className="bg-bg-primary rounded-xl p-3 sm:p-4 shadow-sm border border-border-light transition-theme mb-4">
         <div className="flex gap-3 mb-4">
-          <Avatar src={currentUser.avatar} name={currentUser.name} size="md" />
+          <Avatar src={currentUser.avatar.url} name={currentUser.fullName} size="md" />
           <Button
             variant="secondary"
             onClick={() => setShowCreateModal(true)}
             className="flex-1 justify-start text-text-secondary font-medium border-none rounded-full text-sm sm:text-base truncate"
           >
-            <span className="truncate">{currentUser.name} ơi, bạn đang nghĩ gì thế?</span>
+            <span className="truncate">{currentUser.fullName} ơi, bạn đang nghĩ gì thế?</span>
           </Button>
         </div>
 

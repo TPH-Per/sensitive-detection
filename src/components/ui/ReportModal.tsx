@@ -10,10 +10,10 @@ import { ReportReason, ReportType } from '../../types';
 import { useReportStore } from '../../store/reportStore';
 import { useAuthStore } from '../../store/authStore';
 import { toast } from '../../store/toastStore';
-import { REPORT_CONFIG, IMAGE_COMPRESSION, TOAST_MESSAGES } from '../../constants';
+import { REPORT_CONFIG, TOAST_MESSAGES } from '../../constants';
 import { reportSchema, ReportFormValues } from '../../utils/validation';
-import { compressImage } from '../../utils/imageUtils';
-import { uploadWithProgress, validateFileSize } from '../../utils/uploadUtils';
+import { validateFileSize } from '../../utils/uploadUtils';
+import { reportService } from '../../services/reportService';
 
 export const ReportModal: React.FC = () => {
   const { user } = useAuthStore();
@@ -68,7 +68,7 @@ export const ReportModal: React.FC = () => {
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const files = Array.from(e.target.files) as File[];
-      
+
       // Kiểm tra dung lượng từng file
       const validFiles = files.filter(file => {
         const validation = validateFileSize(file, 'IMAGE');
@@ -109,22 +109,20 @@ export const ReportModal: React.FC = () => {
 
     try {
       setIsUploading(true);
-      let imageUrls: string[] = [];
+      let mediaObjects = [];
 
       if (selectedImages.length > 0) {
-        const uploadPromises = selectedImages.map(async (file) => {
-          const compressed = await compressImage(file, IMAGE_COMPRESSION.REPORT);
-          const path = `reports/${user.id}/${Date.now()}_${file.name}`;
-          return await uploadWithProgress(path, compressed);
-        });
-        imageUrls = await Promise.all(uploadPromises);
+        mediaObjects = await reportService.uploadReportImages(
+          selectedImages,
+          user.id
+        );
       }
 
       const success = await submitReport(
         user.id,
         data.reason as ReportReason,
         data.description || undefined,
-        imageUrls,
+        mediaObjects,
         shouldBlock
       );
 
@@ -155,19 +153,19 @@ export const ReportModal: React.FC = () => {
       {/* Tùy chọn chặn */}
       {formData.reason !== '' && (
         <div className="flex items-start gap-3 p-3 rounded-lg border border-warning/30 bg-warning/5 hover:bg-warning/10 transition-colors animate-in fade-in slide-in-from-bottom-2 duration-200">
-            <div className="flex-shrink-0 mt-0.5">
-              <Checkbox
-                id="report-block-user"
-                checked={shouldBlock}
-                onChange={(e) => setShouldBlock(e.target.checked)}
-              />
-            </div>
-            <label htmlFor="report-block-user" className="cursor-pointer flex-1 min-w-0">
-              <div className="text-sm font-medium text-text-primary">Chặn người dùng này</div>
-              <div className="text-xs text-text-secondary mt-0.5">Họ sẽ không thể nhắn tin hay xem trang cá nhân của bạn</div>
-            </label>
+          <div className="flex-shrink-0 mt-0.5">
+            <Checkbox
+              id="report-block-user"
+              checked={shouldBlock}
+              onChange={(e) => setShouldBlock(e.target.checked)}
+            />
           </div>
-        
+          <label htmlFor="report-block-user" className="cursor-pointer flex-1 min-w-0">
+            <div className="text-sm font-medium text-text-primary">Chặn người dùng này</div>
+            <div className="text-xs text-text-secondary mt-0.5">Họ sẽ không thể nhắn tin hay xem trang cá nhân của bạn</div>
+          </label>
+        </div>
+
       )}
 
       {/* Buttons */}

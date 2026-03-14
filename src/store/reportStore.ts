@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { ReportType, ReportReason, Report } from '../types';
+import { ReportType, ReportReason, Report, MediaObject } from '../types';
 import { reportService } from '../services/reportService';
 import { userService } from '../services/userService';
 import { useAuthStore } from './authStore';
@@ -9,7 +9,7 @@ interface ReportState {
   isSubmitting: boolean;
   error: string | null;
   pendingCount: number;
-  
+
   data: {
     type: ReportType | null;
     id: string | null;
@@ -19,10 +19,10 @@ interface ReportState {
   openReportModal: (type: ReportType, id: string, ownerId: string) => void;
   closeReportModal: () => void;
   submitReport: (
-    reporterId: string, 
-    reason: ReportReason, 
+    reporterId: string,
+    reason: ReportReason,
     description?: string,
-    images?: string[],
+    images?: MediaObject[],
     blockUser?: boolean
   ) => Promise<boolean>;
   reset: () => void;
@@ -57,7 +57,7 @@ export const useReportStore = create<ReportState>((set, get) => ({
   submitReport: async (reporterId, reason, description, images, blockUser = false) => {
     const { data } = get();
     const { type: targetType, id: targetId, ownerId: targetOwnerId } = data;
-    
+
     if (!targetType || !targetId || !targetOwnerId) {
       set({ error: 'Thiếu thông tin báo cáo' });
       return false;
@@ -72,15 +72,21 @@ export const useReportStore = create<ReportState>((set, get) => ({
 
     try {
       const hasReported = await reportService.hasUserReported(
-        reporterId, 
-        targetType, 
+        reporterId,
+        targetType,
         targetId
       );
-      
+
       if (hasReported) {
         if (blockUser && targetOwnerId) {
-          await userService.blockUser(reporterId, targetOwnerId);
-          useAuthStore.getState().updateBlockList('add', targetOwnerId);
+        const defaultBlockOptions = { 
+          blockMessages: true, 
+          blockCalls: true, 
+          blockViewMyActivity: true, 
+          hideTheirActivity: true 
+        };
+          await userService.blockUser(reporterId, targetOwnerId, defaultBlockOptions);
+          useAuthStore.getState().updateBlockEntry('add', targetOwnerId, defaultBlockOptions);
           set({ isOpen: false, isSubmitting: false });
           return true;
         }
@@ -99,8 +105,14 @@ export const useReportStore = create<ReportState>((set, get) => ({
       });
 
       if (blockUser && targetOwnerId) {
-        await userService.blockUser(reporterId, targetOwnerId);
-        useAuthStore.getState().updateBlockList('add', targetOwnerId);
+        const defaultBlockOptions = { 
+          blockMessages: true, 
+          blockCalls: true, 
+          blockViewMyActivity: true, 
+          hideTheirActivity: true 
+        };
+        await userService.blockUser(reporterId, targetOwnerId, defaultBlockOptions);
+        useAuthStore.getState().updateBlockEntry('add', targetOwnerId, defaultBlockOptions);
       }
 
       set({ isOpen: false, isSubmitting: false });

@@ -1,16 +1,16 @@
 import React, { useState } from 'react';
 import { Search, Send } from 'lucide-react';
 import { Modal, Avatar, UserAvatar, Input, Button } from '../../ui';
-import { Message, Conversation, User } from '../../../types';
-import { useChatStore } from '../../../store/chatStore';
+import { RtdbMessage, RtdbConversation, User, RtdbUserChat } from '../../../types';
+import { useRtdbChatStore } from '../../../store';
 import { useConversationParticipants } from '../../../hooks/chat/useConversationParticipants';
 
 interface ForwardModalProps {
   isOpen: boolean;
   onClose: () => void;
-  message: Message | null;
+  message: { id: string; data: RtdbMessage } | null;
   currentUserId: string;
-  conversations: Conversation[];
+  conversations: Array<{ id: string; data: RtdbConversation; userChat: RtdbUserChat }>;
   usersMap: Record<string, User>;
 }
 
@@ -25,21 +25,22 @@ export const ForwardModal: React.FC<ForwardModalProps> = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [sendingTo, setSendingTo] = useState<string | null>(null);
   const [sentIds, setSentIds] = useState<Set<string>>(new Set());
-  const forwardMessage = useChatStore(state => state.forwardMessage);
+  const forwardMessage = useRtdbChatStore(state => state.forwardMessage);
 
   if (!message) return null;
 
   const filteredConversations = conversations.filter(conv => {
-    const name = conv.isGroup
-      ? conv.groupName
-      : usersMap[conv.participantIds.find(id => id !== currentUserId) || '']?.name || '';
+    const participantIds = Object.keys(conv.data.members);
+    const name = conv.data.isGroup
+      ? conv.data.name
+      : usersMap[participantIds.find(id => id !== currentUserId) || '']?.fullName || '';
     return name.toLowerCase().includes(searchTerm.toLowerCase());
   });
 
   const handleForward = async (conversationId: string) => {
     try {
       setSendingTo(conversationId);
-      await forwardMessage(conversationId, currentUserId, message);
+      await forwardMessage(conversationId, currentUserId, message.data);
       setSentIds(prev => new Set(prev).add(conversationId));
     } catch (error) {
       console.error("Lỗi khi chuyển tiếp:", error);
@@ -82,7 +83,7 @@ export const ForwardModal: React.FC<ForwardModalProps> = ({
         <div className="flex-none p-3 bg-bg-secondary rounded-lg border border-border-light mb-4">
           <p className="text-xs text-text-tertiary mb-1 font-medium">Nội dung chuyển tiếp:</p>
           <p className="text-sm text-text-primary line-clamp-2 italic">
-            {message.type === 'text' ? message.content : `[${message.type}]`}
+            {message.data.type === 'text' ? message.data.content : `[${message.data.type}]`}
           </p>
         </div>
 
@@ -112,7 +113,7 @@ export const ForwardModal: React.FC<ForwardModalProps> = ({
 };
 
 interface ConversationForwardItemProps {
-  conversation: Conversation;
+  conversation: { id: string; data: RtdbConversation; userChat: RtdbUserChat };
   currentUserId: string;
   usersMap: Record<string, User>;
   hasSent: boolean;
@@ -128,20 +129,20 @@ const ConversationForwardItem: React.FC<ConversationForwardItemProps> = ({
   isSending,
   onForward
 }) => {
-  const participants = useConversationParticipants(conversation.participantIds);
+  const participants = useConversationParticipants(Object.keys(conversation.data.members));
   const partner = participants.find(p => p.id !== currentUserId);
-  const name = conversation.isGroup ? conversation.groupName : partner?.name || 'Unknown';
-  const avatar = conversation.isGroup ? conversation.groupAvatar : partner?.avatar;
+  const name = conversation.data.isGroup ? conversation.data.name : partner?.fullName || 'Unknown';
+  const avatar = conversation.data.isGroup ? conversation.data.avatar : partner?.avatar;
 
   return (
     <div className="flex items-center justify-between p-2 hover:bg-bg-hover active:bg-bg-active rounded-xl transition-all duration-base group">
       <div className="flex items-center gap-3 min-w-0">
         <UserAvatar
-          userId={conversation.isGroup ? '' : partner?.id || ''}
-          src={avatar}
+          userId={conversation.data.isGroup ? '' : partner?.id || ''}
+          src={avatar?.url}
           name={name}
           size="sm"
-          isGroup={conversation.isGroup}
+          isGroup={conversation.data.isGroup}
           members={participants}
         />
         <span className="text-sm font-medium text-text-primary truncate">{name}</span>

@@ -10,7 +10,7 @@ import { useMentions } from '../../../hooks/chat/useMentions';
 import { toast } from '../../../store/toastStore';
 import { TOAST_MESSAGES, FILE_LIMITS, TIME_LIMITS } from '../../../constants';
 import { insertTextAtCursor, validateFileSize } from '../../../utils';
-import { Message, User } from '../../../types';
+import { RtdbMessage, User } from '../../../types';
 
 interface ChatInputProps {
   onSendText: (text: string, mentions?: string[], replyToId?: string) => void;
@@ -21,8 +21,8 @@ interface ChatInputProps {
   onTyping: (isTyping: boolean) => void;
   disabled?: boolean;
   blockedMessage?: string;
-  replyingTo?: Message;
-  editingMessage: Message | null;
+  replyingTo?: { id: string; data: RtdbMessage };
+  editingMessage: { id: string; data: RtdbMessage } | null;
   onCancelAction: () => void;
   onEditMessage?: (text: string) => Promise<void>;
   currentUserId: string;
@@ -106,7 +106,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
       inputRef.current?.focus();
     }
     if (editingMessage) {
-      setInputText(editingMessage.content);
+      setInputText(editingMessage.data.content);
     }
   }, [editingMessage, isSending, disabled]);
 
@@ -202,7 +202,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
           let match;
           while ((match = mentionRegex.exec(inputText.trim())) !== null) {
             const name = match[1];
-            const user = participants.find(p => p.name === name);
+            const user = participants.find(p => p.fullName === name);
             if (user) mentions.push(user.id);
           }
           await onSendText(inputText.trim(), mentions.length > 0 ? [...new Set(mentions)] : undefined, replyingTo?.id);
@@ -291,10 +291,10 @@ export const ChatInput: React.FC<ChatInputProps> = ({
             </div>
             <div className="flex-1 min-w-0">
               <div className="text-[12px] font-bold text-primary mb-0.5">
-                {editingMessage ? 'Đang chỉnh sửa' : (replyingTo?.senderId === currentUserId ? 'Trả lời chính bạn' : `Trả lời ${usersMap[replyingTo?.senderId || '']?.name || ''}`)}
+                {editingMessage ? 'Đang chỉnh sửa' : (replyingTo?.data.senderId === currentUserId ? 'Trả lời chính bạn' : `Trả lời ${usersMap[replyingTo?.data.senderId || '']?.fullName || ''}`)}
               </div>
               <div className="text-[13px] text-text-secondary truncate">
-                {editingMessage ? editingMessage.content : (replyingTo?.type === 'text' ? replyingTo.content : `[${replyingTo?.type}]`)}
+                {editingMessage ? editingMessage.data.content : (replyingTo?.data.type === 'text' ? replyingTo.data.content : `[${replyingTo?.data.type}]`)}
               </div>
             </div>
           </div>

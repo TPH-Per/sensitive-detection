@@ -184,6 +184,7 @@ export const MediaViewer: React.FC<MediaViewerProps> = ({
                     <video
                         ref={videoRef}
                         src={currentMedia.url}
+                        poster={currentMedia.thumbnail}
                         className="max-w-full max-h-full object-contain animate-in zoom-in-95 duration-200 shadow-2xl drop-shadow-2xl rounded-sm"
                         onClick={(e) => e.stopPropagation()}
                         controls

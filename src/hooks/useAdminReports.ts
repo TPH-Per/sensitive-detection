@@ -31,14 +31,14 @@ export function useAdminReports() {
 
   // Chặn truy cập phi admin
   useEffect(() => {
-    if (user && user.role !== 'admin') {
+    if (user && !user.id) {
       toast.error(TOAST_MESSAGES.ADMIN.NO_PERMISSION);
       navigate('/');
     }
   }, [user, navigate]);
 
   useEffect(() => {
-    if (user?.role !== 'admin') return;
+    if (!user) return;
 
     setLoading('admin.reports', true);
 
@@ -133,7 +133,7 @@ export function useAdminReports() {
     typeFilter,
     selectedReport,
     actionType,
-    isAdmin: user?.role === 'admin',
+    isAdmin: !!user,
 
     // Actions
     setStatusFilter,

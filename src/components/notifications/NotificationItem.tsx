@@ -22,14 +22,14 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({ notification
   const markAsRead = useNotificationStore(state => state.markAsRead);
   const deleteNotification = useNotificationStore(state => state.deleteNotification);
   const { getUser, fetchUser } = useUserCache();
-  const sender = getUser(notification.senderId);
+  const sender = getUser(notification.actorId);
   const friendIds = useFriendIds();
 
   useEffect(() => {
     if (!sender) {
-      fetchUser(notification.senderId);
+      fetchUser(notification.actorId);
     }
-  }, [notification.senderId, sender, fetchUser]);
+  }, [notification.actorId, sender, fetchUser]);
 
   const handleItemClick = async () => {
     if (!notification.isRead) {
@@ -45,8 +45,8 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({ notification
 
     // Điều hướng theo loại thông báo
     switch (notification.type) {
-      case NotificationType.LIKE_POST:
-      case NotificationType.COMMENT_POST:
+      case NotificationType.REACTION:
+      case NotificationType.COMMENT:
         if (notification.data.postId && user) {
           fetchPostById(notification.data.postId, user.id, friendIds);
         }
@@ -54,20 +54,10 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({ notification
       case NotificationType.FRIEND_REQUEST:
         navigate('/contacts');
         break;
-      case NotificationType.FRIEND_ACCEPT:
-        navigate(`/profile/${notification.senderId}`);
-        break;
-      case NotificationType.REPLY_COMMENT:
-      case NotificationType.REACT_COMMENT:
-        if (notification.data.postId && user) {
-          fetchPostById(notification.data.postId, user.id, friendIds);
+      case NotificationType.SYSTEM:
+        if (notification.data.friendRequestId) {
+          navigate(`/profile/${notification.actorId}`);
         }
-        break;
-      case NotificationType.REPORT_NEW:
-        navigate('/admin/reports');
-        break;
-      case NotificationType.REPORT_RESOLVED:
-      case NotificationType.CONTENT_VIOLATION:
         break;
     }
   };
@@ -78,19 +68,12 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({ notification
   };
 
   const isInteraction = [
-    NotificationType.LIKE_POST,
-    NotificationType.COMMENT_POST,
-    NotificationType.REPLY_COMMENT,
-    NotificationType.REACT_COMMENT,
-    NotificationType.FRIEND_REQUEST,
-    NotificationType.FRIEND_ACCEPT
+    NotificationType.REACTION,
+    NotificationType.COMMENT,
+    NotificationType.FRIEND_REQUEST
   ].includes(notification.type);
 
-  const isSystem = [
-    NotificationType.REPORT_NEW,
-    NotificationType.REPORT_RESOLVED,
-    NotificationType.CONTENT_VIOLATION
-  ].includes(notification.type);
+  const isSystem = notification.type === NotificationType.SYSTEM;
 
   return (
     <div
@@ -103,14 +86,14 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({ notification
           <Shield size={20} className="text-primary" />
         </div>
       ) : (
-        <UserAvatar userId={notification.senderId} size="md" showStatus={false} />
+        <UserAvatar userId={notification.actorId} size="md" showStatus={false} />
       )}
       <div className="flex-1 min-w-0">
         <p className="text-sm text-text-primary leading-tight">
           {isInteraction && (
             <span className="font-semibold mr-1">
-              {sender?.name
-                ? sender.name
+              {sender?.fullName
+                ? sender.fullName
                 : <Skeleton width={72} height={13} className="opacity-60 inline-block align-middle" />}
             </span>
           )}

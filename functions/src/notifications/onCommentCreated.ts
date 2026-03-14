@@ -12,7 +12,7 @@ export const onCommentCreated = onDocumentCreated(
     if (!comment) return;
 
     const commentId = event.params.commentId;
-    const { postId, userId: senderId, parentId, replyToUserId, content } = comment;
+    const { postId, authorId: senderId, parentId, content } = comment;
     const contentSnippet: string = (content || '').substring(0, 50);
 
     const batch = db.batch();
@@ -25,41 +25,49 @@ export const onCommentCreated = onDocumentCreated(
     try {
       const senderName = await getSenderName(senderId);
 
-      if (parentId && replyToUserId && replyToUserId !== senderId) {
-        const body = buildPushBody(NotificationType.REPLY_COMMENT, senderName);
+      if (parentId) {
+        // Reply to comment - notify parent comment author
+        const parentCommentSnap = await db.collection('comments').doc(parentId).get();
+        if (!parentCommentSnap.exists) return;
+
+        const parentAuthorId: string = parentCommentSnap.data()!.authorId;
+        if (parentAuthorId === senderId) return;
+
+        const body = buildPushBody(NotificationType.COMMENT, senderName, { contentSnippet });
 
         await createNotification({
-          receiverId: replyToUserId,
-          senderId,
-          type: NotificationType.REPLY_COMMENT,
+          receiverId: parentAuthorId,
+          actorId: senderId,
+          type: NotificationType.COMMENT,
           data: { postId, commentId, contentSnippet },
         });
 
         await sendPushNotification({
-          receiverId: replyToUserId,
-          type: NotificationType.REPLY_COMMENT,
+          receiverId: parentAuthorId,
+          type: NotificationType.COMMENT,
           body,
           data: { postId, commentId },
         });
-      } else if (!parentId) {
+      } else {
+        // Comment on post - notify post author
         const postSnap = await db.collection('posts').doc(postId).get();
         if (!postSnap.exists) return;
 
-        const postOwnerId: string = postSnap.data()!.userId;
+        const postOwnerId: string = postSnap.data()!.authorId;
         if (postOwnerId === senderId) return;
 
-        const body = buildPushBody(NotificationType.COMMENT_POST, senderName, { contentSnippet });
+        const body = buildPushBody(NotificationType.COMMENT, senderName, { contentSnippet });
 
         await createNotification({
           receiverId: postOwnerId,
-          senderId,
-          type: NotificationType.COMMENT_POST,
+          actorId: senderId,
+          type: NotificationType.COMMENT,
           data: { postId, commentId, contentSnippet },
         });
 
         await sendPushNotification({
           receiverId: postOwnerId,
-          type: NotificationType.COMMENT_POST,
+          type: NotificationType.COMMENT,
           body,
           data: { postId, commentId },
         });

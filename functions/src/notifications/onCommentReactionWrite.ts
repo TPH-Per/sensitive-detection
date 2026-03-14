@@ -22,16 +22,15 @@ export const onCommentReactionWrite = onDocumentWritten(
     const commentRef = db.collection('comments').doc(commentId);
     const updates: Record<string, FieldValue> = {};
 
+    // Update reactions Map
     if (isCreate) {
-      updates['reactionCount'] = FieldValue.increment(1);
-      updates[`reactionSummary.${afterData!.type}`] = FieldValue.increment(1);
+      updates[`reactions.${afterData!.type}`] = FieldValue.increment(1);
     } else if (isDelete) {
-      updates['reactionCount'] = FieldValue.increment(-1);
-      updates[`reactionSummary.${beforeData!.type}`] = FieldValue.increment(-1);
+      updates[`reactions.${beforeData!.type}`] = FieldValue.increment(-1);
     } else {
       // Đổi loại cảm xúc
-      updates[`reactionSummary.${beforeData!.type}`] = FieldValue.increment(-1);
-      updates[`reactionSummary.${afterData!.type}`] = FieldValue.increment(1);
+      updates[`reactions.${beforeData!.type}`] = FieldValue.increment(-1);
+      updates[`reactions.${afterData!.type}`] = FieldValue.increment(1);
     }
 
     await commentRef.update(updates);
@@ -41,23 +40,23 @@ export const onCommentReactionWrite = onDocumentWritten(
     try {
       const commentSnap = await commentRef.get();
       if (!commentSnap.exists) return;
-      const commentOwnerId: string = commentSnap.data()!.userId;
+      const commentOwnerId: string = commentSnap.data()!.authorId;
       if (userId === commentOwnerId) return;
 
       const { postId } = commentSnap.data()!;
       const senderName = await getSenderName(userId);
-      const body = buildPushBody(NotificationType.REACT_COMMENT, senderName);
+      const body = buildPushBody(NotificationType.COMMENT, senderName);
 
       await createNotification({
         receiverId: commentOwnerId,
-        senderId: userId,
-        type: NotificationType.REACT_COMMENT,
+        actorId: userId,
+        type: NotificationType.COMMENT,
         data: { postId, commentId },
       });
 
       await sendPushNotification({
         receiverId: commentOwnerId,
-        type: NotificationType.REACT_COMMENT,
+        type: NotificationType.COMMENT,
         body,
         data: { postId, commentId },
       });

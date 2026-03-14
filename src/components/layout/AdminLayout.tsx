@@ -86,9 +86,9 @@ export const AdminLayout: React.FC = () => {
           </button>
 
           <div className="flex items-center gap-3 px-4 py-4 mt-2">
-            <UserAvatar userId={user?.id || ''} src={user?.avatar} name={user?.name} size="md" />
+            <UserAvatar userId={user?.id || ''} src={user?.avatar.url} name={user?.fullName} size="md" initialStatus={user?.status} />
             <div className="flex flex-col min-w-0">
-              <span className="text-sm font-bold text-text-primary truncate">{user?.name}</span>
+              <span className="text-sm font-bold text-text-primary truncate">{user?.fullName}</span>
               <span className="text-[11px] text-text-tertiary truncate">Administrator</span>
             </div>
           </div>

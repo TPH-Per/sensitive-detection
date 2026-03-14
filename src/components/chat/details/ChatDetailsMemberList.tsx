@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, Conversation, UserStatus } from '../../../types';
+import { User, RtdbConversation, RtdbUserChat } from '../../../types';
 import { UserAvatar, UserStatusText, Dropdown, DropdownItem, ConfirmDialog, Button, IconButton } from '../../ui';
 import { Crown, Shield, UserPlus, MoreVertical, UserMinus, ShieldPlus, ShieldMinus, LogOut, Lock } from 'lucide-react';
 
 interface ChatDetailsMemberListProps {
-  conversation: Conversation;
+  conversation: { id: string; data: RtdbConversation; userChat: RtdbUserChat };
   currentUserId: string;
   participants: User[];
   onMemberClick?: (userId: string) => void;
@@ -29,12 +29,13 @@ export const ChatDetailsMemberList: React.FC<ChatDetailsMemberListProps> = ({
   const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
   const [confirmRemove, setConfirmRemove] = useState<string | null>(null);
 
-  if (!conversation.isGroup) return null;
+  if (!conversation.data.isGroup) return null;
 
-  const members = participants.filter(m => m.status !== UserStatus.BANNED);
-  const creatorId = conversation.creatorId;
-  const adminIds = conversation.adminIds || [];
-  const isCurrentUserAdmin = adminIds.includes(currentUserId);
+  const members = participants.filter(m => m.status !== 'banned');
+  const creatorId = conversation.data.creatorId;
+  const memberRoles = conversation.data.members;
+  const currentUserRole = memberRoles[currentUserId];
+  const isCurrentUserAdmin = currentUserRole === 'admin';
   const isCurrentUserCreator = creatorId === currentUserId;
 
   const handleMemberProfileClick = (memberId: string) => {
@@ -45,15 +46,15 @@ export const ChatDetailsMemberList: React.FC<ChatDetailsMemberListProps> = ({
 
   const getMemberRole = (memberId: string) => {
     if (memberId === creatorId) return 'creator';
-    if (adminIds.includes(memberId)) return 'admin';
+    if (memberRoles[memberId] === 'admin') return 'admin';
     return 'member';
   };
 
   const canManageMember = (memberId: string) => {
     if (memberId === currentUserId) return false;
     if (memberId === creatorId) return false;
-    if (!isCurrentUserAdmin) return false;
-    if (adminIds.includes(memberId) && !isCurrentUserCreator) return false;
+    if (!isCurrentUserAdmin && !isCurrentUserCreator) return false;
+    if (memberRoles[memberId] === 'admin' && !isCurrentUserCreator) return false;
     return true;
   };
 
@@ -94,10 +95,7 @@ export const ChatDetailsMemberList: React.FC<ChatDetailsMemberListProps> = ({
               >
                 <UserAvatar
                   userId={member.id}
-                  src={member.avatar}
-                  name={member.name}
                   size="sm"
-                  initialStatus={member.status}
                   showStatus
                   onClick={() => handleMemberProfileClick(member.id)}
                 />
@@ -108,7 +106,7 @@ export const ChatDetailsMemberList: React.FC<ChatDetailsMemberListProps> = ({
                       className={`text-sm font-medium text-text-primary truncate ${!isCurrentUser ? 'cursor-pointer hover:underline' : ''}`}
                       onClick={() => handleMemberProfileClick(member.id)}
                     >
-                      {member.name}
+                      {member.fullName}
                       {isCurrentUser && <span className="text-text-tertiary"> (Bạn)</span>}
                     </span>
 

@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Message, User, Conversation } from '../../types';
+import { RtdbMessage, User, RtdbConversation, RtdbUserChat } from '../../types';
 import { Loading } from '../ui';
 import { ChatBoxSkeleton } from './ChatBoxSkeleton';
 import { MessageRequestBanner } from './message/MessageRequestBanner';
@@ -10,8 +10,8 @@ import { MessageList } from './MessageList';
 import { TypingIndicator } from './TypingIndicator';
 
 interface ChatBoxProps {
-  conversation: Conversation;
-  messages: Message[];
+  conversation: { id: string; data: RtdbConversation; userChat: RtdbUserChat };
+  messages: Array<{ id: string; data: RtdbMessage }>;
   participants: User[];
   currentUserId: string;
   currentUserFriendIds?: string[];
@@ -22,9 +22,9 @@ interface ChatBoxProps {
   onInfoClick?: () => void;
   onRecall?: (messageId: string) => void;
   onDeleteForMe?: (messageId: string) => void;
-  onForward?: (message: Message) => void;
-  onReply?: (message: Message) => void;
-  onEdit?: (message: Message) => void;
+  onForward?: (message: { id: string; data: RtdbMessage }) => void;
+  onReply?: (message: { id: string; data: RtdbMessage }) => void;
+  onEdit?: (message: { id: string; data: RtdbMessage }) => void;
   onAddFriend?: (userId: string) => void;
   onAcceptFriend?: (userId: string) => void;
   onBlock?: (userId: string) => void;
@@ -82,33 +82,36 @@ export const ChatBox: React.FC<ChatBoxProps> = ({
   });
 
   const partner = useMemo(() =>
-    conversation.isGroup ? null : participants.find(p => p.id !== currentUserId)
-    , [conversation.isGroup, participants, currentUserId]);
+    conversation.data.isGroup ? null : participants.find(p => p.id !== currentUserId)
+    , [conversation.data.isGroup, participants, currentUserId]);
 
-  const chatName = conversation.isGroup ? conversation.groupName : partner?.name || 'Không rõ';
-  const avatarSrc = conversation.isGroup ? conversation.groupAvatar : partner?.avatar;
+  const chatName = conversation.data.isGroup ? conversation.data.name : partner?.fullName || 'Không rõ';
+  const avatarSrc = conversation.data.isGroup ? conversation.data.avatar?.url : partner?.avatar.url;
 
   const isMessageRequest = useMemo(() =>
-    !conversation.isGroup && partner && !currentUserFriendIds.includes(partner.id)
-    , [conversation.isGroup, partner, currentUserFriendIds]);
+    !conversation.data.isGroup && partner &&
+    !currentUserFriendIds.includes(partner.id) &&
+    !isBlockedByMe && !isBlocked
+    , [conversation.data.isGroup, partner, currentUserFriendIds, isBlockedByMe, isBlocked]);
 
-  // Tìm tin nhắn cuối đã đọc.
   const lastReadByMap = useMemo(() => {
     const map: Record<string, User[]> = {};
     const reversed = [...messages].reverse();
-    if (!conversation.isGroup && messages.length > 0) {
-      const partnerId = conversation.participantIds.find(id => id !== currentUserId);
+    const participantIds = Object.keys(conversation.data.members);
+
+    if (!conversation.data.isGroup && messages.length > 0) {
+      const partnerId = participantIds.find(id => id !== currentUserId);
       const isFriend = partnerId && currentUserFriendIds.includes(partnerId);
       if (partnerId && isFriend) {
-        const lastReadMsg = reversed.find(m => m.readBy?.includes(partnerId));
+        const lastReadMsg = reversed.find(m => m.data.readBy?.[partnerId]);
         if (lastReadMsg) {
           map[lastReadMsg.id] = [usersMap[partnerId]].filter(Boolean);
         }
       }
-    } else if (conversation.isGroup) {
-      conversation.participantIds.forEach(uid => {
+    } else if (conversation.data.isGroup) {
+      participantIds.forEach(uid => {
         if (uid === currentUserId) return;
-        const lastReadMsg = reversed.find(m => m.readBy?.includes(uid));
+        const lastReadMsg = reversed.find(m => m.data.readBy?.[uid]);
         if (lastReadMsg) {
           if (!map[lastReadMsg.id]) map[lastReadMsg.id] = [];
           if (usersMap[uid]) map[lastReadMsg.id].push(usersMap[uid]);
@@ -117,8 +120,13 @@ export const ChatBox: React.FC<ChatBoxProps> = ({
 
       Object.keys(map).forEach(msgId => {
         const msg = messages.find(m => m.id === msgId);
-        if (msg?.readBy) {
-          map[msgId].sort((a, b) => msg.readBy!.indexOf(a.id) - msg.readBy!.indexOf(b.id));
+        if (msg?.data.readBy) {
+          const readByEntries = Object.entries(msg.data.readBy);
+          map[msgId].sort((a, b) => {
+            const aTime = readByEntries.find(([uid]) => uid === a.id)?.[1] || 0;
+            const bTime = readByEntries.find(([uid]) => uid === b.id)?.[1] || 0;
+            return aTime - bTime;
+          });
         }
       });
     }
@@ -142,7 +150,7 @@ export const ChatBox: React.FC<ChatBoxProps> = ({
 
       {isMessageRequest && partner && onAddFriend && onBlock && (
         <MessageRequestBanner
-          partnerName={partner.name || 'Người dùng'}
+          partnerName={partner.fullName || 'Người dùng'}
           friendRequestStatus={friendRequestStatus}
           onAddFriend={() => onAddFriend(partner.id)}
           onAcceptFriend={onAcceptFriend ? () => onAcceptFriend(partner.id) : undefined}
@@ -189,9 +197,9 @@ export const ChatBox: React.FC<ChatBoxProps> = ({
         )}
       </div>
 
-      {isBlockedByMe && partner && onUnblock && !conversation.isGroup && (
+      {isBlockedByMe && partner && onUnblock && !conversation.data.isGroup && (
         <BlockedUserBanner
-          partnerName={partner.name || 'Người dùng'}
+          partnerName={partner.fullName || 'Người dùng'}
           onUnblock={onUnblock}
         />
       )}

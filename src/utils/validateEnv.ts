@@ -76,10 +76,10 @@ export function getValidatedEnvConfig(): EnvConfig {
 
     if (!validation.isValid) {
         const errorMessage = [
-            '❌ Environment Configuration Error',
+            '[Environment Configuration Error]',
             '',
             'Missing or invalid environment variables:',
-            ...validation.errors.map(err => `  • ${err}`),
+            ...validation.errors.map(err => `  - ${err}`),
             '',
             'Please check your .env file and ensure all required variables are set.',
             'See .env.example for reference.',
@@ -90,7 +90,7 @@ export function getValidatedEnvConfig(): EnvConfig {
     }
 
     if (validation.warnings.length > 0) {
-        console.warn('⚠️ Environment warnings:', validation.warnings);
+        console.warn('Environment warnings:', validation.warnings);
     }
 
     return {

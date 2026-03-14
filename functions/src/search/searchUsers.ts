@@ -3,14 +3,18 @@ import { db } from '../app';
 
 interface SearchResult {
   id: string;
-  name: string;
+  fullName: string;
   avatar: string;
   email: string;
+  status?: string;
 }
 
 // Thay thế getDocs toàn collection — tìm user theo email chính xác
 export const searchUsers = onCall(
-  { region: 'us-central1' },
+  {
+    region: 'us-central1',
+    cors: true
+  },
   async (request) => {
     if (!request.auth) throw new HttpsError('unauthenticated', 'Chưa đăng nhập');
 
@@ -27,48 +31,42 @@ export const searchUsers = onCall(
       const snap = await db
         .collection('users')
         .where('email', '==', searchTerm.toLowerCase().trim())
-        .where('status', '!=', 'banned')
         .limit(10)
         .get();
 
       let users: SearchResult[] = snap.docs
         .map((d) => ({ id: d.id, ...d.data() } as SearchResult))
-        .filter((u) => u.id !== currentUserId);
+        .filter((u) => u.id !== currentUserId && u.status !== 'banned');
 
       if (currentUserId && users.length > 0) {
-        const currentUserSecurityDoc = await db
+        // Get blocked users from subcollection
+        const blockedUsersSnap = await db
           .collection('users')
           .doc(currentUserId)
-          .collection('private')
-          .doc('security')
+          .collection('blockedUsers')
           .get();
-        
-        const myBlockedUsers: string[] = currentUserSecurityDoc.exists 
-          ? (currentUserSecurityDoc.data()?.blockedUsers || []) 
-          : [];
+
+        const myBlockedUsers: string[] = blockedUsersSnap.docs.map(doc => doc.id);
 
         users = users.filter((u) => !myBlockedUsers.includes(u.id));
 
         if (users.length > 0) {
           const safeUsers: SearchResult[] = [];
-          
+
           for (const targetUser of users) {
-             const targetUserSecurityDoc = await db
+            // Check if target user has blocked current user
+            const targetBlockedSnap = await db
               .collection('users')
               .doc(targetUser.id)
-              .collection('private')
-              .doc('security')
+              .collection('blockedUsers')
+              .doc(currentUserId)
               .get();
-              
-             const theirBlockedUsers: string[] = targetUserSecurityDoc.exists
-              ? (targetUserSecurityDoc.data()?.blockedUsers || [])
-              : [];
-              
-             if (!theirBlockedUsers.includes(currentUserId)) {
-               safeUsers.push(targetUser);
-             }
+
+            if (!targetBlockedSnap.exists) {
+              safeUsers.push(targetUser);
+            }
           }
-          
+
           users = safeUsers;
         }
       }

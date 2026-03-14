@@ -25,6 +25,7 @@ export const DropdownItem: React.FC<DropdownItemProps> = ({
     className={`
       w-full px-4 py-2.5 text-left text-sm flex items-center justify-start gap-3 transition-all duration-base
       hover:bg-bg-hover active:bg-bg-active font-medium
+      first:rounded-t-[inherit] last:rounded-b-[inherit]
       ${variant === 'danger'
         ? 'text-error hover:text-error'
         : 'text-text-primary'
@@ -46,6 +47,7 @@ interface DropdownProps {
   isOpen?: boolean;
   onOpenChange?: (isOpen: boolean) => void;
   disableTriggerScale?: boolean;
+  matchTriggerWidth?: boolean;
 }
 
 export const Dropdown: React.FC<DropdownProps> = ({
@@ -56,7 +58,8 @@ export const Dropdown: React.FC<DropdownProps> = ({
   menuClassName = '',
   isOpen: controlledIsOpen,
   onOpenChange,
-  disableTriggerScale = false
+  disableTriggerScale = false,
+  matchTriggerWidth = false
 }) => {
   const [internalIsOpen, setInternalIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -108,6 +111,7 @@ export const Dropdown: React.FC<DropdownProps> = ({
             left: align === 'right'
               ? `${left + width - (dropdownRef.current?.offsetWidth || 180)}px`
               : `${left}px`,
+            width: matchTriggerWidth ? `${width}px` : undefined,
           }}
           onClick={() => handleOpenChange(false)}
         >

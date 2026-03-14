@@ -1,6 +1,5 @@
 import { useCallback } from 'react';
-import { Message } from '../../types';
-import { useChatStore } from '../../store/chatStore';
+import { useRtdbChatStore } from '../../store';
 
 interface UseChatMessagesProps {
   selectedConversationId: string | null;
@@ -8,9 +7,9 @@ interface UseChatMessagesProps {
 }
 
 // Xử lý gửi và quản lý tin nhắn
-export const useChatMessages = ({ 
-  selectedConversationId, 
-  currentUserId 
+export const useChatMessages = ({
+  selectedConversationId,
+  currentUserId
 }: UseChatMessagesProps) => {
   const {
     sendTextMessage,
@@ -18,27 +17,20 @@ export const useChatMessages = ({
     sendFileMessage,
     sendVideoMessage,
     sendVoiceMessage,
-    sendCallMessage,
     recallMessage,
     deleteMessageForMe,
     editMessage,
     forwardMessage: storeForwardMessage,
-    replyToMessage: storeReplyToMessage,
-  } = useChatStore();
+  } = useRtdbChatStore();
 
   const handleSendText = useCallback(async (
-    text: string, 
-    mentions?: string[], 
+    text: string,
+    mentions?: string[],
     replyToId?: string
   ) => {
     if (!selectedConversationId || !currentUserId) return;
-    
-    if (replyToId) {
-      await storeReplyToMessage(selectedConversationId, currentUserId, text, replyToId);
-    } else {
-      await sendTextMessage(selectedConversationId, currentUserId, text, mentions);
-    }
-  }, [selectedConversationId, currentUserId, sendTextMessage, storeReplyToMessage]);
+    await sendTextMessage(selectedConversationId, currentUserId, text, mentions, replyToId);
+  }, [selectedConversationId, currentUserId, sendTextMessage]);
 
   const handleSendImage = useCallback(async (file: File, replyToId?: string) => {
     if (!selectedConversationId || !currentUserId) return;
@@ -61,37 +53,37 @@ export const useChatMessages = ({
   }, [selectedConversationId, currentUserId, sendVoiceMessage]);
 
   const handleEditMessage = useCallback(async (messageId: string, text: string) => {
-    await editMessage(messageId, text);
-  }, [editMessage]);
+    if (!selectedConversationId || !currentUserId) return;
+    await editMessage(selectedConversationId, messageId, text);
+  }, [selectedConversationId, currentUserId, editMessage]);
 
   const handleRecallMessage = useCallback(async (messageId: string) => {
-    if (!selectedConversationId) return;
-    await recallMessage(messageId, selectedConversationId);
-  }, [selectedConversationId, recallMessage]);
+    if (!selectedConversationId || !currentUserId) return;
+    await recallMessage(selectedConversationId, messageId);
+  }, [selectedConversationId, currentUserId, recallMessage]);
 
   const handleDeleteForMe = useCallback(async (messageId: string) => {
-    if (!currentUserId) return;
-    await deleteMessageForMe(messageId, currentUserId);
-  }, [currentUserId, deleteMessageForMe]);
+    if (!selectedConversationId || !currentUserId) return;
+    await deleteMessageForMe(selectedConversationId, messageId, currentUserId);
+  }, [selectedConversationId, currentUserId, deleteMessageForMe]);
 
-  const forwardMessage = useCallback(async (conversationId: string, message: Message) => {
+  const forwardMessage = useCallback(async (conversationId: string, message: any) => {
     if (!currentUserId) return;
     await storeForwardMessage(conversationId, currentUserId, message);
   }, [currentUserId, storeForwardMessage]);
 
   const replyToMessage = useCallback(async (text: string, replyToId: string) => {
     if (!selectedConversationId || !currentUserId) return;
-    await storeReplyToMessage(selectedConversationId, currentUserId, text, replyToId);
-  }, [selectedConversationId, currentUserId, storeReplyToMessage]);
+    await sendTextMessage(selectedConversationId, currentUserId, text, undefined);
+  }, [selectedConversationId, currentUserId, sendTextMessage]);
 
   const handleSendCall = useCallback(async (
     callType: 'voice' | 'video',
     status: 'ended' | 'missed' | 'rejected',
     duration?: number
   ) => {
-    if (!selectedConversationId || !currentUserId) return;
-    await sendCallMessage(selectedConversationId, currentUserId, callType, status, duration);
-  }, [selectedConversationId, currentUserId, sendCallMessage]);
+    console.log('Send call message not yet implemented', callType, status, duration);
+  }, []);
 
   return {
     handleSendText,

@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo } from 'react';
-import { User, UserStatus } from '../../types';
+import { User } from '../../types';
 import { Avatar } from './Avatar';
 import { usePresence } from '../../hooks/usePresence';
 import { useAuthStore } from '../../store/authStore';
@@ -12,7 +12,7 @@ interface UserAvatarProps {
   src?: string;
   name?: string;
   size?: '2xs' | 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl';
-  initialStatus?: UserStatus;
+  initialStatus?: 'active' | 'banned';
   className?: string;
   isGroup?: boolean;
   members?: User[];
@@ -45,18 +45,16 @@ const UserAvatarInner: React.FC<UserAvatarProps> = ({
     }
   }, [userId, name, cachedUser, fetchUsers]);
 
-  const displayName = name || cachedUser?.name;
-  const avatarUrl = src || (userId === currentUser?.id ? currentUser?.avatar : cachedUser?.avatar);
+  const displayName = name || cachedUser?.fullName;
+  const avatarUrl = src || (userId === currentUser?.id ? currentUser?.avatar.url : cachedUser?.avatar.url);
 
-  const statusToDisplay = useMemo(() => {
-    const status = presence?.status;
-    if (!showStatus || !status || status === UserStatus.BANNED) return undefined;
-    if (userId === currentUser?.id) return status;
+  const statusToDisplay = useMemo((): 'active' | 'banned' | undefined => {
+    if (!showStatus || initialStatus === 'banned') return undefined;
+    if (userId === currentUser?.id) return presence && 'isOnline' in presence && presence.isOnline ? 'active' : undefined;
 
     const isBlocked = checkBlocked(userId);
-    // Chỉ hiện status của bạn bè không bị chặn
-    return (isFriend && !isBlocked) ? status : undefined;
-  }, [presence?.status, showStatus, userId, currentUser?.id, isFriend, checkBlocked]);
+    return (isFriend && !isBlocked && presence && 'isOnline' in presence && presence.isOnline) ? 'active' : undefined;
+  }, [presence, showStatus, userId, currentUser?.id, isFriend, checkBlocked, initialStatus]);
 
   return (
     <Avatar

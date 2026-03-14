@@ -1,0 +1,264 @@
+import { StateCreator } from 'zustand';
+import { RtdbMessage } from '../../types';
+import { rtdbMessageService } from '../../services/chat/rtdbMessageService';
+import { useAuthStore } from '../authStore';
+import type { RtdbChatState } from '../rtdbChatStore';
+import { PAGINATION } from '../../constants';
+
+export interface RtdbMessageSlice {
+    messages: Record<string, Array<{ id: string; data: RtdbMessage }>>;
+    hasMoreMessages: Record<string, boolean>;
+    isLoadingMore: Record<string, boolean>;
+    uploadProgress: Record<string, { progress: number; error?: boolean; localUrl?: string }>;
+
+    subscribeToMessages: (conversationId: string) => () => void;
+    loadMoreMessages: (conversationId: string) => Promise<void>;
+    sendTextMessage: (conversationId: string, senderId: string, content: string, mentions?: string[], replyToId?: string) => Promise<void>;
+    sendImageMessage: (conversationId: string, senderId: string, file: File, replyToId?: string) => Promise<void>;
+    sendFileMessage: (conversationId: string, senderId: string, file: File, replyToId?: string) => Promise<void>;
+    sendVideoMessage: (conversationId: string, senderId: string, file: File, replyToId?: string) => Promise<void>;
+    sendVoiceMessage: (conversationId: string, senderId: string, file: File, replyToId?: string) => Promise<void>;
+    markAsRead: (conversationId: string, userId: string) => Promise<void>;
+    markAsDelivered: (conversationId: string, userId: string) => Promise<void>;
+    recallMessage: (conversationId: string, messageId: string) => Promise<void>;
+    deleteMessageForMe: (conversationId: string, messageId: string, userId: string) => Promise<void>;
+    forwardMessage: (targetConversationId: string, senderId: string, srcMessage: RtdbMessage) => Promise<void>;
+    editMessage: (conversationId: string, messageId: string, content: string) => Promise<void>;
+    toggleReaction: (conversationId: string, messageId: string, userId: string, emoji: string) => Promise<void>;
+    clearMessages: (conversationId: string) => void;
+    setUploadProgress: (messageId: string, progress: number) => void;
+    setUploadError: (messageId: string, isError: boolean) => void;
+}
+
+const LIMIT_PER_PAGE = PAGINATION.CHAT_MESSAGES;
+
+export const createRtdbMessageSlice: StateCreator<RtdbChatState, [], [], RtdbMessageSlice> = (set, get) => ({
+    messages: {},
+    hasMoreMessages: {},
+    isLoadingMore: {},
+    uploadProgress: {},
+
+    subscribeToMessages: (conversationId: string) => {
+        set((state) => {
+            const newMessages = { ...state.messages };
+            delete newMessages[conversationId];
+            return { messages: newMessages };
+        });
+
+        const conversation = get().conversations.find(c => c.id === conversationId);
+        const clearedAt = conversation?.userChat?.clearedAt || 0;
+
+        const unsubscribe = rtdbMessageService.subscribeToMessages(conversationId, LIMIT_PER_PAGE, (messages) => {
+            set((state) => ({
+                messages: {
+                    ...state.messages,
+                    [conversationId]: messages
+                }
+            }));
+        }, clearedAt);
+
+        return unsubscribe;
+    },
+
+    loadMoreMessages: async (conversationId: string) => {
+        const currentMessages = get().messages[conversationId] || [];
+        if (currentMessages.length === 0) return;
+
+        set((state) => ({
+            isLoadingMore: { ...state.isLoadingMore, [conversationId]: true }
+        }));
+
+        try {
+            const oldestMessage = currentMessages[0];
+            const beforeTimestamp = oldestMessage.data.createdAt;
+            
+            const conversation = get().conversations.find(c => c.id === conversationId);
+            const clearedAt = conversation?.userChat?.clearedAt || 0;
+
+            const olderMessages = await rtdbMessageService.loadMoreMessages(
+                conversationId, 
+                beforeTimestamp, 
+                LIMIT_PER_PAGE,
+                clearedAt
+            );
+
+            set((state) => ({
+                messages: {
+                    ...state.messages,
+                    [conversationId]: [...olderMessages, ...currentMessages]
+                },
+                hasMoreMessages: {
+                    ...state.hasMoreMessages,
+                    [conversationId]: olderMessages.length === LIMIT_PER_PAGE
+                },
+                isLoadingMore: { ...state.isLoadingMore, [conversationId]: false }
+            }));
+        } catch (error) {
+            console.error('[rtdbMessageSlice] Lỗi loadMoreMessages:', error);
+            set((state) => ({
+                isLoadingMore: { ...state.isLoadingMore, [conversationId]: false }
+            }));
+        }
+    },
+
+    sendTextMessage: async (conversationId: string, senderId: string, content: string, mentions?: string[], replyToId?: string) => {
+        try {
+            await rtdbMessageService.sendTextMessage(conversationId, senderId, content, {
+                mentions,
+                replyToId
+            });
+        } catch (error) {
+            console.error('[rtdbMessageSlice] Lỗi sendTextMessage:', error);
+            throw error;
+        }
+    },
+
+    sendImageMessage: async (conversationId: string, senderId: string, file: File, replyToId?: string) => {
+        try {
+            await rtdbMessageService.sendImageMessage(conversationId, senderId, file, {
+                replyToId,
+                onProgress: (progress) => {
+                    get().setUploadProgress(`temp_${Date.now()}`, progress.progress);
+                }
+            });
+        } catch (error) {
+            console.error('[rtdbMessageSlice] Lỗi sendImageMessage:', error);
+            throw error;
+        }
+    },
+
+    sendFileMessage: async (conversationId: string, senderId: string, file: File, replyToId?: string) => {
+        try {
+            await rtdbMessageService.sendFileMessage(conversationId, senderId, file, {
+                replyToId,
+                onProgress: (progress) => {
+                    get().setUploadProgress(`temp_${Date.now()}`, progress.progress);
+                }
+            });
+        } catch (error) {
+            console.error('[rtdbMessageSlice] Lỗi sendFileMessage:', error);
+            throw error;
+        }
+    },
+
+    sendVideoMessage: async (conversationId: string, senderId: string, file: File, replyToId?: string) => {
+        try {
+            await rtdbMessageService.sendVideoMessage(conversationId, senderId, file, {
+                replyToId,
+                onProgress: (progress) => {
+                    get().setUploadProgress(`temp_${Date.now()}`, progress.progress);
+                }
+            });
+        } catch (error) {
+            console.error('[rtdbMessageSlice] Lỗi sendVideoMessage:', error);
+            throw error;
+        }
+    },
+
+    sendVoiceMessage: async (conversationId: string, senderId: string, file: File, replyToId?: string) => {
+        try {
+            await rtdbMessageService.sendVoiceMessage(conversationId, senderId, file, {
+                replyToId,
+                onProgress: (progress) => {
+                    get().setUploadProgress(`temp_${Date.now()}`, progress.progress);
+                }
+            });
+        } catch (error) {
+            console.error('[rtdbMessageSlice] Lỗi sendVoiceMessage:', error);
+            throw error;
+        }
+    },
+
+    markAsRead: async (conversationId: string, userId: string) => {
+        try {
+            await rtdbMessageService.markAsRead(conversationId, userId);
+        } catch (error) {
+            console.error('[rtdbMessageSlice] Lỗi markAsRead:', error);
+        }
+    },
+
+    markAsDelivered: async (conversationId: string, userId: string) => {
+        try {
+            await rtdbMessageService.markAsDelivered(conversationId, userId);
+        } catch (error) {
+            console.error('[rtdbMessageSlice] Lỗi markAsDelivered:', error);
+        }
+    },
+
+    recallMessage: async (conversationId: string, messageId: string) => {
+        const userId = useAuthStore.getState().user?.id;
+        if (!userId) return;
+
+        try {
+            await rtdbMessageService.recallMessage(conversationId, messageId, userId);
+        } catch (error) {
+            console.error('[rtdbMessageSlice] Lỗi recallMessage:', error);
+            throw error;
+        }
+    },
+
+    deleteMessageForMe: async (conversationId: string, messageId: string, userId: string) => {
+        try {
+            await rtdbMessageService.deleteForMe(conversationId, messageId, userId);
+        } catch (error) {
+            console.error('[rtdbMessageSlice] Lỗi deleteMessageForMe:', error);
+            throw error;
+        }
+    },
+
+    forwardMessage: async (targetConversationId: string, senderId: string, srcMessage: RtdbMessage) => {
+        try {
+            await rtdbMessageService.forwardMessage(targetConversationId, senderId, srcMessage);
+        } catch (error) {
+            console.error('[rtdbMessageSlice] Lỗi forwardMessage:', error);
+            throw error;
+        }
+    },
+
+    editMessage: async (conversationId: string, messageId: string, content: string) => {
+        const userId = useAuthStore.getState().user?.id;
+        if (!userId) return;
+
+        try {
+            await rtdbMessageService.editMessage(conversationId, messageId, userId, content);
+        } catch (error) {
+            console.error('[rtdbMessageSlice] Lỗi editMessage:', error);
+            throw error;
+        }
+    },
+
+    toggleReaction: async (conversationId: string, messageId: string, userId: string, emoji: string) => {
+        try {
+            await rtdbMessageService.toggleReaction(conversationId, messageId, userId, emoji);
+        } catch (error) {
+            console.error('[rtdbMessageSlice] Lỗi toggleReaction:', error);
+            throw error;
+        }
+    },
+
+    clearMessages: (conversationId: string) => {
+        set((state) => {
+            const newMessages = { ...state.messages };
+            delete newMessages[conversationId];
+            return { messages: newMessages };
+        });
+    },
+
+    setUploadProgress: (messageId: string, progress: number) => {
+        set((state) => ({
+            uploadProgress: {
+                ...state.uploadProgress,
+                [messageId]: { ...state.uploadProgress[messageId], progress }
+            }
+        }));
+    },
+
+    setUploadError: (messageId: string, isError: boolean) => {
+        set((state) => ({
+            uploadProgress: {
+                ...state.uploadProgress,
+                [messageId]: { ...state.uploadProgress[messageId], error: isError }
+            }
+        }));
+    }
+});

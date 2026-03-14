@@ -25,7 +25,7 @@ export const useMentions = ({
 
   const filteredParticipants = participants
     .filter(p => p.id !== currentUserId)
-    .filter(p => p.name.toLowerCase().includes(mentionQuery.toLowerCase()));
+    .filter(p => p.fullName.toLowerCase().includes(mentionQuery.toLowerCase()));
 
   const handleInputChange = useCallback((text: string, selectionStart: number) => {
     if (!isGroup) return;
@@ -48,17 +48,17 @@ export const useMentions = ({
 
   const handleSelectMention = useCallback((user: User) => {
     if (mentionStartPos === -1) return;
-    
+
     const before = inputText.slice(0, mentionStartPos);
     const afterCursor = inputRef.current?.selectionStart || mentionStartPos + 1;
     const after = inputText.slice(afterCursor);
-    
-    const mentionText = `@[${user.name}] `;
+
+    const mentionText = `@[${user.fullName}] `;
     const newText = before + mentionText + after;
-    
+
     setInputText(newText);
     setShowMentions(false);
-    
+
     requestAnimationFrame(() => {
       if (inputRef.current) {
         const newPos = before.length + mentionText.length;

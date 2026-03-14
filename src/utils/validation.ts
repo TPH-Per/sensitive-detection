@@ -39,15 +39,15 @@ export const forgotPasswordSchema = z.object({
 
 // Schema cho Chỉnh sửa hồ sơ
 export const profileSchema = z.object({
-  name: z.string()
+  fullName: z.string()
     .min(1, 'Tên không được để trống')
     .max(VALIDATION.USER_NAME_MAX_LENGTH, `Tên không được quá ${VALIDATION.USER_NAME_MAX_LENGTH} ký tự`),
   bio: z.string()
     .max(VALIDATION.BIO_MAX_LENGTH, `Giới thiệu không được quá ${VALIDATION.BIO_MAX_LENGTH} ký tự`)
     .optional(),
   location: z.string().optional(),
-  gender: z.nativeEnum(Gender).optional(),
-  birthDate: z.number().optional(),
+  gender: z.nativeEnum(Gender).or(z.literal("")).optional(),
+  dob: z.number().optional(),
 });
 
 // Schema cho Đổi mật khẩu
@@ -74,18 +74,14 @@ export const postSchema = z.object({
     .optional()
     .or(z.literal('')),
   visibility: z.nativeEnum(Visibility),
-  images: z.array(z.string())
-    .max(MEDIA_CONSTRAINTS.MAX_IMAGES_PER_POST, `Chỉ được tải lên tối đa ${MEDIA_CONSTRAINTS.MAX_IMAGES_PER_POST} ảnh`),
-  videos: z.array(z.string())
-    .max(MEDIA_CONSTRAINTS.MAX_VIDEOS_PER_POST, `Chỉ được tải lên tối đa ${MEDIA_CONSTRAINTS.MAX_VIDEOS_PER_POST} video`),
-  videoThumbnails: z.record(z.string(), z.string()).optional(),
+  media: z.array(z.any())
+    .max(MEDIA_CONSTRAINTS.MAX_IMAGES_PER_POST, `Chỉ được tải lên tối đa ${MEDIA_CONSTRAINTS.MAX_IMAGES_PER_POST} media`),
   hasPendingFiles: z.boolean().optional(),
 }).refine(data => {
   const hasContent = data.content?.trim()?.length && data.content.trim().length > 0;
-  const hasImages = data.images && data.images.length > 0;
-  const hasVideos = data.videos && data.videos.length > 0;
+  const hasMedia = data.media && data.media.length > 0;
   const hasPending = !!data.hasPendingFiles;
-  return hasContent || hasImages || hasVideos || hasPending;
+  return hasContent || hasMedia || hasPending;
 }, {
   message: "Bài viết không được để trống",
   path: ["content"],

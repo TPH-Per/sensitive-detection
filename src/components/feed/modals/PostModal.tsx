@@ -5,7 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { UserAvatar, Button, EmojiPicker, Select, Modal, IconButton, ConfirmDialog } from '../../ui';
 import { toast } from '../../../store/toastStore';
 import { validateFileSize } from '../../../utils';
-import { User, Post, Visibility } from '../../../types';
+import { User, Post, Visibility, MediaObject } from '../../../types';
 import { postSchema, PostFormValues } from '../../../utils/validation';
 import { insertTextAtCursor } from '../../../utils/uiUtils';
 import { useAutoResizeTextarea } from '../../../hooks/utils';
@@ -16,8 +16,8 @@ interface PostModalProps {
   currentUser: User;
   initialPost?: Post;
   initialFiles?: File[];
-  onSubmit: (content: string, images: string[], videos: string[], visibility: Visibility, videoThumbnails?: Record<string, string>, pendingFiles?: File[]) => Promise<void>;
-  onUploadImages: (files: File[], onProgress?: (progress: number) => void) => Promise<{ images: string[], videos: string[], videoThumbnails?: Record<string, string> }>;
+  onSubmit: (content: string, media: MediaObject[], visibility: Visibility, pendingFiles?: File[]) => Promise<void>;
+  onUploadImages: (files: File[], onProgress?: (progress: number) => void) => Promise<MediaObject[]>;
 }
 
 const EMPTY_FILES: File[] = [];
@@ -48,9 +48,7 @@ export const PostModal: React.FC<PostModalProps> = ({
     resolver: zodResolver(postSchema),
     defaultValues: {
       content: '',
-      images: [],
-      videos: [],
-      videoThumbnails: {},
+      media: [],
       hasPendingFiles: false,
       visibility: Visibility.PUBLIC
     }
@@ -65,25 +63,34 @@ export const PostModal: React.FC<PostModalProps> = ({
   const initializedRef = React.useRef(false);
 
   useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const { userService } = await import('../../../services/userService');
+        const settings = await userService.getUserSettings(currentUser.id);
+        if (settings) {
+          setValue('visibility', settings.defaultPostVisibility);
+        }
+      } catch (error) {
+        console.error('Lỗi lấy settings mặc định:', error);
+      }
+    };
+
     if (isOpen && !initializedRef.current) {
       if (isEdit && initialPost) {
         reset({
           content: initialPost.content,
-          images: initialPost.images || [],
-          videos: initialPost.videos || [],
-          videoThumbnails: initialPost.videoThumbnails || {},
+          media: initialPost.media || [],
           hasPendingFiles: false,
           visibility: initialPost.visibility
         });
       } else {
         reset({
           content: '',
-          images: [],
-          videos: [],
-          videoThumbnails: {},
+          media: [],
           hasPendingFiles: initialFiles.length > 0,
-          visibility: Visibility.PUBLIC
+          visibility: Visibility.PUBLIC // Giá trị tạm thời
         });
+        fetchSettings(); // Ghi đè bằng settings từ DB
         if (initialFiles.length > 0) processFiles(initialFiles);
       }
       initializedRef.current = true;
@@ -148,12 +155,8 @@ export const PostModal: React.FC<PostModalProps> = ({
     processFiles(files);
   };
 
-  const handleRemoveImage = (index: number) => {
-    setValue('images', formData.images.filter((_, i) => i !== index), { shouldDirty: true });
-  };
-
-  const handleRemoveVideo = (index: number) => {
-    setValue('videos', formData.videos.filter((_, i) => i !== index), { shouldDirty: true });
+  const handleRemoveMedia = (index: number) => {
+    setValue('media', formData.media.filter((_, i) => i !== index), { shouldDirty: true });
   };
 
   // Xóa pending file (chưa upload)
@@ -174,10 +177,8 @@ export const PostModal: React.FC<PostModalProps> = ({
 
       await onSubmit(
         data.content || '',
-        data.images,
-        data.videos,
+        data.media,
         data.visibility,
-        data.videoThumbnails,
         pendingFiles
       );
 
@@ -193,7 +194,7 @@ export const PostModal: React.FC<PostModalProps> = ({
 
   const handleCloseAttempt = () => {
     const hasContent = !!formData.content?.trim();
-    const hasMedia = formData.images.length > 0 || formData.videos.length > 0 || pendingFiles.length > 0;
+    const hasMedia = formData.media.length > 0 || pendingFiles.length > 0;
 
     if (hasContent || hasMedia) {
       setShowDiscardConfirm(true);
@@ -273,8 +274,8 @@ export const PostModal: React.FC<PostModalProps> = ({
         <div className="flex flex-col min-h-[150px]">
           <div className="sticky top-[-1px] z-10 bg-bg-primary px-4 md:px-6 py-3 border-b border-divider flex items-center justify-between flex-none">
             <div className="flex items-center gap-3">
-              <UserAvatar userId={currentUser.id} src={currentUser.avatar} name={currentUser.name} size="md" initialStatus={currentUser.status} />
-              <h3 className="font-semibold text-text-primary text-sm md:text-base">{currentUser.name}</h3>
+              <UserAvatar userId={currentUser.id} src={currentUser.avatar.url} name={currentUser.fullName} size="md" initialStatus={currentUser.status} />
+              <h3 className="font-semibold text-text-primary text-sm md:text-base">{currentUser.fullName}</h3>
             </div>
             <Select
               value={formData.visibility}
@@ -298,7 +299,7 @@ export const PostModal: React.FC<PostModalProps> = ({
                   (textareaRef as React.MutableRefObject<HTMLTextAreaElement | null>).current = e;
                 }}
                 placeholder="Hãy viết gì đó..."
-                className={`w-full resize-none outline-none bg-transparent text-text-primary placeholder:text-text-tertiary overflow-hidden transition-all duration-200 ${(formData.content?.length || 0) < 85 && formData.images.length === 0 && formData.videos.length === 0 && previews.length === 0
+                className={`w-full resize-none outline-none bg-transparent text-text-primary placeholder:text-text-tertiary overflow-hidden transition-all duration-200 ${(formData.content?.length || 0) < 85 && formData.media.length === 0 && previews.length === 0
                   ? 'text-xl md:text-2xl font-medium min-h-[120px]'
                   : 'text-base md:text-lg min-h-[100px]'
                   }`}
@@ -311,26 +312,24 @@ export const PostModal: React.FC<PostModalProps> = ({
             {/* Media Preview Section */}
             {(() => {
               const allPreviews = [
-                ...formData.images.map(url => ({ url, type: 'image' as const, isPending: false })),
-                ...formData.videos.map(url => ({ url, type: 'video' as const, isPending: false })),
+                ...formData.media.map(m => ({ url: m.url, type: m.mimeType.startsWith('video/') ? 'video' as const : 'image' as const, isPending: false })),
                 ...previews.map(p => ({ ...p, isPending: true }))
               ];
-              
+
               if (allPreviews.length === 0) return null;
-              
+
               const count = allPreviews.length;
               const gridClass = count === 1 ? 'grid-cols-1' : 'grid-cols-2';
-              
+
               return (
                 <div className={`grid ${gridClass} gap-2 mt-4`}>
                   {allPreviews.map((item, idx) => {
                     const isLarge = count === 3 && idx === 0;
                     return (
-                      <div 
-                        key={`${item.url}-${idx}`} 
-                        className={`relative group rounded-xl overflow-hidden bg-bg-secondary border border-border-light shadow-sm ${
-                          isLarge ? 'col-span-2 aspect-video' : 'aspect-square md:aspect-video'
-                        }`}
+                      <div
+                        key={`${item.url}-${idx}`}
+                        className={`relative group rounded-xl overflow-hidden bg-bg-secondary border border-border-light shadow-sm ${isLarge ? 'col-span-2 aspect-video' : 'aspect-square md:aspect-video'
+                          }`}
                       >
                         {item.type === 'image' ? (
                           <img src={item.url} alt="" className="w-full h-full object-cover" />
@@ -342,20 +341,16 @@ export const PostModal: React.FC<PostModalProps> = ({
                             </div>
                           </>
                         )}
-                        
+
                         <button
                           type="button"
                           onClick={() => {
                             if (item.isPending) {
-                              // Tìm index trong mảng previews gốc
                               const pIdx = previews.findIndex(p => p.url === item.url);
                               if (pIdx !== -1) handleRemovePending(pIdx);
-                            } else if (item.type === 'image') {
-                              const iIdx = formData.images.indexOf(item.url);
-                              if (iIdx !== -1) handleRemoveImage(iIdx);
                             } else {
-                              const vIdx = formData.videos.indexOf(item.url);
-                              if (vIdx !== -1) handleRemoveVideo(vIdx);
+                              const mIdx = formData.media.findIndex(m => m.url === item.url);
+                              if (mIdx !== -1) handleRemoveMedia(mIdx);
                             }
                           }}
                           className="absolute top-2 right-2 p-1.5 min-w-[36px] min-h-[36px] flex items-center justify-center bg-black/50 text-white rounded-full opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all duration-base hover:bg-black/70 active:bg-black/90 z-30"

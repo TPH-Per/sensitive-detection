@@ -19,19 +19,19 @@ export const TypingIndicator: React.FC<TypingIndicatorProps> = ({
   let typingText = '';
   if (activeTypingUsers.length === 1) {
     const user = usersMap[activeTypingUsers[0]];
-    const name = getLastName(user?.name) || 'Ai đó';
+    const name = getLastName(user?.fullName) || 'Ai đó';
     typingText = `${name} đang soạn tin...`;
   } else if (activeTypingUsers.length === 2) {
     const user1 = usersMap[activeTypingUsers[0]];
     const user2 = usersMap[activeTypingUsers[1]];
-    const name1 = getLastName(user1?.name) || 'Người dùng';
-    const name2 = getLastName(user2?.name) || 'người dùng';
+    const name1 = getLastName(user1?.fullName) || 'Người dùng';
+    const name2 = getLastName(user2?.fullName) || 'người dùng';
     typingText = `${name1} và ${name2} đang soạn tin...`;
   } else {
     const user1 = usersMap[activeTypingUsers[0]];
     const user2 = usersMap[activeTypingUsers[1]];
-    const name1 = getLastName(user1?.name) || 'Người dùng';
-    const name2 = getLastName(user2?.name) || 'người dùng';
+    const name1 = getLastName(user1?.fullName) || 'Người dùng';
+    const name2 = getLastName(user2?.fullName) || 'người dùng';
     const othersCount = activeTypingUsers.length - 2;
     typingText = `${name1}, ${name2} và ${othersCount} người khác đang soạn tin...`;
   }

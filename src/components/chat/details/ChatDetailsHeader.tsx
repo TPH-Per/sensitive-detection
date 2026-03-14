@@ -1,9 +1,9 @@
 import React from 'react';
-import { User, Conversation, UserStatus } from '../../../types';
+import { User, RtdbConversation, RtdbUserChat } from '../../../types';
 import { UserAvatar, Avatar, UserStatusText, BannedBadge } from '../../ui';
 
 interface ChatDetailsHeaderProps {
-  conversation: Conversation;
+  conversation: { id: string; data: RtdbConversation; userChat: RtdbUserChat };
   currentUserId: string;
   participants: User[];
   partner?: User;
@@ -15,9 +15,9 @@ export const ChatDetailsHeader: React.FC<ChatDetailsHeaderProps> = ({
   participants,
   partner
 }) => {
-  const isGroup = conversation.isGroup;
-  const displayName = isGroup ? conversation.groupName : partner?.name || 'Unknown';
-  const avatarSrc = isGroup ? conversation.groupAvatar : partner?.avatar;
+  const isGroup = conversation.data.isGroup;
+  const displayName = isGroup ? conversation.data.name : partner?.fullName || 'Unknown';
+  const avatarSrc = isGroup ? conversation.data.avatar?.url : partner?.avatar.url;
 
   return (
     <div className="flex flex-col items-center py-6 px-4 border-b border-border-light">
@@ -36,7 +36,7 @@ export const ChatDetailsHeader: React.FC<ChatDetailsHeaderProps> = ({
 
       <h2 className="mt-4 text-lg font-bold text-text-primary text-center flex items-center gap-2">
         {displayName}
-        {!isGroup && partner?.status === UserStatus.BANNED && <BannedBadge size="lg" />}
+        {!isGroup && partner?.status === 'banned' && <BannedBadge size="lg" />}
       </h2>
 
       {!isGroup && partner && (

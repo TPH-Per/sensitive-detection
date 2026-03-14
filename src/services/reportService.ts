@@ -11,14 +11,61 @@ import {
   getCountFromServer,
   limit,
   onSnapshot,
-  QueryConstraint
+  QueryConstraint,
+  serverTimestamp
 } from 'firebase/firestore';
-import { db } from '../firebase/config';
-import { getFunctions, httpsCallable } from 'firebase/functions';
-import { Report, ReportType, ReportStatus } from '../types';
+import { db, functions } from '../firebase/config';
+import { httpsCallable } from 'firebase/functions';
+import { Report, ReportType, ReportStatus, MediaObject } from '../types';
 import { PAGINATION } from '../constants';
+import { uploadWithProgress, ProgressCallback } from '../utils/uploadUtils';
+import { compressImage } from '../utils/imageUtils';
+import { IMAGE_COMPRESSION } from '../constants';
 
 export const reportService = {
+  // Upload ảnh bằng chứng cho báo cáo (tối đa 5 ảnh)
+  uploadReportImages: async (
+    files: File[],
+    reporterId: string,
+    onProgress?: ProgressCallback
+  ): Promise<MediaObject[]> => {
+    try {
+      if (files.length > 5) {
+        throw new Error('Tối đa 5 ảnh bằng chứng');
+      }
+
+      const uploadPromises = files.map(async (file, index) => {
+        // Compress ảnh trước khi upload
+        const compressedFile = await compressImage(file, IMAGE_COMPRESSION.POST);
+
+        const fileExt = file.name.split('.').pop();
+        const fileName = `report_${reporterId}_${Date.now()}_${index}.${fileExt}`;
+        const path = `reports/${reporterId}/${fileName}`;
+
+        const downloadURL = await uploadWithProgress(
+          path,
+          compressedFile,
+          onProgress
+        );
+
+        const mediaObject: MediaObject = {
+          url: downloadURL,
+          fileName,
+          mimeType: file.type,
+          size: compressedFile.size,
+          isSensitive: false,
+        };
+
+        return mediaObject;
+      });
+
+      return await Promise.all(uploadPromises);
+    } catch (error) {
+      console.error('Lỗi upload ảnh báo cáo:', error);
+      throw error;
+    }
+  },
+
   // Cloud Function onReportCreated xử lý notification cho admin
   createReport: async (data: Omit<Report, 'id' | 'status' | 'createdAt'>): Promise<string> => {
     try {
@@ -28,8 +75,10 @@ export const reportService = {
 
       const docRef = await addDoc(collection(db, 'reports'), {
         ...cleanData,
+        targetOwnerId: data.targetOwnerId,
         status: ReportStatus.PENDING,
-        createdAt: Timestamp.now()
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
       });
 
       return docRef.id;
@@ -137,14 +186,12 @@ export const reportService = {
     resolution: string = 'Đã xử lý',
     action: 'delete_content' | 'warn_user' | 'ban_user' = 'delete_content'
   ): Promise<void> => {
-    const functions = getFunctions();
     const fn = httpsCallable(functions, 'resolveReport');
     await fn({ reportId, resolution, action });
   },
 
   // Admin từ chối báo cáo qua Cloud Function
   rejectReport: async (reportId: string): Promise<void> => {
-    const functions = getFunctions();
     const fn = httpsCallable(functions, 'rejectReport');
     await fn({ reportId });
   },

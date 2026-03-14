@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, Info, Users, Image, Search } from 'lucide-react';
-import { Conversation, Message, User, UserStatus } from '../../../types';
+import { RtdbConversation, RtdbMessage, RtdbUserChat, User } from '../../../types';
 import { IconButton, UserAvatar, Avatar, UserStatusText } from '../../ui';
 import { ChatDetailsHeader } from './ChatDetailsHeader';
 import { ChatDetailsMemberList } from './ChatDetailsMemberList';
@@ -10,8 +10,8 @@ import { ChatDetailsActions } from './ChatDetailsActions';
 import { useConversationParticipants } from '../../../hooks/chat/useConversationParticipants';
 
 interface ChatDetailsPanelProps {
-  conversation: Conversation;
-  messages: Message[];
+  conversation: { id: string; data: RtdbConversation; userChat: RtdbUserChat };
+  messages: Array<{ id: string; data: RtdbMessage }>;
   currentUserId: string;
   usersMap: Record<string, User>;
   isOpen: boolean;
@@ -25,7 +25,6 @@ interface ChatDetailsPanelProps {
   onDelete?: () => void;
   onMemberClick?: (userId: string) => void;
   onMessageClick?: (messageId: string) => void;
-  // Group management props
   onLeaveGroup?: () => void;
   onEditGroup?: () => void;
   onAddMember?: () => void;
@@ -63,11 +62,12 @@ export const ChatDetailsPanel: React.FC<ChatDetailsPanelProps> = ({
   const [isVisible, setIsVisible] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
 
-  const participants = useConversationParticipants(conversation.participantIds);
+  const participantIds = Object.keys(conversation.data.members);
+  const participants = useConversationParticipants(participantIds);
 
-  const partnerId = conversation.isGroup
+  const partnerId = conversation.data.isGroup
     ? null
-    : conversation.participantIds.find(id => id !== currentUserId);
+    : participantIds.find(id => id !== currentUserId);
 
   const partner = partnerId ? usersMap[partnerId] : null;
 
@@ -96,7 +96,7 @@ export const ChatDetailsPanel: React.FC<ChatDetailsPanelProps> = ({
   ];
 
   const visibleTabs = tabs.filter(
-    tab => tab.showFor === 'all' || (tab.showFor === 'group' && conversation.isGroup)
+    tab => tab.showFor === 'all' || (tab.showFor === 'group' && conversation.data.isGroup)
   );
 
   const renderTabContent = () => {

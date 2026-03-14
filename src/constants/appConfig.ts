@@ -84,7 +84,7 @@ export const REPORT_CONFIG = {
   MAX_IMAGES_PER_REPORT: 5,
   REASONS: {
     spam: { label: 'Spam', description: 'Tin rác, quảng cáo không mong muốn' },
-    harassment_violence: { label: 'Quấy rối & Bạo lực', description: 'Bắt nạt, đe dọa hoặc nội dung bạo lực' },
+    harassment: { label: 'Quấy rối & Bạo lực', description: 'Bắt nạt, đe dọa hoặc nội dung bạo lực' },
     hate_speech: { label: 'Ngôn từ thù ghét', description: 'Phân biệt chủng tộc, giới tính, thù địch' },
     sensitive: { label: 'Nội dung nhạy cảm', description: 'Hình ảnh/video khiêu dâm, người lớn' },
     scam_impersonation: { label: 'Lừa đảo & Giả mạo', description: 'Chiếm đoạt tài sản hoặc mạo danh người khác' },

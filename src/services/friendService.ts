@@ -6,11 +6,12 @@ import {
   query,
   where,
   orderBy,
-  updateDoc,
   deleteDoc,
   Timestamp,
   addDoc,
-  onSnapshot
+  onSnapshot,
+  writeBatch,
+  serverTimestamp
 } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import { FriendRequest, FriendRequestStatus } from '../types';
@@ -32,22 +33,24 @@ export const friendService = {
     }
   },
 
-  sendFriendRequest: async (senderId: string, receiverId: string, message?: string): Promise<FriendRequest> => {
+  sendFriendRequest: async (senderId: string, receiverId: string): Promise<FriendRequest> => {
     try {
       if (senderId === receiverId) {
         throw new Error("Không thể gửi lời mời kết bạn cho chính mình");
       }
 
-      const [receiverSnap, receiverSec, senderSec] = await Promise.all([
+      // Kiểm tra user tồn tại và block status từ subcollection blockedUsers
+      const [receiverSnap, receiverBlockedSnap, senderBlockedSnap] = await Promise.all([
         getDoc(doc(db, 'users', receiverId)),
-        getDoc(doc(db, 'users', receiverId, 'private', 'security')),
-        getDoc(doc(db, 'users', senderId, 'private', 'security')),
+        getDoc(doc(db, 'users', receiverId, 'blockedUsers', senderId)),
+        getDoc(doc(db, 'users', senderId, 'blockedUsers', receiverId)),
       ]);
+
       if (!receiverSnap.exists()) throw new Error("Người dùng không tồn tại");
-      if (receiverSec.data()?.blockedUserIds?.includes(senderId)) {
+      if (receiverBlockedSnap.exists()) {
         throw new Error("Không thể gửi lời mời kết bạn cho người dùng này");
       }
-      if (senderSec.data()?.blockedUserIds?.includes(receiverId)) {
+      if (senderBlockedSnap.exists()) {
         throw new Error("Bạn đã chặn người dùng này");
       }
 
@@ -58,9 +61,8 @@ export const friendService = {
         senderId,
         receiverId,
         status: FriendRequestStatus.PENDING,
-        message: message || '',
-        createdAt: Timestamp.now(),
-        updatedAt: Timestamp.now()
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
       };
 
       const docRef = await addDoc(collection(db, 'friendRequests'), requestData);
@@ -161,13 +163,16 @@ export const friendService = {
     });
   },
 
-  acceptFriendRequest: async (requestId: string): Promise<void> => {
+  acceptFriendRequest: async (requestId: string, senderId: string, receiverId: string): Promise<void> => {
     try {
-      const requestRef = doc(db, 'friendRequests', requestId);
-      await updateDoc(requestRef, {
-        status: FriendRequestStatus.ACCEPTED,
-        updatedAt: Timestamp.now()
-      });
+      const batch = writeBatch(db);
+      const now = serverTimestamp();
+
+      batch.set(doc(db, 'users', senderId, 'friends', receiverId), { friendId: receiverId, createdAt: now });
+      batch.set(doc(db, 'users', receiverId, 'friends', senderId), { friendId: senderId, createdAt: now });
+      batch.delete(doc(db, 'friendRequests', requestId));
+
+      await batch.commit();
     } catch (error) {
       console.error("Lỗi chấp nhận kết bạn", error);
       throw error;
@@ -193,11 +198,29 @@ export const friendService = {
     }
   },
 
-  unfriend: async (_userId: string, friendId: string): Promise<void> => {
+  unfriend: async (userId: string, friendId: string): Promise<void> => {
     try {
-      const { getFunctions, httpsCallable } = await import('firebase/functions');
-      const fn = httpsCallable(getFunctions(), 'unfriend');
-      await fn({ friendId });
+      const batch = writeBatch(db);
+
+      batch.delete(doc(db, 'users', userId, 'friends', friendId));
+      batch.delete(doc(db, 'users', friendId, 'friends', userId));
+
+      const [sentSnap, receivedSnap] = await Promise.all([
+        getDocs(query(
+          collection(db, 'friendRequests'),
+          where('senderId', '==', userId),
+          where('receiverId', '==', friendId)
+        )),
+        getDocs(query(
+          collection(db, 'friendRequests'),
+          where('senderId', '==', friendId),
+          where('receiverId', '==', userId)
+        )),
+      ]);
+
+      [...sentSnap.docs, ...receivedSnap.docs].forEach(d => batch.delete(d.ref));
+
+      await batch.commit();
     } catch (error) {
       console.error("Lỗi hủy kết bạn", error);
       throw error;

@@ -6,85 +6,119 @@ import { REACTION_LABELS } from '../../../constants';
 import { getReactionIcon } from '../../chat/reactions/ReactionIcons';
 
 interface ReactionActionsProps {
-  postId: string;
-  reactionSummary?: Partial<Record<ReactionType, number>>;
-  reactionCount?: number;
-  myReaction?: string;
-  commentCount?: number;
-  onReact: (postId: string, reaction: string) => void;
+  reactionSummary: Partial<Record<ReactionType, number>>;
+  reactionCount: number;
+  myReaction: string | null;
+  commentCount: number;
+  onReact: (type: ReactionType | 'REMOVE') => void;
   onCommentClick?: () => void;
   onViewReactions?: () => void;
-  showStats?: boolean;
   showEmptyDivider?: boolean;
+  className?: string;
   statsClassName?: string;
   actionClassName?: string;
   selectorClassName?: string;
 }
 
 export const ReactionActions: React.FC<ReactionActionsProps> = ({
-  postId, reactionSummary, reactionCount = 0, myReaction, commentCount = 0,
-  onReact, onCommentClick, onViewReactions, showStats = true,
-  showEmptyDivider = false, statsClassName, actionClassName, selectorClassName
+  reactionSummary,
+  reactionCount,
+  myReaction,
+  commentCount,
+  onReact,
+  onCommentClick,
+  onViewReactions,
+  showEmptyDivider = false,
+  className = '',
+  statsClassName = 'px-4 py-3 flex justify-between items-center border-b border-border-light/60',
+  actionClassName = 'flex p-1 relative',
+  selectorClassName = '',
 }) => {
   const [showReactions, setShowReactions] = useState(false);
-  const hasStats = reactionCount > 0 || commentCount > 0;
+
+  const handleLikeClick = () => {
+    onReact(myReaction ? 'REMOVE' : ReactionType.LIKE);
+  };
+
+  const hasInteractions = reactionCount > 0 || commentCount > 0;
 
   return (
-    <>
-      {showStats && (hasStats ? (
-        <div className={statsClassName || "px-4 py-1 flex justify-between items-center border-b border-border-light min-h-[40px]"}>
-          <div className="flex items-center gap-2">
-            <ReactionDisplay reactionSummary={reactionSummary} reactionCount={reactionCount} variant="minimal" onClick={onViewReactions} />
+    <div className={`flex flex-col select-none ${className}`}>
+      {hasInteractions ? (
+        <div className={statsClassName}>
+          <div className="flex items-center">
+            {reactionCount > 0 && (
+              <button 
+                onClick={onViewReactions}
+                className="hover:underline transition-transform active:scale-95"
+              >
+                <ReactionDisplay reactionSummary={reactionSummary} reactionCount={reactionCount} />
+              </button>
+            )}
           </div>
+          
           {commentCount > 0 && (
-            onCommentClick ? (
-              <Button variant="ghost" size="sm" onClick={onCommentClick}
-                className="hover:underline hover:!bg-transparent text-text-secondary">
-                {commentCount} bình luận
-              </Button>
-            ) : (
-              <span className="text-[13px] text-text-secondary font-medium tracking-tight">
-                {commentCount} bình luận
-              </span>
-            )
+            <button 
+              onClick={onCommentClick}
+              className="text-sm text-text-secondary hover:underline transition-all"
+            >
+              {commentCount} bình luận
+            </button>
           )}
         </div>
-      ) : showEmptyDivider ? (
-        <div className="h-2 border-b border-border-light" />
-      ) : null)}
+      ) : showEmptyDivider && (
+        <div className="mx-4 border-b border-border-light/40" />
+      )}
 
-      <div className={actionClassName || "flex px-2 py-1 relative"}>
-        <div className="flex-1 relative group/reaction-btn"
-          onMouseLeave={() => setShowReactions(false)}>
+      <div className={actionClassName}>
+        <div 
+          className="flex-1 relative group/reaction-btn" 
+          onMouseLeave={() => setShowReactions(false)}
+        >
           {showReactions && (
-            <ReactionSelector
-              className={`absolute bottom-full left-0 mb-2 ml-4 transform origin-bottom-left ${selectorClassName || ''}`}
-              size="md"
-              autoClose={false}
-              onSelect={(emoji) => { onReact(postId, emoji); setShowReactions(false); }}
-              onClose={() => setShowReactions(false)}
-            />
-          )}
-          <Button variant="ghost"
-            className={`w-full min-h-[44px] group ${myReaction ? 'text-primary' : 'text-text-secondary hover:text-primary'}`}
-            onClick={() => onReact(postId, myReaction || '👍')}
-            onMouseEnter={() => setShowReactions(true)}>
-            <div className="flex items-center gap-2">
-              {myReaction
-                ? <span className="animate-in zoom-in spin-in-12 duration-slow">{getReactionIcon(myReaction as ReactionType, "w-5 h-5", 20)}</span>
-                : <Heart size={20} />}
-              <span className={`text-sm font-medium ${myReaction ? `text-${REACTION_LABELS[myReaction]}` : ''}`}>
-                {myReaction ? REACTION_LABELS[myReaction] : 'Thích'}
-              </span>
+            <div className={`absolute bottom-full left-0 ml-2 pb-3 z-[100] ${selectorClassName}`}>
+              <ReactionSelector 
+                onSelect={(type) => {
+                  onReact(type);
+                  setShowReactions(false);
+                }} 
+                className="relative shadow-2xl animate-in fade-in slide-in-from-bottom-2 duration-200"
+              />
             </div>
+          )}
+
+          <Button
+            variant="ghost"
+            fullWidth
+            className={`h-10 transition-all duration-200 ${
+              myReaction ? 'text-primary bg-primary/5 font-bold' : 'text-text-secondary hover:bg-black/5'
+            }`}
+            onClick={handleLikeClick}
+            onMouseEnter={() => setShowReactions(true)}
+            icon={myReaction ? (
+              <span className="animate-bounce-once">
+                {getReactionIcon(myReaction as ReactionType, "w-5 h-5", 20)}
+              </span>
+            ) : (
+              <Heart className="w-5 h-5 transition-transform group-hover/reaction-btn:scale-110" />
+            )}
+          >
+            {myReaction ? REACTION_LABELS[myReaction as ReactionType] : 'Thích'}
           </Button>
         </div>
-        <Button variant="ghost" onClick={onCommentClick}
-          className={`flex-1 min-h-[44px] text-text-secondary ${onCommentClick ? 'hover:text-primary hover:bg-bg-hover' : ''}`}
-          icon={<MessageCircle size={20} />}>
-          <span className="text-sm font-medium">Bình luận</span>
+
+        {/* Nút Bình luận */}
+        <Button
+          variant="ghost"
+          fullWidth
+          className="flex-1 h-10 text-text-secondary transition-all hover:bg-black/5"
+          onClick={onCommentClick}
+          icon={<MessageCircle className="w-5 h-5" />}
+        >
+          Bình luận
         </Button>
       </div>
-    </>
+    </div>
   );
 };
+

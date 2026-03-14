@@ -1,8 +1,8 @@
 import { useRef, useEffect, useState, useCallback } from 'react';
-import { Message } from '../../types';
+import { RtdbMessage } from '../../types';
 
 interface UseChatScrollProps {
-  messages: Message[];
+  messages: Array<{ id: string; data: RtdbMessage }>;
   conversationId: string;
   isLoading: boolean;
   hasMoreMessages: boolean;
@@ -42,7 +42,7 @@ export const useChatScroll = ({
       if (messages.length > prevMessagesLength.current) {
         const lastMsg = messages[messages.length - 1];
         const prevLastMsg = messages[prevMessagesLength.current - 1];
-        const isNewMessage = !prevLastMsg || lastMsg.createdAt > prevLastMsg.createdAt;
+        const isNewMessage = !prevLastMsg || lastMsg.data.createdAt > prevLastMsg.data.createdAt;
 
         if (isNewMessage && shouldAutoScroll) {
           messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });

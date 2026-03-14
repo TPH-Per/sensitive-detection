@@ -32,7 +32,7 @@ export const CreateGroupModal: React.FC<CreateGroupModalProps> = ({
   const [showCropper, setShowCropper] = useState(false);
   const [cropImage, setCropImage] = useState<string | null>(null);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
-  
+
   const {
     register,
     handleSubmit,
@@ -113,29 +113,29 @@ export const CreateGroupModal: React.FC<CreateGroupModalProps> = ({
 
   const toggleSelect = (userId: string) => {
     const currentIds = formData.memberIds;
-    
+
     // Kiểm tra giới hạn số thành viên tối đa
     if (!currentIds.includes(userId) && currentIds.length >= GROUP_LIMITS.MAX_MEMBERS - 1) {
       toast.error(`Nhóm tối đa ${GROUP_LIMITS.MAX_MEMBERS} thành viên`);
       return;
     }
-    
-    const newIds = currentIds.includes(userId) 
+
+    const newIds = currentIds.includes(userId)
       ? currentIds.filter(id => id !== userId)
       : [...currentIds, userId];
-    
+
     setValue('memberIds', newIds, { shouldValidate: step === 'select' });
   };
 
   const handleNext = () => {
     if (formData.memberIds.length < GROUP_LIMITS.MIN_MEMBERS) return;
-    
+
     // Tự động tạo tên nhóm từ tên thành viên (bao gồm người tạo)
     const { user: currentUser } = useAuthStore.getState();
     const selectedFriends = friends.filter(f => formData.memberIds.includes(f.id));
     const allNames = [
-      currentUser?.name.split(' ')[0] || 'Bạn',
-      ...selectedFriends.map(f => f.name.split(' ')[0])
+      currentUser?.fullName.split(' ')[0] || 'Bạn',
+      ...selectedFriends.map(f => f.fullName.split(' ')[0])
     ];
     const autoName = allNames.join(', ');
     setValue('name', autoName);
@@ -154,8 +154,8 @@ export const CreateGroupModal: React.FC<CreateGroupModalProps> = ({
     }
   };
 
-  const filteredFriends = friends.filter(f => 
-    f.name.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredFriends = friends.filter(f =>
+    f.fullName.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const renderSelectStep = () => (
@@ -176,12 +176,12 @@ export const CreateGroupModal: React.FC<CreateGroupModalProps> = ({
             const friend = friends.find(f => f.id === id);
             if (!friend) return null;
             return (
-              <div 
+              <div
                 key={id}
                 className="flex items-center gap-2 bg-primary-light text-primary px-3 py-1.5 rounded-full text-sm"
               >
-                <span>{friend.name.split(' ')[0]}</span>
-                <IconButton 
+                <span>{friend.fullName.split(' ')[0]}</span>
+                <IconButton
                   onClick={() => toggleSelect(id)}
                   className="hover:bg-primary/20"
                   icon={<X size={14} />}
@@ -209,21 +209,18 @@ export const CreateGroupModal: React.FC<CreateGroupModalProps> = ({
               onClick={() => toggleSelect(friend.id)}
               className={`
                 flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all
-                ${formData.memberIds.includes(friend.id) 
-                  ? 'bg-primary-light' 
+                ${formData.memberIds.includes(friend.id)
+                  ? 'bg-primary-light'
                   : 'hover:bg-bg-hover'
                 }
               `}
             >
-              <UserAvatar 
+              <UserAvatar
                 userId={friend.id}
-                src={friend.avatar} 
-                name={friend.name} 
                 size="sm"
-                initialStatus={friend.status}
               />
               <span className="flex-1 text-sm font-medium text-text-primary">
-                {friend.name}
+                {friend.fullName}
               </span>
               {formData.memberIds.includes(friend.id) && (
                 <div className="w-5 h-5 bg-primary rounded-full flex items-center justify-center">
@@ -243,7 +240,7 @@ export const CreateGroupModal: React.FC<CreateGroupModalProps> = ({
   const renderDetailsStep = () => {
     const { user: currentUser } = useAuthStore.getState();
     const totalMembers = formData.memberIds.length + 1; // +1 cho người tạo
-    
+
     return (
       <div className="space-y-6">
         <div className="flex flex-col items-center">
@@ -295,8 +292,8 @@ export const CreateGroupModal: React.FC<CreateGroupModalProps> = ({
             {/* Hiển thị người tạo (bạn) */}
             {currentUser && (
               <div className="flex items-center gap-2 bg-primary-light px-3 py-2 rounded-lg border border-primary/30">
-                <Avatar src={currentUser.avatar} name={currentUser.name} size="xs" />
-                <span className="text-sm text-primary font-medium">{currentUser.name}</span>
+                <Avatar src={currentUser.avatar.url} name={currentUser.fullName} size="xs" />
+                <span className="text-sm text-primary font-medium">{currentUser.fullName}</span>
                 <Crown size={12} className="text-primary" />
               </div>
             )}
@@ -306,8 +303,8 @@ export const CreateGroupModal: React.FC<CreateGroupModalProps> = ({
               if (!friend) return null;
               return (
                 <div key={id} className="flex items-center gap-2 bg-bg-secondary px-3 py-2 rounded-lg">
-                  <Avatar src={friend.avatar} name={friend.name} size="xs" />
-                  <span className="text-sm text-text-primary">{friend.name}</span>
+                  <Avatar src={friend.avatar.url} name={friend.fullName} size="xs" />
+                  <span className="text-sm text-text-primary">{friend.fullName}</span>
                 </div>
               );
             })}
@@ -319,56 +316,56 @@ export const CreateGroupModal: React.FC<CreateGroupModalProps> = ({
 
   return (
     <>
-    <Modal
-      isOpen={isOpen}
-      onClose={onClose}
-      title={step === 'select' ? 'Tạo nhóm mới' : 'Thông tin nhóm'}
-      maxWidth="md"
-      footer={
-        <div className="flex gap-3">
-          {step === 'details' && (
-            <Button
-              variant="secondary"
-              onClick={() => setStep('select')}
-              disabled={isSubmitting}
-            >
-              Quay lại
-            </Button>
-          )}
-          {step === 'select' ? (
-            <Button
-              variant="primary"
-              onClick={handleNext}
-              disabled={formData.memberIds.length < GROUP_LIMITS.MIN_MEMBERS}
-            >
-              Tiếp tục ({formData.memberIds.length}/{GROUP_LIMITS.MAX_MEMBERS - 1})
-            </Button>
-          ) : (
-            <Button
-              variant="primary"
-              onClick={handleSubmit(onFormSubmit)}
-              disabled={isSubmitting}
-              isLoading={isSubmitting}
-            >
-              Tạo nhóm
-            </Button>
-          )}
-        </div>
-      }
-    >
-      {step === 'select' ? renderSelectStep() : renderDetailsStep()}
-    </Modal>
+      <Modal
+        isOpen={isOpen}
+        onClose={onClose}
+        title={step === 'select' ? 'Tạo nhóm mới' : 'Thông tin nhóm'}
+        maxWidth="md"
+        footer={
+          <div className="flex gap-3">
+            {step === 'details' && (
+              <Button
+                variant="secondary"
+                onClick={() => setStep('select')}
+                disabled={isSubmitting}
+              >
+                Quay lại
+              </Button>
+            )}
+            {step === 'select' ? (
+              <Button
+                variant="primary"
+                onClick={handleNext}
+                disabled={formData.memberIds.length < GROUP_LIMITS.MIN_MEMBERS}
+              >
+                Tiếp tục ({formData.memberIds.length}/{GROUP_LIMITS.MAX_MEMBERS - 1})
+              </Button>
+            ) : (
+              <Button
+                variant="primary"
+                onClick={handleSubmit(onFormSubmit)}
+                disabled={isSubmitting}
+                isLoading={isSubmitting}
+              >
+                Tạo nhóm
+              </Button>
+            )}
+          </div>
+        }
+      >
+        {step === 'select' ? renderSelectStep() : renderDetailsStep()}
+      </Modal>
 
-    {showCropper && cropImage && (
-      <ImageCropper
-        isOpen={showCropper}
-        image={cropImage}
-        aspect={1}
-        title="Cắt ảnh nhóm"
-        onCropComplete={handleCropComplete}
-        onCancel={handleCropCancel}
-      />
-    )}
+      {showCropper && cropImage && (
+        <ImageCropper
+          isOpen={showCropper}
+          image={cropImage}
+          aspect={1}
+          title="Cắt ảnh nhóm"
+          onCropComplete={handleCropComplete}
+          onCancel={handleCropCancel}
+        />
+      )}
     </>
   );
 };

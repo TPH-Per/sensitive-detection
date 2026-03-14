@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { Post, User } from '../types';
+import { Post, User, ReactionType } from '../types';
 import { postService } from '../services/postService';
 import { userService } from '../services/userService';
 import { useFriendIds } from './utils';
@@ -14,8 +14,8 @@ interface UseUserPostsReturn {
   hasMore: boolean;
   users: Record<string, User>;
   handleLoadMore: () => void;
-  handleReact: (postId: string, reaction: string) => Promise<void>;
-  handleDelete: (postId: string, images?: string[]) => Promise<void>;
+  handleReact: (postId: string, reaction: ReactionType | 'REMOVE') => Promise<void>;
+  handleDelete: (postId: string, media?: any[]) => Promise<void>;
   refresh: () => Promise<void>;
 }
 
@@ -37,7 +37,7 @@ export const useUserPosts = (userId: string, currentUser: User): UseUserPostsRet
 
     const dbPostIds = new Set(dbPosts.map(p => p.id));
     const uploadingPosts = allStorePosts.filter(p =>
-      p.userId === userId && !dbPostIds.has(p.id)
+      p.authorId === userId && !dbPostIds.has(p.id)
     );
 
     return [...uploadingPosts, ...dbPosts];
@@ -74,7 +74,7 @@ export const useUserPosts = (userId: string, currentUser: User): UseUserPostsRet
         setDbPosts(prev => [...prev, ...newPosts]);
       }
 
-      const userIds = [...new Set(newPosts.map(p => p.userId))];
+      const userIds = [...new Set(newPosts.map(p => p.authorId))];
       fetchUsers(userIds);
 
     } catch (error) {
@@ -100,8 +100,8 @@ export const useUserPosts = (userId: string, currentUser: User): UseUserPostsRet
             if (index !== -1) {
               updatedPosts[index] = npm;
             } else {
-              const firstPostTime = updatedPosts[0]?.createdAt?.getTime() || 0;
-              if (npm.createdAt.getTime() > firstPostTime) {
+              const firstPostTime = updatedPosts[0]?.createdAt?.toMillis?.() || 0;
+              if (npm.createdAt?.toMillis?.() > firstPostTime) {
                 updatedPosts.unshift(npm);
               }
             }
@@ -109,7 +109,7 @@ export const useUserPosts = (userId: string, currentUser: User): UseUserPostsRet
           return updatedPosts;
         });
 
-        fetchUsers(newPosts.map(p => p.userId));
+        fetchUsers(newPosts.map(p => p.authorId));
       }
     );
 
@@ -122,7 +122,7 @@ export const useUserPosts = (userId: string, currentUser: User): UseUserPostsRet
     }
   }, [loading, loadingMore, hasMore, loadPosts]);
 
-  const handleReact = useCallback(async (postId: string, reaction: string) => {
+  const handleReact = useCallback(async (postId: string, reaction: ReactionType | 'REMOVE') => {
     const post = posts.find(p => p.id === postId);
     if (!post) return;
 
@@ -130,28 +130,7 @@ export const useUserPosts = (userId: string, currentUser: User): UseUserPostsRet
     const oldReaction = myPostReactions[postId];
     const isRemove = oldReaction === reaction;
 
-    const prevSummary = post.reactionSummary;
-    const newSummary = { ...prevSummary };
-    let newCount = post.reactionCount;
-
-    if (isRemove) {
-      if (oldReaction) {
-        newSummary[oldReaction] = Math.max(0, (newSummary[oldReaction] ?? 0) - 1);
-        if (newSummary[oldReaction] === 0) delete newSummary[oldReaction];
-      }
-      newCount = Math.max(0, newCount - 1);
-    } else if (oldReaction) {
-      newSummary[oldReaction] = Math.max(0, (newSummary[oldReaction] ?? 0) - 1);
-      if (newSummary[oldReaction] === 0) delete newSummary[oldReaction];
-      newSummary[reaction] = (newSummary[reaction] ?? 0) + 1;
-    } else {
-      newSummary[reaction] = (newSummary[reaction] ?? 0) + 1;
-      newCount += 1;
-    }
-
-    setDbPosts(prev => prev.map(p => p.id !== postId ? p : {
-      ...p, reactionCount: newCount, reactionSummary: newSummary
-    }));
+    // Logic optimistic count nay duoc thay the bang useFilteredReactions
 
     // Update myPostReactions in store
     const newMyReactions = { ...myPostReactions };
@@ -165,18 +144,15 @@ export const useUserPosts = (userId: string, currentUser: User): UseUserPostsRet
     try {
       await postService.reactToPost(postId, currentUser.id, isRemove ? 'REMOVE' : reaction);
     } catch (error) {
-      // Rollback
-      setDbPosts(prev => prev.map(p => p.id !== postId ? p : {
-        ...p, reactionCount: post.reactionCount, reactionSummary: prevSummary
-      }));
+      // Rollback myPostReactions in store
       usePostStore.setState({ myPostReactions: { ...usePostStore.getState().myPostReactions, [postId]: oldReaction } });
     }
   }, [posts, currentUser.id]);
 
-  const handleDelete = useCallback(async (postId: string, images?: string[]) => {
+  const handleDelete = useCallback(async (postId: string, media?: any[]) => {
     try {
       // Gọi hàm xóa từ store để cập nhật trạng thái toàn cục
-      await deleteStorePost(postId, currentUser.id, images);
+      await deleteStorePost(postId, currentUser.id, media);
       // Cập nhật trạng thái local
       setDbPosts(prev => prev.filter(p => p.id !== postId));
     } catch (error) {

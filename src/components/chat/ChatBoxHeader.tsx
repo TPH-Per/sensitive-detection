@@ -1,10 +1,10 @@
 import React from 'react';
 import { Phone, Video, Info, ChevronLeft } from 'lucide-react';
-import { Conversation, User, UserStatus } from '../../types';
+import { RtdbConversation, RtdbUserChat, User } from '../../types';
 import { Avatar, UserAvatar, UserStatusText, IconButton, Button, BannedBadge } from '../ui';
 
 interface ChatBoxHeaderProps {
-  conversation: Conversation;
+  conversation: { id: string; data: RtdbConversation; userChat: RtdbUserChat };
   participants: User[];
   chatName: string;
   avatarSrc?: string;
@@ -43,7 +43,7 @@ const ChatBoxHeaderInner: React.FC<ChatBoxHeaderProps> = ({
         )}
 
         <div className="flex-shrink-0">
-          {conversation.isGroup ? (
+          {conversation.data.isGroup ? (
             <Avatar
               src={avatarSrc}
               name={chatName}
@@ -65,16 +65,16 @@ const ChatBoxHeaderInner: React.FC<ChatBoxHeaderProps> = ({
         <div className="flex-1 min-w-0 flex flex-col justify-center">
           <div className="flex items-center gap-1.5">
             <h2 className="text-sm font-bold text-text-primary truncate leading-tight">{chatName}</h2>
-            {!conversation.isGroup && partner && usersMap[partner.id]?.status === UserStatus.BANNED && <BannedBadge />}
+            {!conversation.data.isGroup && partner && usersMap[partner.id]?.status === 'banned' && <BannedBadge />}
           </div>
-          {!conversation.isGroup && partner && (
+          {!conversation.data.isGroup && partner && (
             <UserStatusText
               userId={partner.id}
               className="text-xs text-text-tertiary truncate leading-tight"
               initialStatus={partner.status}
             />
           )}
-          {conversation.isGroup && (
+          {conversation.data.isGroup && (
             <span className="text-xs text-text-tertiary truncate leading-tight">
               {participants.length} thành viên
             </span>

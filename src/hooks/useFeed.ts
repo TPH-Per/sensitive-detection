@@ -1,5 +1,5 @@
 import { useEffect, useCallback, RefObject } from 'react';
-import { Post, User, Visibility } from '../types';
+import { Post, User, Visibility, ReactionType } from '../types';
 import { useAuthStore } from '../store/authStore';
 import { usePostStore } from '../store/postStore';
 import { useUserCache } from '../store/userCacheStore';
@@ -14,9 +14,10 @@ interface UseFeedReturn {
   hasMore: boolean;
   usersMap: Record<string, User>;
   handleLoadMore: () => void;
-  handleReact: (postId: string, reaction: string) => Promise<void>;
-  handleUpdate: (postId: string, content: string, images: string[], videos: string[], visibility: Visibility, videoThumbnails?: Record<string, string>, pendingFiles?: File[]) => Promise<void>;
-  handleDelete: (postId: string, images?: string[], videos?: string[]) => Promise<void>;
+  handleRefresh: () => Promise<void>;
+  handleReact: (postId: string, reaction: ReactionType | 'REMOVE') => Promise<void>;
+  handleUpdate: (postId: string, content: string, media: any[], visibility: Visibility) => Promise<void>;
+  handleDelete: (postId: string, media?: any[]) => Promise<void>;
   observerRef: RefObject<HTMLDivElement | null>;
 }
 
@@ -29,6 +30,7 @@ export const useFeed = (): UseFeedReturn => {
     hasMore,
     fetchPosts,
     subscribeToPosts,
+    refreshFeed,
     reactToPost,
     updatePost,
     deletePost,
@@ -39,66 +41,64 @@ export const useFeed = (): UseFeedReturn => {
 
   const handleLoadMore = useCallback(() => {
     if (!currentUser || feedPostsLoading || feedLoadMoreLoading || !hasMore) return;
-    fetchPosts(currentUser.id, friendIds, blockedUserIds, true);
-  }, [currentUser, hasMore, fetchPosts, feedPostsLoading, feedLoadMoreLoading, friendIds, blockedUserIds]);
+    fetchPosts(currentUser.id, true);
+  }, [currentUser, hasMore, fetchPosts, feedPostsLoading, feedLoadMoreLoading]);
 
   const observerRef = useIntersectionObserver(handleLoadMore, {
     enabled: hasMore && !feedPostsLoading && !feedLoadMoreLoading && !!currentUser
   });
 
-
-
   const handleSubscribeToPosts = useCallback(() => {
     if (!currentUser) return;
-    return subscribeToPosts(currentUser.id, friendIds, blockedUserIds);
-  }, [currentUser, subscribeToPosts, friendIds, blockedUserIds]);
+    return subscribeToPosts(currentUser.id);
+  }, [currentUser, subscribeToPosts]);
 
   useEffect(() => {
     if (!currentUser) return;
 
-    if (posts.length === 0 || !feedPostsLoading) {
-      fetchPosts(currentUser.id, friendIds, blockedUserIds, false);
-    }
+    fetchPosts(currentUser.id, false, false);
 
     const unsubscribe = handleSubscribeToPosts();
 
     return () => {
       if (unsubscribe) unsubscribe();
     };
-  }, [currentUser?.id, blockedUserIds.length, friendIds.length]);
+  }, [currentUser?.id]);
 
-  // Lấy thông tin người dùng khi có bài mới
   useEffect(() => {
     if (posts.length > 0) {
-      const userIds = [...new Set(posts.map(p => p.userId))];
+      const userIds = [...new Set(posts.map(p => p.authorId))];
       fetchUsers(userIds);
     }
   }, [posts, fetchUsers]);
 
-  const handleReact = useCallback(async (postId: string, reaction: string) => {
+
+
+  const handleRefresh = useCallback(async () => {
     if (!currentUser) return;
-    await reactToPost(postId, currentUser.id, reaction);
+    await refreshFeed(currentUser.id);
+  }, [currentUser, refreshFeed]);
+
+  const handleReact = useCallback(async (postId: string, reaction: ReactionType | 'REMOVE') => {
+    if (!currentUser) return;
+    await reactToPost(postId, currentUser.id, reaction as ReactionType | 'REMOVE');
   }, [currentUser, reactToPost]);
 
   const handleUpdate = useCallback(async (
     postId: string,
     content: string,
-    images: string[],
-    videos: string[],
-    visibility: Visibility,
-    videoThumbnails?: Record<string, string>,
-    pendingFiles?: File[]
+    media: any[],
+    visibility: Visibility
   ) => {
-    await updatePost(postId, content, images, videos, visibility, videoThumbnails, pendingFiles);
+    await updatePost(postId, content, media, visibility);
   }, [updatePost]);
 
   const handleDelete = useCallback(async (
     postId: string,
-    images?: string[],
-    videos?: string[]
+    media?: any[]
   ) => {
     if (!currentUser) return;
-    await deletePost(postId, currentUser.id, images, videos);
+    await deletePost(postId, currentUser.id, media);
   }, [deletePost, currentUser]);
 
   return {
@@ -107,6 +107,7 @@ export const useFeed = (): UseFeedReturn => {
     hasMore,
     usersMap,
     handleLoadMore,
+    handleRefresh,
     handleReact,
     handleUpdate,
     handleDelete,

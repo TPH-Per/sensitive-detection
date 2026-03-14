@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Check, Loader2, UserPlus, Users } from 'lucide-react';
-import { User, Conversation } from '../../../types';
+import { User, RtdbConversation, RtdbUserChat } from '../../../types';
 import { userService } from '../../../services/userService';
 import { Modal, Input, Button, Avatar, UserAvatar } from '../../ui';
 import { GROUP_LIMITS } from '../../../constants';
@@ -8,7 +8,7 @@ import { toast } from '../../../store/toastStore';
 
 interface AddMemberModalProps {
   isOpen: boolean;
-  conversation: Conversation;
+  conversation: { id: string; data: RtdbConversation; userChat: RtdbUserChat };
   currentUserId: string;
   onClose: () => void;
   onAddMembers: (userIds: string[]) => Promise<void>;
@@ -28,7 +28,7 @@ export const AddMemberModal: React.FC<AddMemberModalProps> = ({
   const [isAdding, setIsAdding] = useState(false);
 
   // Thành viên hiện tại trong nhóm
-  const existingMemberIds = conversation.participantIds;
+  const existingMemberIds = Object.keys(conversation.data.members);
 
   useEffect(() => {
     if (isOpen) {
@@ -58,14 +58,14 @@ export const AddMemberModal: React.FC<AddMemberModalProps> = ({
     // Kiểm tra giới hạn số thành viên tối đa
     const currentTotal = existingMemberIds.length + selectedIds.length;
     const isSelecting = !selectedIds.includes(userId);
-    
+
     if (isSelecting && currentTotal >= GROUP_LIMITS.MAX_MEMBERS) {
       toast.error(`Nhóm tối đa ${GROUP_LIMITS.MAX_MEMBERS} thành viên`);
       return;
     }
-    
-    setSelectedIds(prev => 
-      prev.includes(userId) 
+
+    setSelectedIds(prev =>
+      prev.includes(userId)
         ? prev.filter(id => id !== userId)
         : [...prev, userId]
     );
@@ -73,7 +73,7 @@ export const AddMemberModal: React.FC<AddMemberModalProps> = ({
 
   const currentTotal = existingMemberIds.length + selectedIds.length;
   const isAtMax = existingMemberIds.length >= GROUP_LIMITS.MAX_MEMBERS;
-  
+
   if (isAtMax) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-center">
@@ -88,7 +88,7 @@ export const AddMemberModal: React.FC<AddMemberModalProps> = ({
 
   const handleAdd = async () => {
     if (selectedIds.length === 0) return;
-    
+
     setIsAdding(true);
     try {
       await onAddMembers(selectedIds);
@@ -100,8 +100,8 @@ export const AddMemberModal: React.FC<AddMemberModalProps> = ({
     }
   };
 
-  const filteredFriends = friends.filter(f => 
-    f.name.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredFriends = friends.filter(f =>
+    f.fullName.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -156,9 +156,9 @@ export const AddMemberModal: React.FC<AddMemberModalProps> = ({
             <div className="flex flex-col items-center py-8 text-center">
               <UserPlus size={40} className="text-text-tertiary mb-3" />
               <p className="text-text-tertiary">
-                {searchTerm 
-                  ? 'Không tìm thấy bạn bè' 
-                  : friends.length === 0 
+                {searchTerm
+                  ? 'Không tìm thấy bạn bè'
+                  : friends.length === 0
                     ? 'Tất cả bạn bè đã trong nhóm'
                     : 'Không có bạn bè để thêm'
                 }
@@ -171,21 +171,21 @@ export const AddMemberModal: React.FC<AddMemberModalProps> = ({
                 onClick={() => toggleSelect(friend.id)}
                 className={`
                   flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all
-                  ${selectedIds.includes(friend.id) 
-                    ? 'bg-primary-light' 
+                  ${selectedIds.includes(friend.id)
+                    ? 'bg-primary-light'
                     : 'hover:bg-bg-hover'
                   }
                 `}
               >
-                <UserAvatar 
+                <UserAvatar
                   userId={friend.id}
-                  src={friend.avatar} 
-                  name={friend.name} 
+                  src={friend.avatar.url}
+                  name={friend.fullName}
                   size="sm"
                   initialStatus={friend.status}
                 />
                 <span className="flex-1 text-sm font-medium text-text-primary">
-                  {friend.name}
+                  {friend.fullName}
                 </span>
                 {selectedIds.includes(friend.id) && (
                   <div className="w-5 h-5 bg-primary rounded-full flex items-center justify-center">

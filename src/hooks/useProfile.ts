@@ -1,9 +1,9 @@
 import { useState, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { User, UserStatus } from '../types';
+import { User } from '../types';
 import { useAuthStore } from '../store/authStore';
 import { userService } from '../services/userService';
-import { conversationService } from '../services/chat/conversationService';
+import { rtdbConversationService } from '../services/chat/rtdbConversationService';
 import { toast } from '../store/toastStore';
 import { useUserCache } from '../store/userCacheStore';
 import { TOAST_MESSAGES } from '../constants';
@@ -44,20 +44,20 @@ export const useProfile = () => {
     profile,
     profileUserId,
     isOwnProfile,
-    friendStatus: friend.friendStatus,
-    pendingRequestId: friend.pendingRequestId,
   });
 
-  const isBannedProfile = profile?.status === UserStatus.BANNED;
+  const isBannedProfile = profile?.status === 'banned';
+
+  const canViewContent = !block.isBlockedByMe && !block.isActivityBlockedByPartner;
 
   const handleMessage = useCallback(async () => {
     if (!currentUser || !profile) return;
-    if (profile.status === UserStatus.BANNED) {
+    if (profile.status === 'banned') {
       toast.error(TOAST_MESSAGES.CHAT.BLOCKED_USER);
       return;
     }
     try {
-      const conversationId = await conversationService.getOrCreateConversation(currentUser.id, profile.id);
+      const conversationId = await rtdbConversationService.getOrCreateDirect(currentUser.id, profile.id);
       navigate(`/?conv=${conversationId}`);
     } catch {
       toast.error(TOAST_MESSAGES.CHAT.OPEN_FAILED);
@@ -82,12 +82,12 @@ export const useProfile = () => {
   return {
     currentUser,
     profile: data.profile,
-    stats: data.stats,
     latestMedia: data.latestMedia,
     loading: data.loading,
     profileUserId,
     isOwnProfile,
     isBannedProfile,
+    canViewContent,
     activeTab,
     setActiveTab,
     loadProfile,
@@ -110,8 +110,12 @@ export const useProfile = () => {
 
     // Block
     isBlockedByMe: block.isBlockedByMe,
-    canViewContent: block.canViewContent,
-    handleBlockUser: block.handleBlockUser,
+    isActivityBlockedByPartner: block.isActivityBlockedByPartner,
+    currentBlockOptions: block.currentBlockOptions,
+    isBlockModalOpen: block.isBlockModalOpen,
+    handleOpenBlockModal: block.handleOpenBlockModal,
+    handleApplyBlock: block.handleApplyBlock,
     handleUnblockUser: block.handleUnblockUser,
+    closeBlockModal: block.closeBlockModal,
   };
 };

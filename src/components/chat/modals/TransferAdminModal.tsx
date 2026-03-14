@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { LogOut, Loader2, Users } from 'lucide-react';
-import { User, Conversation } from '../../../types';
+import { User, RtdbConversation, RtdbUserChat } from '../../../types';
 import { Modal, Button, UserAvatar, Select } from '../../ui';
 import { useConversationParticipants } from '../../../hooks/chat/useConversationParticipants';
 
 interface TransferAdminModalProps {
   isOpen: boolean;
-  conversation: Conversation;
+  conversation: { id: string; data: RtdbConversation; userChat: RtdbUserChat };
   currentUserId: string;
   onClose: () => void;
   onConfirm: (newAdminId: string) => Promise<void>;
@@ -22,14 +22,14 @@ export const TransferAdminModal: React.FC<TransferAdminModalProps> = ({
   const [selectedId, setSelectedId] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const participants = useConversationParticipants(conversation.participantIds);
+  const participants = useConversationParticipants(Object.keys(conversation.data.members));
 
   // Lấy danh sách thành viên khác để chọn làm admin mới
   const otherMembers = participants.filter(p => p.id !== currentUserId);
 
   const options = otherMembers.map(member => ({
     value: member.id,
-    label: member.name
+    label: member.fullName
   }));
 
   const handleConfirm = async () => {
@@ -100,14 +100,11 @@ export const TransferAdminModal: React.FC<TransferAdminModalProps> = ({
             <div className="flex items-center gap-3 p-4 bg-bg-secondary rounded-xl border border-border-light">
               <UserAvatar
                 userId={selectedMember.id}
-                src={selectedMember.avatar}
-                name={selectedMember.name}
                 size="md"
-                initialStatus={selectedMember.status}
               />
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-bold text-text-primary truncate">
-                  {selectedMember.name}
+                  {selectedMember.fullName}
                 </p>
                 <p className="text-xs text-text-tertiary">
                   Sẽ trở thành trưởng nhóm mới

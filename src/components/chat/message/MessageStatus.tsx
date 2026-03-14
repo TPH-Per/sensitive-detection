@@ -23,11 +23,11 @@ export const MessageStatus: React.FC<MessageStatusProps> = ({
       <div className="flex items-center gap-1">
         <div className="flex -space-x-1">
           {readers.slice(0, 3).map(user => (
-            <Avatar 
+            <Avatar
               key={user.id}
-              src={user.avatar} 
-              name={user.name} 
-              size="2xs" 
+              src={user.avatar.url}
+              name={user.fullName}
+              size="2xs"
             />
           ))}
         </div>

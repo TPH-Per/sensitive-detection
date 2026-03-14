@@ -1,21 +1,21 @@
 import React, { useMemo } from 'react';
-import { Message, User, Conversation } from '../../types';
+import { RtdbMessage, User, RtdbConversation, RtdbUserChat } from '../../types';
 import { UserAvatar } from '../ui';
 import { MessageBubble } from './message/MessageBubble';
 import { ImageGroupBubble } from './message/ImageGroupBubble';
 
 interface MessageListProps {
-  messages: Message[];
+  messages: Array<{ id: string; data: RtdbMessage }>;
   currentUserId: string;
   usersMap: Record<string, User>;
-  conversation: Conversation;
+  conversation: { id: string; data: RtdbConversation; userChat: RtdbUserChat };
   participants: User[];
   lastReadByMap: Record<string, User[]>;
   onRecall?: (messageId: string) => void;
   onDeleteForMe?: (messageId: string) => void;
-  onForward?: (message: Message) => void;
-  onReply?: (message: Message) => void;
-  onEdit?: (message: Message) => void;
+  onForward?: (message: { id: string; data: RtdbMessage }) => void;
+  onReply?: (message: { id: string; data: RtdbMessage }) => void;
+  onEdit?: (message: { id: string; data: RtdbMessage }) => void;
   onCall?: (isVideo: boolean) => void;
   chatName: string;
   avatarSrc?: string;
@@ -42,15 +42,15 @@ const MessageListInner: React.FC<MessageListProps> = ({
   isBlocked = false
 }) => {
   const groupedMessages = useMemo(() => {
-    const groups: { date: string; messages: Message[] }[] = [];
+    const groups: { date: string; messages: Array<{ id: string; data: RtdbMessage }> }[] = [];
     let currentDate = '';
 
     const processedMessages = messages
-      .filter(msg => !msg.deletedBy.includes(currentUserId))
+      .filter(msg => !msg.data.deletedBy || !msg.data.deletedBy[currentUserId])
       .map(msg => msg);
 
     processedMessages.forEach((msg) => {
-      const msgDate = new Date(msg.createdAt).toLocaleDateString('vi-VN');
+      const msgDate = new Date(msg.data.createdAt).toLocaleDateString('vi-VN');
       if (msgDate !== currentDate) {
         currentDate = msgDate;
         groups.push({ date: msgDate, messages: [msg] });
@@ -62,19 +62,19 @@ const MessageListInner: React.FC<MessageListProps> = ({
     return groups;
   }, [messages, currentUserId]);
 
-  const shouldShowAvatar = (msg: Message, index: number, dayMessages: Message[]): boolean => {
-    if (msg.senderId === currentUserId) return false;
+  const shouldShowAvatar = (msg: { id: string; data: RtdbMessage }, index: number, dayMessages: Array<{ id: string; data: RtdbMessage }>): boolean => {
+    if (msg.data.senderId === currentUserId) return false;
     if (index === dayMessages.length - 1) return true;
     const nextMsg = dayMessages[index + 1];
-    return nextMsg.senderId !== msg.senderId;
+    return nextMsg.data.senderId !== msg.data.senderId;
   };
 
-  const shouldShowName = (msg: Message, index: number, dayMessages: Message[]): boolean => {
-    if (!conversation.isGroup) return false;
-    if (msg.senderId === currentUserId) return false;
+  const shouldShowName = (msg: { id: string; data: RtdbMessage }, index: number, dayMessages: Array<{ id: string; data: RtdbMessage }>): boolean => {
+    if (!conversation.data.isGroup) return false;
+    if (msg.data.senderId === currentUserId) return false;
     if (index === 0) return true;
     const prevMsg = dayMessages[index - 1];
-    return prevMsg.senderId !== msg.senderId;
+    return prevMsg.data.senderId !== msg.data.senderId;
   };
 
   if (groupedMessages.length === 0) {
@@ -82,11 +82,11 @@ const MessageListInner: React.FC<MessageListProps> = ({
       <div className="flex flex-col items-center justify-center h-full text-center">
         <div className="mb-4">
           <UserAvatar
-            userId={conversation.isGroup ? '' : partner?.id ?? ''}
+            userId={conversation.data.isGroup ? '' : partner?.id ?? ''}
             src={avatarSrc}
             name={chatName}
             size="xl"
-            isGroup={conversation.isGroup}
+            isGroup={conversation.data.isGroup}
             members={participants}
             initialStatus={partner?.status}
             showStatus={false}
@@ -116,25 +116,25 @@ const MessageListInner: React.FC<MessageListProps> = ({
 
               while (i < dayMessages.length) {
                 const msg = dayMessages[i];
-                const isMe = msg.senderId === currentUserId;
-                if (msg.type === 'image' && !msg.isRecalled && !msg.replyToId) {
+                const isMe = msg.data.senderId === currentUserId;
+                if (msg.data.type === 'image' && !msg.data.isRecalled && !msg.data.replyToId) {
                   const imageGroup = [msg];
                   let j = i + 1;
 
                   while (j < dayMessages.length) {
                     const nextMsg = dayMessages[j];
                     const prevMsgInGroup = imageGroup[imageGroup.length - 1];
-                    const nextMsgTime = new Date(nextMsg.createdAt).getTime();
-                    const prevMsgTime = new Date(prevMsgInGroup.createdAt).getTime();
+                    const nextMsgTime = new Date(nextMsg.data.createdAt).getTime();
+                    const prevMsgTime = new Date(prevMsgInGroup.data.createdAt).getTime();
                     const timeDiff = nextMsgTime - prevMsgTime;
                     const MAX_GROUP_TIME = 60 * 1000;
 
                     if (
-                      nextMsg.type === 'image' &&
-                      nextMsg.senderId === msg.senderId &&
-                      !nextMsg.isRecalled &&
-                      !nextMsg.replyToId &&
-                      !nextMsg.deletedBy.includes(currentUserId) &&
+                      nextMsg.data.type === 'image' &&
+                      nextMsg.data.senderId === msg.data.senderId &&
+                      !nextMsg.data.isRecalled &&
+                      !nextMsg.data.replyToId &&
+                      !(nextMsg.data.deletedBy && nextMsg.data.deletedBy[currentUserId]) &&
                       timeDiff < MAX_GROUP_TIME
                     ) {
                       imageGroup.push(nextMsg);
@@ -154,7 +154,7 @@ const MessageListInner: React.FC<MessageListProps> = ({
                       <ImageGroupBubble
                         key={`group-${msg.id}`}
                         messages={imageGroup}
-                        sender={usersMap[msg.senderId]}
+                        sender={usersMap[msg.data.senderId]}
                         currentUserId={currentUserId}
                         showAvatar={showAvatar}
                         showName={showName}
@@ -163,10 +163,11 @@ const MessageListInner: React.FC<MessageListProps> = ({
                         onForward={onForward}
                         onReply={onReply}
                         usersMap={usersMap}
-                        isGroup={conversation.isGroup}
+                        isGroup={conversation.data.isGroup}
                         isLastMessage={isLastMessage}
                         lastReadByUsers={lastReadByMap[lastMsgInGroup.id]}
                         isBlocked={isBlocked}
+                        conversationId={conversation.id}
                       />
                     );
                     i = j;
@@ -174,7 +175,7 @@ const MessageListInner: React.FC<MessageListProps> = ({
                   }
                 }
 
-                const sender = usersMap[msg.senderId];
+                const sender = usersMap[msg.data.senderId];
                 const showAvatar = shouldShowAvatar(msg, i, dayMessages);
                 const showName = shouldShowName(msg, i, dayMessages);
                 const isLastMessage = msg.id === messages[messages.length - 1]?.id;
@@ -198,7 +199,7 @@ const MessageListInner: React.FC<MessageListProps> = ({
                       if (onCall) {
                         let isVideo = false;
                         try {
-                          const parsed = JSON.parse(msg.content);
+                          const parsed = JSON.parse(msg.data.content);
                           isVideo = parsed.callType === 'video';
                         } catch { }
                         onCall(isVideo);
@@ -206,8 +207,10 @@ const MessageListInner: React.FC<MessageListProps> = ({
                     }}
                     currentUserId={currentUserId}
                     usersMap={usersMap}
-                    isGroup={conversation.isGroup}
+                    isGroup={conversation.data.isGroup}
+                    allMessages={messages}
                     isBlocked={isBlocked}
+                    conversationId={conversation.id}
                   />
                 );
                 i++;

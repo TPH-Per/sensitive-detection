@@ -95,3 +95,48 @@ export const formatBytes = (bytes: number): string => {
   const i = Math.floor(Math.log(bytes) / Math.log(k));
   return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
 };
+
+// Trích xuất thumbnail từ Video bằng Canvas ở phía Client
+export const generateVideoThumbnail = (file: File): Promise<File> => {
+  return new Promise((resolve, reject) => {
+    const video = document.createElement('video');
+    video.preload = 'metadata';
+    video.autoplay = false;
+    video.muted = true;
+    
+    const url = URL.createObjectURL(file);
+    video.src = url;
+
+    video.onloadedmetadata = () => {
+      video.currentTime = Math.min(1, video.duration / 2);
+    };
+
+    video.onseeked = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const ctx = canvas.getContext('2d');
+      
+      if (ctx) {
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        canvas.toBlob((blob) => {
+          URL.revokeObjectURL(url);
+          if (blob) {
+            const thumbnailFile = new File([blob], file.name.replace(/\.[^/.]+$/, "") + "_thumb.jpg", { type: 'image/jpeg' });
+            resolve(thumbnailFile);
+          } else {
+            reject(new Error("Could not create thumbnail blob"));
+          }
+        }, 'image/jpeg', 0.8);
+      } else {
+        URL.revokeObjectURL(url);
+        reject(new Error("Could not get canvas context"));
+      }
+    };
+
+    video.onerror = (e) => {
+      URL.revokeObjectURL(url);
+      reject(new Error("Error loading video to generate thumbnail"));
+    };
+  });
+};

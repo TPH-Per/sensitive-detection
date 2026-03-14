@@ -18,7 +18,7 @@ export const onFriendRequestCreated = onDocumentCreated(
 
       await createNotification({
         receiverId,
-        senderId,
+        actorId: senderId,
         type: NotificationType.FRIEND_REQUEST,
         data: { friendRequestId: reqId },
       });
@@ -53,18 +53,20 @@ export const onFriendRequestUpdated = onDocumentUpdated(
     // receiverId là người chấp nhận — notify cho người gửi
     try {
       const acceptorName = await getSenderName(receiverId);
-      const body = buildPushBody(NotificationType.FRIEND_ACCEPT, acceptorName);
+      const body = buildPushBody(NotificationType.SYSTEM, acceptorName, {
+        contentSnippet: `${acceptorName} đã chấp nhận lời mời kết bạn.`
+      });
 
       await createNotification({
         receiverId: senderId,
-        senderId: receiverId,
-        type: NotificationType.FRIEND_ACCEPT,
-        data: {},
+        actorId: receiverId,
+        type: NotificationType.SYSTEM,
+        data: { contentSnippet: `${acceptorName} đã chấp nhận lời mời kết bạn.` },
       });
 
       await sendPushNotification({
         receiverId: senderId,
-        type: NotificationType.FRIEND_ACCEPT,
+        type: NotificationType.SYSTEM,
         body,
       });
     } catch (error) {
@@ -80,7 +82,7 @@ export const onFriendRequestDeleted = onDocumentDeleted(
 
     try {
       const { db } = await import('../app');
-      
+
       const notificationsSnapshot = await db.collection('notifications')
         .where('type', '==', NotificationType.FRIEND_REQUEST)
         .where('data.friendRequestId', '==', reqId)

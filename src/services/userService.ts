@@ -1,6 +1,27 @@
-import { doc, getDoc, setDoc, collection, getDocs, query, where, updateDoc, serverTimestamp, arrayUnion, arrayRemove, onSnapshot, orderBy, limit, startAfter, DocumentSnapshot, getCountFromServer, Timestamp } from 'firebase/firestore';
-import { db } from '../firebase/config';
-import { User, UserStatus, UserRole, Visibility, Gender } from '../types';
+import {
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  setDoc,
+  updateDoc,
+  query,
+  where,
+  onSnapshot,
+  limit,
+  startAfter,
+  DocumentSnapshot,
+  getCountFromServer,
+  Timestamp,
+  serverTimestamp,
+  deleteDoc,
+  writeBatch
+} from 'firebase/firestore';
+import { db, functions } from '../firebase/config';
+import { httpsCallable } from 'firebase/functions';
+import { User, MediaObject, UserRole, UserStatus, BlockOptions, BlockedUserEntry, UserSettings, Visibility, PostType } from '../types';
+import { postService } from './postService';
+import { SOCIAL_MESSAGES } from '../constants/socialMessages';
 import { batchGetUsers } from '../utils/batchUtils';
 import { compressImage } from '../utils/imageUtils';
 import { withRetry } from '../utils/retryUtils';
@@ -14,13 +35,13 @@ function convertDocToUser(doc: DocumentSnapshot): User {
     id: doc.id,
     createdAt: data?.createdAt as Timestamp,
     updatedAt: data?.updatedAt as Timestamp | undefined,
-    lastSeen: data?.lastSeen as Timestamp | undefined,
-    birthDate: data?.birthDate as Timestamp | undefined,
+    deletedAt: data?.deletedAt as Timestamp | undefined,
+    dob: data?.dob as Timestamp | undefined,
   } as User;
 }
 
 export const userService = {
-  // Lấy thông tin người dùng theo ID
+  // Lấy thông tin user
   getUserById: async (id: string): Promise<User | undefined> => {
     try {
       const userDoc = await getDoc(doc(db, 'users', id));
@@ -34,34 +55,23 @@ export const userService = {
     }
   },
 
-  // Cập nhật trạng thái trực tuyến và thời gian truy cập
-  updateUserStatus: async (userId: string, status: UserStatus): Promise<void> => {
-    try {
-      const userRef = doc(db, 'users', userId);
-      await updateDoc(userRef, {
-        status,
-        lastSeen: serverTimestamp()
-      });
-    } catch (error) {
-      console.error("Lỗi cập nhật trạng thái", error);
-    }
-  },
 
-  // Lấy toàn bộ bạn bè
+
+  // Lấy danh sách bạn bè
   getAllFriends: async (currentUserId: string): Promise<User[]> => {
     try {
       const snap = await getDocs(collection(db, 'users', currentUserId, 'friends'));
       const friendIds = snap.docs.map(d => d.id);
       if (friendIds.length === 0) return [];
       const friendsMap = await batchGetUsers(friendIds);
-      return Object.values(friendsMap).filter(u => u.status !== UserStatus.BANNED);
+      return Object.values(friendsMap).filter(u => u.status !== 'banned');
     } catch (error) {
       console.error("Lỗi lấy danh sách bạn bè", error);
       return [];
     }
   },
 
-  // Đăng ký nhận cập nhật danh sách bạn bè
+  // Theo dõi bạn bè realtime
   subscribeToFriends: (userId: string, callback: (friends: User[]) => void): (() => void) => {
     const friendsRef = collection(db, 'users', userId, 'friends');
     let previousFriendIds: string[] = [];
@@ -83,7 +93,7 @@ export const userService = {
 
       try {
         const friendsMap = await batchGetUsers(friendIds);
-        const friends = Object.values(friendsMap).filter(u => u.status !== UserStatus.BANNED);
+        const friends = Object.values(friendsMap).filter(u => u.status !== 'banned');
         callback(friends);
       } catch (error) {
         console.error("Lỗi fetch friends realtime", error);
@@ -91,11 +101,9 @@ export const userService = {
     });
   },
 
-  // Cloud Function searchUsers thay thế full collection scan
+  // Cloud Function tìm kiếm user
   searchUsers: async (searchTerm: string, currentUserId: string): Promise<User[]> => {
     try {
-      const { getFunctions, httpsCallable } = await import('firebase/functions');
-      const functions = getFunctions();
       const fn = httpsCallable<{ searchTerm: string; currentUserId: string }, { users: User[] }>(functions, 'searchUsers');
       const result = await fn({ searchTerm, currentUserId });
       return result.data.users;
@@ -116,8 +124,8 @@ export const userService = {
       const friends = Object.values(friendsMap);
 
       return friends.filter(friend =>
-        friend.status !== UserStatus.BANNED &&
-        (friend.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        friend.status !== 'banned' &&
+        (friend.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
           friend.email?.toLowerCase().includes(searchTerm.toLowerCase()))
       );
     } catch (error) {
@@ -126,44 +134,107 @@ export const userService = {
     }
   },
 
-  // Tạo mới hoặc cập nhật thông tin cá nhân
+  // Cập nhật hồ sơ
   updateProfile: async (userId: string, data: Partial<User>): Promise<User> => {
     try {
       const userRef = doc(db, 'users', userId);
-      const userDoc = await getDoc(userRef);
-
-      let updatedData: User;
-      if (userDoc.exists()) {
-        updatedData = {
-          ...userDoc.data() as User,
-          ...data,
-          updatedAt: Timestamp.now(),
-        };
-      } else {
-        updatedData = {
-          id: userId,
-          name: data.name || 'Người dùng mới',
-          avatar: data.avatar || '',
-          email: data.email || '',
-          status: UserStatus.ONLINE,
-          role: UserRole.USER,
-          bio: data.bio || '',
-          coverImage: data.coverImage || '',
-          createdAt: Timestamp.now(),
-          updatedAt: Timestamp.now(),
-          ...data
-        };
-      }
-
-      const PRIVATE_FIELDS = ['blockedUserIds', 'fcmTokens'];
-      const cleanData = Object.fromEntries(
-        Object.entries(updatedData).filter(([k, v]) => v !== undefined && !PRIVATE_FIELDS.includes(k))
-      );
-
-      await setDoc(userRef, { ...cleanData, updatedAt: serverTimestamp() }, { merge: true });
-      return updatedData;
+      await updateDoc(userRef, {
+        ...data,
+        updatedAt: serverTimestamp()
+      });
+      return { ...data, id: userId } as User;
     } catch (error) {
       console.error("Lỗi cập nhật profile", error);
+      throw error;
+    }
+  },
+
+  // Khởi tạo document người dùng khi đăng ký mới
+  createUserDocument: async (userId: string, data: Partial<User>): Promise<void> => {
+    try {
+      const batch = writeBatch(db);
+      
+      const userRef = doc(db, 'users', userId);
+      batch.set(userRef, {
+        fullName: data.fullName || '',
+        email: data.email || '',
+        avatar: data.avatar || { url: '', fileName: '', mimeType: '', size: 0, isSensitive: false },
+        cover: { url: '', fileName: '', mimeType: '', size: 0, isSensitive: false },
+        status: UserStatus.ACTIVE,
+        role: UserRole.USER,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      });
+
+      const settingsRef = doc(db, 'users', userId, 'private', 'settings');
+      batch.set(settingsRef, {
+        showOnlineStatus: true,
+        showReadReceipts: true,
+        defaultPostVisibility: Visibility.PUBLIC,
+        updatedAt: serverTimestamp()
+      });
+
+      await batch.commit();
+    } catch (error) {
+      console.error("Lỗi khởi tạo document user", error);
+      throw error;
+    }
+  },
+
+  // Helper nội bộ để upload media cho profile (Avatar/Cover)
+  uploadProfileMedia: async (
+    userId: string,
+    file: File,
+    type: 'avatar' | 'cover',
+    shareToFeed: boolean = false,
+    onProgress?: ProgressCallback
+  ): Promise<MediaObject> => {
+    try {
+      const compressionType = type === 'avatar' ? IMAGE_COMPRESSION.AVATAR : IMAGE_COMPRESSION.COVER;
+      const compressedFile = await compressImage(file, compressionType);
+
+      const fileExt = file.name.split('.').pop();
+      const prefix = type === 'avatar' ? 'avatar' : 'cover';
+      const folder = type === 'avatar' ? 'avatars' : 'covers';
+      const fileName = `${prefix}_${userId}_${Date.now()}.${fileExt}`;
+      const path = `${folder}/${userId}/${fileName}`;
+
+      const currentUser = await userService.getUserById(userId);
+      const oldUrl = type === 'avatar' ? currentUser?.avatar?.url : currentUser?.cover?.url;
+
+      const downloadURL = await withRetry(() =>
+        uploadWithProgress(path, compressedFile, onProgress)
+      );
+
+      const mediaObject: MediaObject = {
+        url: downloadURL,
+        fileName,
+        mimeType: file.type,
+        size: compressedFile.size,
+        isSensitive: false,
+      };
+
+      // Cập nhật profile
+      await userService.updateProfile(userId, { [type]: mediaObject });
+
+      // Tự động tạo bài viết nếu được yêu cầu
+      if (shareToFeed && currentUser) {
+        const settings = await userService.getUserSettings(userId);
+        await postService.createPost({
+          authorId: userId,
+          type: type === 'avatar' ? PostType.AVATAR_UPDATE : PostType.COVER_UPDATE,
+          content: SOCIAL_MESSAGES[type === 'avatar' ? 'UPDATE_AVATAR' : 'UPDATE_COVER'],
+          media: [mediaObject],
+          visibility: settings.defaultPostVisibility,
+          updatedAt: serverTimestamp() as any
+        });
+      }
+
+      if (oldUrl) await deleteStorageFile(oldUrl);
+
+      return mediaObject;
+    } catch (error) {
+      console.error(`Lỗi upload ${type}`, error);
       throw error;
     }
   },
@@ -172,181 +243,90 @@ export const userService = {
   uploadAvatar: async (
     userId: string,
     file: File,
+    shareToFeed: boolean = false,
     onProgress?: ProgressCallback
-  ): Promise<string> => {
-    try {
-      const compressedFile = await compressImage(file, IMAGE_COMPRESSION.AVATAR);
-
-      const fileExt = file.name.split('.').pop();
-      const fileName = `avatar_${userId}_${Date.now()}.${fileExt}`;
-      const path = `avatars/${userId}/${fileName}`;
-
-      // Lấy avatar cũ để xóa sau
-      const currentUser = await userService.getUserById(userId);
-      const oldAvatarUrl = currentUser?.avatar;
-
-      const downloadURL = await withRetry(() =>
-        uploadWithProgress(path, compressedFile, onProgress)
-      );
-      await userService.updateProfile(userId, { avatar: downloadURL });
-
-      if (oldAvatarUrl) await deleteStorageFile(oldAvatarUrl);
-
-      return downloadURL;
-    } catch (error) {
-      console.error("Lỗi upload avatar", error);
-      throw error;
-    }
+  ): Promise<MediaObject> => {
+    return userService.uploadProfileMedia(userId, file, 'avatar', shareToFeed, onProgress);
   },
 
   // Tải lên ảnh bìa
   uploadCoverImage: async (
     userId: string,
     file: File,
+    shareToFeed: boolean = false,
     onProgress?: ProgressCallback
-  ): Promise<string> => {
-    try {
-      const compressedFile = await compressImage(file, IMAGE_COMPRESSION.COVER);
-
-      const fileExt = file.name.split('.').pop();
-      const fileName = `cover_${userId}_${Date.now()}.${fileExt}`;
-      const path = `covers/${userId}/${fileName}`;
-
-      // Lấy cover cũ để xóa sau
-      const currentUser = await userService.getUserById(userId);
-      const oldCoverUrl = currentUser?.coverImage;
-
-      const downloadURL = await withRetry(() =>
-        uploadWithProgress(path, compressedFile, onProgress)
-      );
-      await userService.updateProfile(userId, { coverImage: downloadURL });
-
-      if (oldCoverUrl) await deleteStorageFile(oldCoverUrl);
-
-      return downloadURL;
-    } catch (error) {
-      console.error("Lỗi upload cover image", error);
-      throw error;
-    }
+  ): Promise<MediaObject> => {
+    return userService.uploadProfileMedia(userId, file, 'cover', shareToFeed, onProgress);
   },
 
-  deleteAvatar: async (userId: string): Promise<void> => {
+
+
+  // Danh sách user bị chặn
+  getBlockedUsers: async (userId: string): Promise<Record<string, BlockedUserEntry>> => {
     try {
-      const currentUser = await userService.getUserById(userId);
-      if (currentUser?.avatar) await deleteStorageFile(currentUser.avatar);
-      await userService.updateProfile(userId, { avatar: '' });
-    } catch (error) {
-      console.error("Lỗi xóa avatar", error);
-      throw error;
-    }
-  },
-
-  deleteCoverImage: async (userId: string): Promise<void> => {
-    try {
-      const currentUser = await userService.getUserById(userId);
-      if (currentUser?.coverImage) await deleteStorageFile(currentUser.coverImage);
-      await userService.updateProfile(userId, { coverImage: '' });
-    } catch (error) {
-      console.error("Lỗi xóa cover image", error);
-      throw error;
-    }
-  },
-
-  // Lấy thống kê số lượng bạn bè và bài viết
-  getUserStats: async (userId: string, currentUserId?: string, friendIds?: string[]): Promise<{ friendCount: number, postCount: number }> => {
-    try {
-      const isOwner = userId === currentUserId;
-      const isFriend = friendIds?.includes(userId) || false;
-
-      let visibilityFilter: string[];
-      if (isOwner) {
-        visibilityFilter = [Visibility.PUBLIC, Visibility.FRIENDS, Visibility.PRIVATE];
-      } else if (isFriend) {
-        visibilityFilter = [Visibility.PUBLIC, Visibility.FRIENDS];
-      } else {
-        visibilityFilter = [Visibility.PUBLIC];
-      }
-
-      const postsQuery = query(
-        collection(db, 'posts'),
-        where('userId', '==', userId),
-        where('visibility', 'in', visibilityFilter)
-      );
-
-      const [friendCountSnap, postsSnapshot] = await Promise.all([
-        getCountFromServer(collection(db, 'users', userId, 'friends')),
-        getCountFromServer(postsQuery),
-      ]);
-
-      return {
-        friendCount: friendCountSnap.data().count,
-        postCount: postsSnapshot.data().count,
-      };
-    } catch (error) {
-      console.error("Lỗi lấy thống kê user", error);
-      return { friendCount: 0, postCount: 0 };
-    }
-  },
-
-  // Lấy danh sách bị chặn từ subcollection riêng tư
-  getBlockedUserIds: async (userId: string): Promise<string[]> => {
-    try {
-      const secDoc = await getDoc(doc(db, 'users', userId, 'private', 'security'));
-      return secDoc.data()?.blockedUserIds || [];
+      const snap = await getDocs(collection(db, 'users', userId, 'blockedUsers'));
+      const result: Record<string, BlockedUserEntry> = {};
+      snap.docs.forEach(d => {
+        const data = d.data();
+        result[d.id] = {
+          blockedUid: data.blockedUid,
+          blockMessages: data.blockMessages ?? false,
+          blockCalls: data.blockCalls ?? false,
+          blockViewMyActivity: data.blockViewMyActivity ?? false,
+          hideTheirActivity: data.hideTheirActivity ?? false,
+          createdAt: data.createdAt,
+          updatedAt: data.updatedAt,
+        };
+      });
+      return result;
     } catch {
-      return [];
+      return {};
     }
   },
 
-  blockUser: async (userId: string, blockedUserId: string): Promise<void> => {
+  // Chặn người dùng
+  blockUser: async (userId: string, blockedUserId: string, options: BlockOptions): Promise<void> => {
     try {
       await setDoc(
-        doc(db, 'users', userId, 'private', 'security'),
-        { blockedUserIds: arrayUnion(blockedUserId) },
+        doc(db, 'users', userId, 'blockedUsers', blockedUserId),
+        {
+          blockedUid: blockedUserId,
+          ...options,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+        },
         { merge: true }
       );
-
-      const participantIds = [userId, blockedUserId].sort();
-      const q = query(
-        collection(db, 'conversations'),
-        where('participantIds', '==', participantIds),
-        where('isGroup', '==', false)
-      );
-      const querySnapshot = await getDocs(q);
-      if (!querySnapshot.empty) {
-        await updateDoc(querySnapshot.docs[0].ref, { blockedBy: arrayUnion(userId) });
-      }
     } catch (error) {
-      console.error("Lỗi chặn người dùng", error);
+      console.error('Lỗi chặn người dùng', error);
       throw error;
     }
   },
 
+  // Cập nhật từng options của block
+  updateBlockOptions: async (userId: string, blockedUserId: string, options: Partial<BlockOptions>): Promise<void> => {
+    try {
+      await updateDoc(
+        doc(db, 'users', userId, 'blockedUsers', blockedUserId),
+        { ...options, updatedAt: serverTimestamp() }
+      );
+    } catch (error) {
+      console.error('Lỗi cập nhật block options', error);
+      throw error;
+    }
+  },
+
+  // Bỏ chặn — xóa document khỏi subcollection
   unblockUser: async (userId: string, blockedUserId: string): Promise<void> => {
     try {
-      await setDoc(
-        doc(db, 'users', userId, 'private', 'security'),
-        { blockedUserIds: arrayRemove(blockedUserId) },
-        { merge: true }
-      );
-
-      const participantIds = [userId, blockedUserId].sort();
-      const q = query(
-        collection(db, 'conversations'),
-        where('participantIds', '==', participantIds),
-        where('isGroup', '==', false)
-      );
-      const querySnapshot = await getDocs(q);
-      if (!querySnapshot.empty) {
-        await updateDoc(querySnapshot.docs[0].ref, { blockedBy: arrayRemove(userId) });
-      }
+      await deleteDoc(doc(db, 'users', userId, 'blockedUsers', blockedUserId));
     } catch (error) {
-      console.error("Lỗi bỏ chặn người dùng", error);
+      console.error('Lỗi bỏ chặn người dùng', error);
       throw error;
     }
   },
 
-  // Đăng ký nhận cập nhật thông tin người dùng theo thời gian thực
+  // Theo dõi user realtime
   subscribeToUser: (userId: string, callback: (user: User) => void): (() => void) => {
     const userRef = doc(db, 'users', userId);
     return onSnapshot(userRef, (snapshot) => {
@@ -356,7 +336,7 @@ export const userService = {
     });
   },
 
-  // API dành riêng cho Admin - Lấy danh sách users có phân trang
+  // Danh sách user cho Admin
   getAdminUsers: async (
     limitCount: number = PAGINATION.ADMIN_USERS,
     lastVisibleDoc?: DocumentSnapshot
@@ -383,14 +363,14 @@ export const userService = {
     }
   },
 
-  // Lấy thống kê tổng hợp cho Admin dashboard
+  // Thống kê cho Admin
   getAdminStats: async (): Promise<{ total: number, active: number, banned: number }> => {
     try {
       const usersRef = collection(db, 'users');
       // 2 count queries song song thay vì tải toàn bộ docs
       const [totalSnap, bannedSnap] = await Promise.all([
         getCountFromServer(usersRef),
-        getCountFromServer(query(usersRef, where('status', '==', UserStatus.BANNED)))
+        getCountFromServer(query(usersRef, where('status', '==', 'banned')))
       ]);
 
       const total = totalSnap.data().count;
@@ -403,7 +383,7 @@ export const userService = {
     }
   },
 
-  // Đăng ký nhận danh sách người dùng cho Admin (Realtime)
+  // Theo dõi user cho Admin
   subscribeToAdminUsers: (
     limitCount: number = PAGINATION.ADMIN_USERS,
     callback: (users: User[]) => void,
@@ -421,5 +401,50 @@ export const userService = {
     }, (error) => {
       if (onError) onError(error);
     });
+  },
+
+  /**
+   * Lấy cài đặt người dùng từ sub-collection private/settings
+   */
+  getUserSettings: async (userId: string): Promise<UserSettings> => {
+    try {
+      const settingsDoc = await getDoc(doc(db, 'users', userId, 'private', 'settings'));
+      if (settingsDoc.exists()) {
+        const data = settingsDoc.data();
+        return {
+          showOnlineStatus: data.showOnlineStatus ?? true,
+          showReadReceipts: data.showReadReceipts ?? true,
+          defaultPostVisibility: data.defaultPostVisibility || Visibility.PUBLIC,
+          updatedAt: data.updatedAt as Timestamp
+        } as UserSettings;
+      }
+      
+      // Trả về mặc định nếu chưa có document
+      return {
+        showOnlineStatus: true,
+        showReadReceipts: true,
+        defaultPostVisibility: Visibility.PUBLIC,
+        updatedAt: Timestamp.now()
+      };
+    } catch (error) {
+      console.error("[userService] Lỗi getUserSettings:", error);
+      throw error;
+    }
+  },
+
+  /**
+   * Cập nhật cài đặt người dùng
+   */
+  updateUserSettings: async (userId: string, settings: Partial<UserSettings>): Promise<void> => {
+    try {
+      const settingsRef = doc(db, 'users', userId, 'private', 'settings');
+      await setDoc(settingsRef, {
+        ...settings,
+        updatedAt: serverTimestamp()
+      }, { merge: true });
+    } catch (error) {
+      console.error("[userService] Lỗi updateUserSettings:", error);
+      throw error;
+    }
   }
 };

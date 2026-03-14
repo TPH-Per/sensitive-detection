@@ -30,21 +30,18 @@ const FeedPage: React.FC = () => {
 
   const handleEditPost = useCallback(async (
     content: string,
-    images: string[],
-    videos: string[],
-    visibility: Visibility,
-    videoThumbnails?: Record<string, string>,
-    pendingFiles?: File[]
+    media: any[],
+    visibility: Visibility
   ) => {
     if (!showEditModal) return;
-    await handleUpdate(showEditModal, content, images, videos, visibility, videoThumbnails, pendingFiles);
+    await handleUpdate(showEditModal, content, media, visibility);
     setShowEditModal(null);
   }, [showEditModal, handleUpdate]);
 
   const handleDeletePost = useCallback(async () => {
     if (!postToDelete) return;
     const post = posts.find(p => p.id === postToDelete);
-    await handleDelete(postToDelete, post?.images, post?.videos);
+    await handleDelete(postToDelete, post?.media);
     setPostToDelete(null);
   }, [postToDelete, posts, handleDelete]);
 
@@ -74,6 +71,8 @@ const FeedPage: React.FC = () => {
       <div className="w-full max-w-[680px] py-4 md:py-6 space-y-3 md:space-y-4 px-3 sm:px-4 md:px-0 pb-6 md:pb-8">
         <CreatePost currentUser={currentUser} />
 
+
+
         {posts.length === 0 ? (
           <div className="bg-bg-primary rounded-xl p-6 sm:p-8 md:p-12 shadow-sm border border-border-light text-center transition-theme">
             <div className="w-14 h-14 sm:w-16 sm:h-16 bg-bg-secondary rounded-full flex items-center justify-center mx-auto mb-4">
@@ -87,8 +86,7 @@ const FeedPage: React.FC = () => {
         ) : (
           <>
             {posts.map((post) => {
-              const author = usersMap[post.userId];
-              // User cache chưa sẵn sàng
+              const author = usersMap[post.authorId];
               if (!author) return <PostItem.Skeleton key={post.id} />;
 
               return (
@@ -137,7 +135,7 @@ const FeedPage: React.FC = () => {
         isOpen={!!selectedPost}
         onClose={() => setSelectedPost(null)}
         post={selectedPost}
-        author={selectedPost ? usersMap[selectedPost.userId] : null}
+        author={selectedPost ? usersMap[selectedPost.authorId] : null}
         currentUser={currentUser}
         onReact={handleReact}
       />

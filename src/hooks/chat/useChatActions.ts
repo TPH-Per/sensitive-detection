@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { useChatStore } from '../../store/chatStore';
+import { useRtdbChatStore } from '../../store';
 
 interface UseChatActionsProps {
   selectedConversationId: string | null;
@@ -8,10 +8,10 @@ interface UseChatActionsProps {
 }
 
 // Các actions cho conversation: pin, mute, archive, mark unread
-export const useChatActions = ({ 
-  selectedConversationId, 
+export const useChatActions = ({
+  selectedConversationId,
   currentUserId,
-  selectConversation 
+  selectConversation
 }: UseChatActionsProps) => {
   const {
     togglePin,
@@ -20,7 +20,7 @@ export const useChatActions = ({
     toggleMarkUnread,
     deleteConversation,
     markAllAsRead,
-  } = useChatStore();
+  } = useRtdbChatStore();
 
   const handlePin = useCallback(async (id: string, pinned: boolean) => {
     if (!currentUserId) return;
@@ -28,15 +28,17 @@ export const useChatActions = ({
   }, [togglePin, currentUserId]);
 
   const handleMute = useCallback(async (id: string, muted: boolean) => {
-    await toggleMute(id, muted);
-  }, [toggleMute]);
+    if (!currentUserId) return;
+    await toggleMute(id, currentUserId, muted);
+  }, [toggleMute, currentUserId]);
 
   const handleDelete = useCallback(async (id: string) => {
-    await deleteConversation(id);
+    if (!currentUserId) return;
+    await deleteConversation(id, currentUserId);
     if (selectedConversationId === id) {
       selectConversation(null);
     }
-  }, [deleteConversation, selectedConversationId, selectConversation]);
+  }, [deleteConversation, currentUserId, selectedConversationId, selectConversation]);
 
   const handleArchive = useCallback(async (id: string, archived: boolean) => {
     if (!currentUserId) return;

@@ -1,10 +1,10 @@
 import React, { useState, useMemo } from 'react';
-import { Message } from '../../../types';
+import { RtdbMessage } from '../../../types';
 import { Image, Film, FileText, Download, ExternalLink } from 'lucide-react';
 import { LazyImage } from '../../ui';
 
 interface ChatDetailsMediaProps {
-  messages: Message[];
+  messages: Array<{ id: string; data: RtdbMessage }>;
 }
 
 type MediaTab = 'images' | 'videos' | 'files';
@@ -20,16 +20,16 @@ const ChatDetailsMediaInner: React.FC<ChatDetailsMediaProps> = ({ messages }) =>
   const [activeTab, setActiveTab] = useState<MediaTab>('images');
 
   const mediaItems = useMemo(() => {
-    const images: Message[] = [];
-    const videos: Message[] = [];
-    const files: Message[] = [];
+    const images: Array<{ id: string; data: RtdbMessage }> = [];
+    const videos: Array<{ id: string; data: RtdbMessage }> = [];
+    const files: Array<{ id: string; data: RtdbMessage }> = [];
 
     messages.forEach((msg) => {
-      if (msg.type === 'image' && msg.fileUrl) {
+      if (msg.data.type === 'image' && msg.data.media && msg.data.media.length > 0) {
         images.push(msg);
-      } else if (msg.type === 'video' && msg.fileUrl) {
+      } else if (msg.data.type === 'video' && msg.data.media && msg.data.media.length > 0) {
         videos.push(msg);
-      } else if (msg.type === 'file' && msg.fileUrl) {
+      } else if (msg.data.type === 'file' && msg.data.media && msg.data.media.length > 0) {
         files.push(msg);
       }
     });
@@ -54,13 +54,13 @@ const ChatDetailsMediaInner: React.FC<ChatDetailsMediaProps> = ({ messages }) =>
             {mediaItems.images.map((msg) => (
               <a
                 key={msg.id}
-                href={msg.fileUrl}
+                href={msg.data.media?.[0]?.url}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="aspect-square rounded-lg overflow-hidden hover:opacity-80 active:opacity-70 transition-all duration-base"
               >
                 <LazyImage
-                  src={msg.fileUrl!}
+                  src={msg.data.media?.[0]?.url || ''}
                   alt=""
                   className="w-full h-full object-cover"
                 />
@@ -78,12 +78,12 @@ const ChatDetailsMediaInner: React.FC<ChatDetailsMediaProps> = ({ messages }) =>
             {mediaItems.videos.map((msg) => (
               <a
                 key={msg.id}
-                href={msg.fileUrl}
+                href={msg.data.media?.[0]?.url}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="aspect-video rounded-lg overflow-hidden bg-bg-tertiary hover:opacity-80 active:opacity-70 transition-all duration-base relative group"
               >
-                <video src={msg.fileUrl} className="w-full h-full object-cover" playsInline muted />
+                <video src={msg.data.media?.[0]?.url} poster={msg.data.media?.[0]?.thumbnailUrl} className="w-full h-full object-cover" playsInline muted />
                 <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 group-hover:opacity-100 transition-all duration-base">
                   <ExternalLink size={24} className="text-white" />
                 </div>
@@ -101,7 +101,7 @@ const ChatDetailsMediaInner: React.FC<ChatDetailsMediaProps> = ({ messages }) =>
             {mediaItems.files.map((msg) => (
               <a
                 key={msg.id}
-                href={msg.fileUrl}
+                href={msg.data.media?.[0]?.url}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-3 p-3 rounded-xl hover:bg-bg-hover active:bg-bg-active transition-all duration-base"
@@ -111,10 +111,10 @@ const ChatDetailsMediaInner: React.FC<ChatDetailsMediaProps> = ({ messages }) =>
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-text-primary truncate">
-                    {msg.fileName || 'File'}
+                    {msg.data.media?.[0]?.fileName || 'File'}
                   </p>
                   <p className="text-xs text-text-tertiary">
-                    {formatFileSize(msg.fileSize)}
+                    {formatFileSize(msg.data.media?.[0]?.size)}
                   </p>
                 </div>
                 <Download size={18} className="text-text-tertiary flex-shrink-0" />

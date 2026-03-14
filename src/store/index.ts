@@ -1,5 +1,5 @@
 export { useAuthStore } from './authStore';
-export { useChatStore } from './chatStore';
+export { useRtdbChatStore } from './rtdbChatStore';
 export { usePostStore } from './postStore';
 export { useContactStore } from './contactStore';
 export { useNotificationStore } from './notificationStore';

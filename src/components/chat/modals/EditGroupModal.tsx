@@ -1,19 +1,19 @@
 import React, { useState, useRef } from 'react';
 import { X, Camera, Loader2, Users } from 'lucide-react';
-import { Conversation } from '../../../types';
+import { RtdbConversation, RtdbUserChat, MediaObject } from '../../../types';
 import { Modal, Input, Button, Avatar, IconButton, ImageCropper } from '../../ui';
-import { groupService } from '../../../services/chat/groupService';
 import { toast } from '../../../store/toastStore';
 import { TOAST_MESSAGES } from '../../../constants';
 import { validateFileSize } from '../../../utils';
 import { useConversationParticipants } from '../../../hooks/chat/useConversationParticipants';
+import { rtdbGroupService } from '../../../services/chat/rtdbGroupService';
 
 interface EditGroupModalProps {
   isOpen: boolean;
-  conversation: Conversation;
+  conversation: { id: string; data: RtdbConversation; userChat: RtdbUserChat };
   currentUserId: string;
   onClose: () => void;
-  onSave: (updates: { groupName?: string; groupAvatar?: string }) => Promise<void>;
+  onSave: (updates: { name?: string; avatar?: MediaObject }) => Promise<void>;
 }
 
 export const EditGroupModal: React.FC<EditGroupModalProps> = ({
@@ -23,21 +23,21 @@ export const EditGroupModal: React.FC<EditGroupModalProps> = ({
   onClose,
   onSave
 }) => {
-  const [groupName, setGroupName] = useState(conversation.groupName || '');
-  const [groupAvatar, setGroupAvatar] = useState(conversation.groupAvatar || '');
+  const [groupName, setGroupName] = useState(conversation.data.name || '');
+  const [groupAvatar, setGroupAvatar] = useState(conversation.data.avatar?.url || '');
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [showCropper, setShowCropper] = useState(false);
 
-  const participants = useConversationParticipants(conversation.participantIds);
+  const participants = useConversationParticipants(Object.keys(conversation.data.members));
   const [cropImage, setCropImage] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   React.useEffect(() => {
     if (isOpen) {
-      setGroupName(conversation.groupName || '');
-      setGroupAvatar(conversation.groupAvatar || '');
+      setGroupName(conversation.data.name || '');
+      setGroupAvatar(conversation.data.avatar?.url || '');
       setPreviewUrl(null);
       setPendingFile(null);
       setShowCropper(false);
@@ -85,21 +85,19 @@ export const EditGroupModal: React.FC<EditGroupModalProps> = ({
 
     setIsSaving(true);
     try {
-      const updates: { groupName?: string; groupAvatar?: string } = {};
+      const updates: { name?: string; avatar?: MediaObject } = {};
 
-      if (trimmedName !== conversation.groupName) {
-        updates.groupName = trimmedName;
+      if (trimmedName !== conversation.data.name) {
+        updates.name = trimmedName;
       }
 
-      // Upload avatar nếu có file mới
       if (pendingFile) {
-        const avatarUrl = await groupService.uploadGroupAvatar(conversation.id, pendingFile);
-        updates.groupAvatar = avatarUrl;
+        const avatarMedia = await rtdbGroupService.uploadGroupAvatar(conversation.id, pendingFile);
+        updates.avatar = avatarMedia;
       }
 
       await onSave(updates);
 
-      // Cleanup
       if (previewUrl) {
         URL.revokeObjectURL(previewUrl);
       }
@@ -112,7 +110,7 @@ export const EditGroupModal: React.FC<EditGroupModalProps> = ({
     }
   };
 
-  const hasChanges = groupName.trim() !== conversation.groupName || previewUrl !== null;
+  const hasChanges = groupName.trim() !== conversation.data.name || previewUrl !== null;
 
   return (
     <>

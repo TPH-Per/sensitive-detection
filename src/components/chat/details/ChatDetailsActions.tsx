@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Conversation } from '../../../types';
+import { RtdbConversation, RtdbUserChat } from '../../../types';
 import { Bell, BellOff, Pin, PinOff, Trash2, ChevronRight, Ban, UserCheck, LogOut, Edit3, User as UserIcon, Flag } from 'lucide-react';
 import { ConfirmDialog, Button } from '../../ui';
 import { useReportStore } from '../../../store/reportStore';
@@ -9,7 +9,7 @@ import { Mail, MailCheck, Archive as ArchiveIcon } from 'lucide-react';
 import { useConversationMemberSettings } from '../../../hooks/chat/useConversationMemberSettings';
 
 interface ChatDetailsActionsProps {
-  conversation: Conversation;
+  conversation: { id: string; data: RtdbConversation; userChat: RtdbUserChat };
   currentUserId: string;
   participants: User[];
   partner?: User;
@@ -43,14 +43,14 @@ export const ChatDetailsActions: React.FC<ChatDetailsActionsProps> = ({
 }) => {
   const { openReportModal } = useReportStore();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [showBlockConfirm, setShowBlockConfirm] = useState(false);
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
 
   const memberSettings = useConversationMemberSettings(conversation.id, currentUserId);
 
-  const isGroup = conversation.isGroup;
-  const isAdmin = isGroup && (conversation.adminIds || []).includes(currentUserId);
-  const isCreator = isGroup && conversation.creatorId === currentUserId;
+  const isGroup = conversation.data.isGroup;
+  const memberRole = conversation.data.members[currentUserId];
+  const isAdmin = isGroup && memberRole === 'admin';
+  const isCreator = isGroup && conversation.data.creatorId === currentUserId;
 
   // Xác định các actions dựa trên loại conversation
   const actions = [];
@@ -82,16 +82,6 @@ export const ChatDetailsActions: React.FC<ChatDetailsActionsProps> = ({
     });
   }
 
-  // Mark Read/Unread
-  if (onToggleMarkUnread) {
-    actions.push({
-      icon: memberSettings?.markedUnread ? <MailCheck size={20} /> : <Mail size={20} />,
-      label: memberSettings?.markedUnread ? 'Đánh dấu đã đọc' : 'Đánh dấu chưa đọc',
-      onClick: onToggleMarkUnread,
-      variant: 'default' as const,
-    });
-  }
-
   // Đổi tên/ảnh nhóm — mọi thành viên đều có quyền
   if (isGroup && onEditGroup) {
     actions.push({
@@ -117,11 +107,12 @@ export const ChatDetailsActions: React.FC<ChatDetailsActionsProps> = ({
     actions.push({
       icon: isBlocked ? <UserCheck size={20} /> : <Ban size={20} />,
       label: isBlocked ? 'Bỏ chặn người dùng' : 'Chặn người dùng',
-      onClick: () => setShowBlockConfirm(true),
+      onClick: onToggleBlock,
       variant: 'danger' as const,
     });
 
-    const partnerId = conversation.participantIds.find(id => id !== currentUserId);
+    const participantIds = Object.keys(conversation.data.members);
+    const partnerId = participantIds.find(id => id !== currentUserId);
     if (partnerId) {
       actions.push({
         icon: <Flag size={20} />,
@@ -142,11 +133,11 @@ export const ChatDetailsActions: React.FC<ChatDetailsActionsProps> = ({
     });
   }
 
-  // Delete - creator có thể xóa group, hoặc xóa chat 1-1
-  if ((!isGroup || isCreator) && onDelete) {
+  // Delete - cho phép mọi thành viên xóa lịch sử hội thoại
+  if (onDelete) {
     actions.push({
       icon: <Trash2 size={20} />,
-      label: isGroup ? 'Giải tán nhóm' : 'Xóa cuộc trò chuyện',
+      label: isGroup && isCreator ? 'Giải tán nhóm' : 'Xóa cuộc trò chuyện',
       onClick: () => setShowDeleteConfirm(true),
       variant: 'danger' as const,
     });
@@ -182,18 +173,6 @@ export const ChatDetailsActions: React.FC<ChatDetailsActionsProps> = ({
         ))}
       </div>
 
-      <ConfirmDialog
-        isOpen={showBlockConfirm}
-        onClose={() => setShowBlockConfirm(false)}
-        onConfirm={() => onToggleBlock?.()}
-        title={isBlocked ? CONFIRM_MESSAGES.FRIEND.UNBLOCK.TITLE : CONFIRM_MESSAGES.FRIEND.BLOCK.TITLE}
-        message={isBlocked
-          ? CONFIRM_MESSAGES.FRIEND.UNBLOCK.MESSAGE(partner?.name || 'Người dùng')
-          : CONFIRM_MESSAGES.FRIEND.BLOCK.MESSAGE(partner?.name || 'Người dùng')
-        }
-        confirmLabel={isBlocked ? CONFIRM_MESSAGES.FRIEND.UNBLOCK.CONFIRM : CONFIRM_MESSAGES.FRIEND.BLOCK.CONFIRM}
-        variant="danger"
-      />
 
       <ConfirmDialog
         isOpen={showDeleteConfirm}

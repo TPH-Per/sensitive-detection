@@ -1,28 +1,43 @@
-import { Post, Visibility, PostStatus, PostType, ReactionType } from '../types';
+import { Post, Visibility, PostStatus, ReactionType, MediaObject } from '../types';
 import { postService } from '../services/postService';
-import { DocumentSnapshot, Timestamp } from 'firebase/firestore';
+import { DocumentSnapshot, Timestamp, onSnapshot, doc } from 'firebase/firestore';
+import { db } from '../firebase/config';
 import { toast } from './toastStore';
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { PAGINATION, TOAST_MESSAGES } from '../constants';
 import { useLoadingStore } from './loadingStore';
 
+function convertDocToPost(docSnap: DocumentSnapshot): Post {
+  const data = docSnap.data();
+  return {
+    ...data,
+    id: docSnap.id,
+    createdAt: data?.createdAt as Timestamp,
+    editedAt: data?.editedAt as Timestamp | undefined,
+    deletedAt: data?.deletedAt as Timestamp | undefined,
+  } as Post;
+}
+
 interface PostState {
   posts: Post[];
-  myPostReactions: Record<string, string>; // postId -> reactionType
+  myPostReactions: Record<string, string>;
   hasMore: boolean;
   lastDoc: DocumentSnapshot | null;
   abortController: AbortController | null;
   uploadingStates: Record<string, { progress: number; error?: string }>;
   isError: boolean;
+  lastFetchTime: number | null;
+  selectedPostUnsubscribe: (() => void) | null;
 
-  fetchPosts: (currentUserId: string, friendIds: string[], blockedUserIds?: string[], loadMore?: boolean) => Promise<void>;
-  subscribeToPosts: (currentUserId: string, friendIds: string[], blockedUserIds?: string[]) => () => void;
-  createPost: (userId: string, content: string, images: string[], videos: string[], visibility: Visibility, videoThumbnails?: Record<string, string>, pendingFiles?: File[]) => Promise<void>;
-  updatePost: (postId: string, content: string, images: string[], videos: string[], visibility: Visibility, videoThumbnails?: Record<string, string>, pendingFiles?: File[]) => Promise<void>;
+  fetchPosts: (currentUserId: string, loadMore?: boolean, force?: boolean) => Promise<void>;
+  subscribeToPosts: (currentUserId: string) => () => void;
+  refreshFeed: (currentUserId: string) => Promise<void>;
+  createPost: (userId: string, content: string, media: MediaObject[], visibility: Visibility, pendingFiles?: File[]) => Promise<void>;
+  updatePost: (postId: string, content: string, media: MediaObject[], visibility: Visibility, pendingFiles?: File[]) => Promise<void>;
   deletePost: (postId: string, userId: string, images?: string[], videos?: string[]) => Promise<void>;
-  reactToPost: (postId: string, userId: string, reaction: string) => Promise<void>;
-  uploadMedia: (files: File[], userId: string) => Promise<{ images: string[], videos: string[], videoThumbnails?: Record<string, string> }>;
+  reactToPost: (postId: string, userId: string, reaction: ReactionType | 'REMOVE') => Promise<void>;
+  uploadMedia: (files: File[], userId: string) => Promise<MediaObject[]>;
 
   clearPosts: () => void;
 
@@ -43,10 +58,13 @@ export const usePostStore = create<PostState>()(
       isError: false,
       uploadingStates: {},
       selectedPost: null,
+      lastFetchTime: null,
+      selectedPostUnsubscribe: null,
 
       reset: () => {
-        const { abortController } = get();
+        const { abortController, selectedPostUnsubscribe } = get();
         if (abortController) abortController.abort();
+        if (selectedPostUnsubscribe) selectedPostUnsubscribe();
 
         set({
           posts: [],
@@ -56,15 +74,25 @@ export const usePostStore = create<PostState>()(
           abortController: null,
           isError: false,
           selectedPost: null,
-          uploadingStates: {}
+          uploadingStates: {},
+          lastFetchTime: null,
+          selectedPostUnsubscribe: null
         });
       },
 
-      fetchPosts: async (currentUserId: string, friendIds: string[], blockedUserIds: string[] = [], loadMore = false) => {
-        const { abortController: currentController, posts } = get();
+      fetchPosts: async (currentUserId: string, loadMore = false, force = false) => {
+        const { abortController: currentController, posts, lastFetchTime } = get();
         const loadingStore = useLoadingStore.getState();
 
         if (loadingStore.isLoading('feed.posts') || loadingStore.isLoading('feed.loadMore')) return;
+
+        const CACHE_DURATION = 5 * 60 * 1000;
+        const now = Date.now();
+        const isCacheValid = lastFetchTime && (now - lastFetchTime) < CACHE_DURATION;
+
+        if (!force && !loadMore && posts.length > 0 && isCacheValid) {
+          return;
+        }
 
         if (currentController) {
           currentController.abort();
@@ -82,27 +110,33 @@ export const usePostStore = create<PostState>()(
         const { lastDoc } = get();
 
         try {
-          const result = await postService.getFeed(
+          const result = await postService.getFeedFromFanout(
             currentUserId,
-            friendIds,
-            blockedUserIds,
             PAGINATION.FEED_POSTS,
             loadMore ? lastDoc || undefined : undefined
           );
 
           if (newController.signal.aborted) return;
 
-          // Load myReactions for posts
           const postIds = result.posts.map(p => p.id);
           const myReactions = await postService.batchLoadMyReactions(postIds, currentUserId);
 
+          const mergedPosts = loadMore ? [...posts, ...result.posts] : result.posts;
+          const seenIds = new Set<string>();
+          const dedupedPosts = mergedPosts.filter(p => {
+            if (seenIds.has(p.id)) return false;
+            seenIds.add(p.id);
+            return true;
+          });
+
           set({
-            posts: loadMore ? [...posts, ...result.posts] : result.posts,
+            posts: dedupedPosts,
             myPostReactions: loadMore ? { ...get().myPostReactions, ...myReactions } : myReactions,
             lastDoc: result.lastDoc,
             hasMore: result.hasMore,
             abortController: null,
-            isError: false
+            isError: false,
+            lastFetchTime: loadMore ? lastFetchTime : now
           });
         } catch (error: unknown) {
           const err = error as { name?: string };
@@ -117,38 +151,33 @@ export const usePostStore = create<PostState>()(
         }
       },
 
-      subscribeToPosts: (currentUserId: string, friendIds: string[], blockedUserIds: string[] = []) => {
+      subscribeToPosts: (currentUserId: string) => {
         const currentCount = Math.max(get().posts.length, PAGINATION.FEED_POSTS);
 
-        const unsubscribe = postService.subscribeToFeed(
+        const unsubscribe = postService.subscribeToFeedFanout(
           currentUserId,
-          friendIds,
-          blockedUserIds,
           (action, changedPosts) => {
             set((state) => {
               if (action === 'initial') {
-                return {
-                  posts: changedPosts
-                };
+                return {};
               }
 
               if (action === 'add') {
                 const existingIds = new Set(state.posts.map(p => p.id));
                 const newPosts = changedPosts.filter(p => !existingIds.has(p.id));
-                const duplicates = changedPosts.filter(p => existingIds.has(p.id));
 
-                let currentPosts = state.posts;
-                if (duplicates.length > 0) {
-                  currentPosts = currentPosts.map(p => {
-                    const match = duplicates.find(d => d.id === p.id);
-                    return match || p;
-                  });
-                }
+                if (newPosts.length === 0) return {};
 
-                if (newPosts.length === 0 && duplicates.length === 0) return {};
+                const uniquePosts = [...newPosts, ...state.posts];
+                const seenIds = new Set<string>();
+                const deduped = uniquePosts.filter(p => {
+                  if (seenIds.has(p.id)) return false;
+                  seenIds.add(p.id);
+                  return true;
+                }).sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis());
 
                 return {
-                  posts: [...newPosts, ...currentPosts].sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis())
+                  posts: deduped
                 };
               }
 
@@ -181,25 +210,35 @@ export const usePostStore = create<PostState>()(
         return unsubscribe;
       },
 
-      createPost: async (userId: string, content: string, images: string[], videos: string[], visibility: Visibility = Visibility.PUBLIC, videoThumbnails?: Record<string, string>, pendingFiles?: File[]) => {
+      refreshFeed: async (currentUserId: string) => {
+        set({
+          posts: [],
+          lastDoc: null,
+          hasMore: true,
+          lastFetchTime: null
+        });
+        await get().fetchPosts(currentUserId, false, true);
+      },
+
+      createPost: async (userId: string, content: string, media: MediaObject[], visibility: Visibility = Visibility.PUBLIC, pendingFiles?: File[]) => {
         const postId = postService.generatePostId();
-        const previewImages = pendingFiles ? pendingFiles.filter(f => f.type.startsWith('image/')).map(f => URL.createObjectURL(f)) : [];
-        const previewVideos = pendingFiles ? pendingFiles.filter(f => f.type.startsWith('video/')).map(f => URL.createObjectURL(f)) : [];
+        const previewMedia = pendingFiles ? pendingFiles.map(f => ({
+          url: URL.createObjectURL(f),
+          fileName: f.name,
+          mimeType: f.type,
+          size: f.size,
+          isSensitive: false,
+        } as MediaObject)) : [];
 
         const newPost: Post = {
           id: postId,
-          userId,
+          authorId: userId,
           content,
-          images: [...(images || []), ...previewImages],
-          videos: [...(videos || []), ...previewVideos],
-          videoThumbnails: videoThumbnails || {},
+          media: [...media, ...previewMedia],
           visibility,
           commentCount: 0,
           createdAt: Timestamp.now(),
           status: PostStatus.ACTIVE,
-          type: PostType.NORMAL,
-          reactionCount: 0,
-          reactionSummary: {},
         };
 
         set(state => ({
@@ -209,12 +248,10 @@ export const usePostStore = create<PostState>()(
 
         const processUpload = async () => {
           try {
-            let finalImages = [...images];
-            let finalVideos = [...videos];
-            let finalThumbnails = { ...videoThumbnails };
+            let finalMedia = [...media];
 
             if (pendingFiles && pendingFiles.length > 0) {
-              const result = await postService.uploadPostMedia(pendingFiles, userId, (progress) => {
+              const uploadedMedia = await postService.uploadPostMedia(pendingFiles, userId, (progress) => {
                 set(state => ({
                   uploadingStates: {
                     ...state.uploadingStates,
@@ -222,27 +259,25 @@ export const usePostStore = create<PostState>()(
                   }
                 }));
               });
-              finalImages = [...finalImages, ...result.images];
-              finalVideos = [...finalVideos, ...result.videos];
-              finalThumbnails = { ...finalThumbnails, ...result.videoThumbnails };
+              finalMedia = [...finalMedia, ...uploadedMedia];
             }
 
             await postService.createPost({
-              userId,
+              authorId: userId,
               content,
-              images: finalImages,
-              videos: finalVideos,
-              videoThumbnails: finalThumbnails,
+              media: finalMedia,
               visibility,
-              type: PostType.NORMAL,
-              reactionCount: 0,
-              reactionSummary: {},
             }, postId);
 
             set(state => {
               const newUploadingStates = { ...state.uploadingStates };
               delete newUploadingStates[postId];
-              return { uploadingStates: newUploadingStates };
+              return {
+                uploadingStates: newUploadingStates,
+                posts: state.posts.map(p =>
+                  p.id === postId ? { ...p, media: finalMedia } : p
+                )
+              };
             });
 
             toast.success(TOAST_MESSAGES.POST.CREATE_SUCCESS);
@@ -257,23 +292,25 @@ export const usePostStore = create<PostState>()(
             }));
             toast.error(TOAST_MESSAGES.POST.CREATE_FAILED(errorMessage));
           } finally {
-            // Dọn dẹp các URL tạm thời để tránh rò rỉ bộ nhớ
-            previewImages.forEach(url => URL.revokeObjectURL(url));
-            previewVideos.forEach(url => URL.revokeObjectURL(url));
+            previewMedia.forEach(m => URL.revokeObjectURL(m.url));
           }
         };
 
         processUpload();
       },
 
-      updatePost: async (postId: string, content: string, images: string[], videos: string[], visibility: Visibility, videoThumbnails?: Record<string, string>, pendingFiles?: File[]) => {
+      updatePost: async (postId: string, content: string, media: MediaObject[], visibility: Visibility, pendingFiles?: File[]) => {
         const { posts } = get();
         const post = posts.find(p => p.id === postId);
         if (!post) return;
 
-        // Tạo URL xem trước tạm thời
-        const previewImages = pendingFiles ? pendingFiles.filter(f => f.type.startsWith('image/')).map(f => URL.createObjectURL(f)) : [];
-        const previewVideos = pendingFiles ? pendingFiles.filter(f => f.type.startsWith('video/')).map(f => URL.createObjectURL(f)) : [];
+        const previewMedia = pendingFiles ? pendingFiles.map(f => ({
+          url: URL.createObjectURL(f),
+          fileName: f.name,
+          mimeType: f.type,
+          size: f.size,
+          isSensitive: false,
+        } as MediaObject)) : [];
 
         set(state => ({
           posts: state.posts.map(p =>
@@ -281,10 +318,8 @@ export const usePostStore = create<PostState>()(
               ? {
                 ...p,
                 content,
-                images: [...images, ...previewImages],
-                videos: [...videos, ...previewVideos],
+                media: [...media, ...previewMedia],
                 visibility,
-                videoThumbnails,
                 isEdited: true,
                 editedAt: Timestamp.now()
               }
@@ -297,12 +332,10 @@ export const usePostStore = create<PostState>()(
 
         const processUpdate = async () => {
           try {
-            let finalImages = [...images];
-            let finalVideos = [...videos];
-            let finalThumbnails = { ...videoThumbnails };
+            let finalMedia = [...media];
 
             if (pendingFiles && pendingFiles.length > 0) {
-              const result = await postService.uploadPostMedia(pendingFiles, post.userId, (progress) => {
+              const uploadedMedia = await postService.uploadPostMedia(pendingFiles, post.authorId, (progress) => {
                 set(state => ({
                   uploadingStates: {
                     ...state.uploadingStates,
@@ -310,12 +343,10 @@ export const usePostStore = create<PostState>()(
                   }
                 }));
               });
-              finalImages = [...finalImages, ...result.images];
-              finalVideos = [...finalVideos, ...result.videos];
-              finalThumbnails = { ...finalThumbnails, ...result.videoThumbnails };
+              finalMedia = [...finalMedia, ...uploadedMedia];
             }
 
-            await postService.updatePost(postId, content, finalImages, finalVideos, visibility, finalThumbnails);
+            await postService.updatePost(postId, content, finalMedia, visibility);
 
             set(state => {
               const newUploadingStates = { ...state.uploadingStates };
@@ -324,7 +355,7 @@ export const usePostStore = create<PostState>()(
                 uploadingStates: newUploadingStates,
                 posts: state.posts.map(p =>
                   p.id === postId
-                    ? { ...p, images: finalImages, videos: finalVideos, videoThumbnails: finalThumbnails }
+                    ? { ...p, media: finalMedia }
                     : p
                 )
               };
@@ -342,9 +373,7 @@ export const usePostStore = create<PostState>()(
             }));
             toast.error(TOAST_MESSAGES.POST.UPDATE_FAILED(errorMessage));
           } finally {
-            // Dọn dẹp URL tạm
-            previewImages.forEach(url => URL.revokeObjectURL(url));
-            previewVideos.forEach(url => URL.revokeObjectURL(url));
+            previewMedia.forEach(m => URL.revokeObjectURL(m.url));
           }
         };
 
@@ -365,42 +394,12 @@ export const usePostStore = create<PostState>()(
         }
       },
 
-      reactToPost: async (postId: string, userId: string, reaction: string) => {
+      reactToPost: async (postId: string, userId: string, reaction: ReactionType | 'REMOVE') => {
         const post = get().posts.find(p => p.id === postId) ?? get().selectedPost;
         if (!post) return;
 
         const prevMyReaction = get().myPostReactions[postId];
-        const prevCount = post.reactionCount;
-        const prevSummary = { ...post.reactionSummary };
-        const prevSelectedPost = get().selectedPost;
-
-        const isRemove = reaction === 'REMOVE' || prevMyReaction === reaction;
-        const oldType = prevMyReaction;
-
-        const applyOptimistic = (p: Post): Post => {
-          const newSummary = { ...p.reactionSummary };
-          let delta = 0;
-
-          if (isRemove && oldType) {
-            newSummary[oldType as ReactionType] = Math.max(0, (newSummary[oldType as ReactionType] ?? 1) - 1);
-            if (newSummary[oldType as ReactionType] === 0) delete newSummary[oldType as ReactionType];
-            delta = -1;
-          } else if (!isRemove) {
-            if (oldType) {
-              newSummary[oldType as ReactionType] = Math.max(0, (newSummary[oldType as ReactionType] ?? 1) - 1);
-              if (newSummary[oldType as ReactionType] === 0) delete newSummary[oldType as ReactionType];
-            } else {
-              delta = 1;
-            }
-            newSummary[reaction as ReactionType] = (newSummary[reaction as ReactionType] ?? 0) + 1;
-          }
-
-          return {
-            ...p,
-            reactionCount: Math.max(0, p.reactionCount + delta),
-            reactionSummary: newSummary,
-          };
-        };
+        const isRemove = prevMyReaction === reaction || reaction === 'REMOVE';
 
         // Update myPostReactions
         const newMyReactions = { ...get().myPostReactions };
@@ -411,8 +410,6 @@ export const usePostStore = create<PostState>()(
         }
 
         set((state) => ({
-          posts: state.posts.map(p => p.id === postId ? applyOptimistic(p) : p),
-          selectedPost: state.selectedPost?.id === postId ? applyOptimistic(state.selectedPost) : state.selectedPost,
           myPostReactions: newMyReactions,
         }));
 
@@ -421,8 +418,6 @@ export const usePostStore = create<PostState>()(
         } catch (error) {
           console.error("Lỗi react bài viết:", error);
           set((state) => ({
-            posts: state.posts.map(p => p.id === postId ? { ...p, reactionCount: prevCount, reactionSummary: prevSummary } : p),
-            selectedPost: prevSelectedPost,
             myPostReactions: { ...state.myPostReactions, [postId]: prevMyReaction },
           }));
         }
@@ -439,12 +434,40 @@ export const usePostStore = create<PostState>()(
 
       clearPosts: () => set({ posts: [], lastDoc: null, hasMore: true }),
 
-      setSelectedPost: (post: Post | null) => set({ selectedPost: post }),
+      setSelectedPost: (post: Post | null) => {
+        const { selectedPostUnsubscribe } = get();
+        if (selectedPostUnsubscribe) {
+          selectedPostUnsubscribe();
+        }
+
+        if (post) {
+          const unsubscribe = onSnapshot(doc(db, 'posts', post.id), (postDoc) => {
+            if (postDoc.exists()) {
+              const updatedPost = convertDocToPost(postDoc);
+              set(state => ({
+                selectedPost: state.selectedPost?.id === post.id ? updatedPost : state.selectedPost,
+                posts: state.posts.map(p => p.id === post.id ? updatedPost : p)
+              }));
+            }
+          });
+
+          set({ selectedPost: post, selectedPostUnsubscribe: unsubscribe });
+        } else {
+          set({ selectedPost: null, selectedPostUnsubscribe: null });
+        }
+      },
 
       fetchPostById: async (postId: string, currentUserId: string, friendIds: string[]) => {
         useLoadingStore.getState().setLoading('feed', true);
         try {
           const post = await postService.getPostById(postId, currentUserId, friendIds);
+
+          if (!post) {
+            toast.info('Bài viết này đã bị xóa hoặc không còn tồn tại');
+            set({ selectedPost: null });
+            return;
+          }
+
           const myReaction = await postService.getMyReactionForPost(postId, currentUserId);
 
           set({
@@ -453,6 +476,7 @@ export const usePostStore = create<PostState>()(
           });
         } catch (error) {
           console.error("Lỗi lấy chi tiết bài viết:", error);
+          toast.error('Không thể tải bài viết');
         } finally {
           useLoadingStore.getState().setLoading('feed', false);
         }
@@ -461,7 +485,11 @@ export const usePostStore = create<PostState>()(
     {
       name: 'smurf_feed_cache',
       storage: createJSONStorage(() => localStorage),
-      partialize: (state) => ({ posts: state.posts.slice(0, PAGINATION.FEED_CACHE_LIMIT) }),
+      partialize: (state) => ({
+        posts: state.posts.slice(0, PAGINATION.FEED_CACHE_LIMIT),
+        lastFetchTime: state.lastFetchTime,
+        myPostReactions: state.myPostReactions
+      }),
     }
   )
 );

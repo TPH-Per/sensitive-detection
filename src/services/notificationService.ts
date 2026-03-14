@@ -12,8 +12,9 @@ import {
   writeBatch,
   limit,
   arrayUnion,
-  deleteDoc
-, Timestamp} from 'firebase/firestore';
+  deleteDoc,
+  serverTimestamp
+} from 'firebase/firestore';
 import { getMessaging, getToken, onMessage } from 'firebase/messaging';
 import { db } from '../firebase/config';
 import type { Notification } from '../types';
@@ -114,7 +115,7 @@ export const notificationService = {
         if (token) {
           await setDoc(
             doc(db, 'users', userId, 'private', 'fcm'),
-            { tokens: arrayUnion(token) },
+            { fcmTokens: arrayUnion(token), updatedAt: serverTimestamp() },
             { merge: true }
           );
           return token;
@@ -130,42 +131,24 @@ export const notificationService = {
   // Helper để lấy text hiển thị ngắn gọn cho thông báo
   getNotificationText: (notification: Notification, senderName: string): string => {
     const isInteraction = [
-      NotificationType.LIKE_POST,
-      NotificationType.COMMENT_POST,
-      NotificationType.REPLY_COMMENT,
-      NotificationType.REACT_COMMENT,
-      NotificationType.FRIEND_REQUEST,
-      NotificationType.FRIEND_ACCEPT
+      NotificationType.REACTION,
+      NotificationType.COMMENT,
+      NotificationType.FRIEND_REQUEST
     ].includes(notification.type);
 
     const prefix = (senderName && isInteraction) ? `${senderName} ` : '';
 
     switch (notification.type) {
-      case NotificationType.LIKE_POST:
-        return `${prefix}đã thích bài viết của bạn.`;
-      case NotificationType.COMMENT_POST:
-        return `${prefix}đã bình luận: "${notification.data.contentSnippet}"`;
-      case NotificationType.REPLY_COMMENT:
-        return `${prefix}đã phản hồi bình luận của bạn.`;
-      case NotificationType.REACT_COMMENT:
-        return `${prefix}đã bày tỏ cảm xúc về bình luận của bạn.`;
+      case NotificationType.REACTION:
+        return `${prefix}đã bày tỏ cảm xúc về nội dung của bạn.`;
+      case NotificationType.COMMENT:
+        return notification.data.contentSnippet
+          ? `${prefix}đã bình luận: "${notification.data.contentSnippet}"`
+          : `${prefix}đã bình luận.`;
       case NotificationType.FRIEND_REQUEST:
         return `${prefix}đã gửi lời mời kết bạn.`;
-      case NotificationType.FRIEND_ACCEPT:
-        return `${prefix}đã chấp nhận lời mời kết bạn.`;
-      case NotificationType.REPORT_NEW:
-        return `Có báo cáo mới cần xử lý: ${notification.data.contentSnippet || ''}`;
-      case NotificationType.REPORT_RESOLVED:
-        return notification.data.contentSnippet === 'Không phát hiện vi phạm'
-          ? `Báo cáo của bạn đã được xem xét và không phát hiện vi phạm.`
-          : `Báo cáo của bạn đã được xử lý. Cảm ơn bạn đã đóng góp!`;
-      case NotificationType.CONTENT_VIOLATION:
-        const reasonKey = notification.data.contentSnippet as ReportReason;
-        const reasonLabel = REPORT_CONFIG.REASONS[reasonKey]?.label || notification.data.contentSnippet;
-
-        return notification.data.contentSnippet
-          ? `Nội dung bị báo cáo: ${reasonLabel}. Vui lòng tuân thủ quy tắc cộng đồng.`
-          : 'Nội dung của bạn đã bị xóa do vi phạm quy tắc cộng đồng.';
+      case NotificationType.SYSTEM:
+        return notification.data.contentSnippet || 'Bạn có thông báo hệ thống mới.';
       default:
         return "Thông báo mới.";
     }

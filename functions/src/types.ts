@@ -3,8 +3,6 @@
 
 import {
   UserStatus,
-  UserRole,
-  PostType,
   PostStatus,
   CommentStatus,
   Visibility,
@@ -22,8 +20,6 @@ import {
 // Re-export for consumers
 export {
   UserStatus,
-  UserRole,
-  PostType,
   PostStatus,
   CommentStatus,
   Visibility,
@@ -43,7 +39,7 @@ export type { NotificationPayload };
 
 export interface NotificationData {
   receiverId: string;
-  senderId: string;
+  actorId: string;
   type: NotificationType;
   data: NotificationPayload;
 }

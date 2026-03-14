@@ -1,12 +1,12 @@
 import React from 'react';
 import { FileText, Download, Image as ImageIcon, Play, Pause, Mic, PhoneIncoming, Phone, PhoneMissed, Video } from 'lucide-react';
 
-import { Message, MessageType } from '../../../types';
+import { RtdbMessage, MessageType } from '../../../types';
 import { IconButton, LazyVideo, LazyImage } from '../../ui';
 
 
 interface MessageContentProps {
-  message: Message;
+  message: { id: string; data: RtdbMessage };
   isMe: boolean;
   uploadProgress: Record<string, { progress: number; error?: boolean }>;
   isPlaying: boolean;
@@ -24,23 +24,24 @@ const MessageContentInner: React.FC<MessageContentProps> = ({
   setShowFullImage,
   onCall,
 }) => {
-  if (message.isRecalled) {
+  if (message.data.isRecalled) {
     return (
       <div className={`italic text-sm ${isMe ? 'text-white/80' : 'text-text-tertiary'}`}>
-        Tin nhắn đã được thu hồi
+        Tin nhắn đã thu hồi
       </div>
     );
   }
 
-  switch (message.type) {
+  switch (message.data.type) {
     case 'image':
+      const imageUrl = message.data.media?.[0]?.url || message.data.content;
       return (
         <div
           className="rounded-lg overflow-hidden max-w-[280px] cursor-pointer group relative"
           onClick={() => setShowFullImage(true)}
         >
           <LazyImage
-            src={message.fileUrl || message.content}
+            src={imageUrl}
             alt="sent"
             className="w-full h-auto"
           />
@@ -64,8 +65,10 @@ const MessageContentInner: React.FC<MessageContentProps> = ({
       );
 
     case 'file':
-      const fileSize = message.fileSize
-        ? `${(message.fileSize / 1024).toFixed(1)} KB`
+      const fileUrl = message.data.media?.[0]?.url || message.data.content;
+      const fileName = message.data.media?.[0]?.fileName || 'Tài liệu';
+      const fileSize = message.data.media?.[0]?.size
+        ? `${(message.data.media[0].size / 1024).toFixed(1)} KB`
         : 'N/A';
 
       return (
@@ -75,12 +78,12 @@ const MessageContentInner: React.FC<MessageContentProps> = ({
             <FileText size={24} className={isMe ? 'text-primary' : 'text-text-secondary'} />
           </div>
           <div className="flex-1 min-w-0">
-            <div className="font-medium truncate text-sm">{message.fileName || 'Tài liệu'}</div>
+            <div className="font-medium truncate text-sm">{fileName}</div>
             <div className="text-xs opacity-70">{fileSize}</div>
           </div>
           <a
-            href={message.fileUrl}
-            download={message.fileName}
+            href={fileUrl}
+            download={fileName}
             className="p-1 hover:bg-black/10 active:bg-black/20 rounded-full transition-all duration-base"
             onClick={(e) => e.stopPropagation()}
           >
@@ -103,7 +106,7 @@ const MessageContentInner: React.FC<MessageContentProps> = ({
       );
 
     case 'video':
-      const videoUrl = message.fileUrl || message.content;
+      const videoUrl = message.data.media?.[0]?.url || message.data.content;
       return (
         <div className="rounded-lg overflow-hidden max-w-[300px] border border-border-light shadow-sm">
           <LazyVideo
@@ -115,7 +118,7 @@ const MessageContentInner: React.FC<MessageContentProps> = ({
 
     case MessageType.CALL: {
       let parsed: { callType: 'voice' | 'video'; status: 'ended' | 'missed' | 'rejected'; duration?: number };
-      try { parsed = JSON.parse(message.content); }
+      try { parsed = JSON.parse(message.data.content); }
       catch { parsed = { callType: 'voice', status: 'missed' }; }
 
       const { callType, status, duration } = parsed;
@@ -221,9 +224,9 @@ const MessageContentInner: React.FC<MessageContentProps> = ({
       return (
         <div className="flex flex-col">
           <div className="whitespace-pre-wrap break-all">
-            {renderTextWithMentions(message.content)}
+            {renderTextWithMentions(message.data.content)}
           </div>
-          {message.isEdited && !message.isRecalled && (
+          {message.data.isEdited && !message.data.isRecalled && (
             <span className="text-[10px] opacity-70 mt-0.5">(đã chỉnh sửa)</span>
           )}
         </div>

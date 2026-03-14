@@ -1,19 +1,19 @@
 import React from 'react';
 import { Search, X, Clock } from 'lucide-react';
 import { Button, Skeleton, Avatar, UserAvatar } from '../../ui';
-import { Conversation, User, UserStatus } from '../../../types';
+import { RtdbConversation, User, RtdbUserChat } from '../../../types';
 import { useConversationParticipants } from '../../../hooks/chat/useConversationParticipants';
 
 interface SearchResultsProps {
   searchTerm: string;
   results: {
-    conversations: Conversation[];
+    conversations: Array<{ id: string; data: RtdbConversation; userChat: RtdbUserChat }>;
     users: User[];
   };
-  conversations: Conversation[];
+  conversations: Array<{ id: string; data: RtdbConversation; userChat: RtdbUserChat }>;
   currentUserId: string;
   selectedId: string | null;
-  history: (Conversation | User)[];
+  history: Array<{ id: string; data: RtdbConversation; userChat: RtdbUserChat } | User>;
   onSelectConversation: (id: string) => void;
   onSelectUser: (user: User) => void;
   onRemoveFromHistory: (id: string) => void;
@@ -73,19 +73,17 @@ export const SearchResults: React.FC<SearchResultsProps> & { Skeleton: React.FC 
         <div className="space-y-1">
           {history.filter(item => {
             if ('status' in item) {
-              return item.status !== UserStatus.BANNED;
+              return item.status !== 'banned';
             }
-            if ('participantIds' in item) {
-              // Không filter ở đây, để component con xử lý
+            if ('data' in item) {
               return true;
             }
             return true;
           }).map((item) => {
-            const isConversation = 'participantIds' in item;
+            const isConversation = 'data' in item;
 
             if (isConversation) {
-              // Đồng bộ dữ liệu mới nhất cho hội thoại
-              const latestConv = conversations.find(c => c.id === item.id) || item as Conversation;
+              const latestConv = conversations.find(c => c.id === item.id) || item as { id: string; data: RtdbConversation; userChat: RtdbUserChat };
               return (
                 <HistoryConversationItem
                   key={item.id}
@@ -105,14 +103,11 @@ export const SearchResults: React.FC<SearchResultsProps> & { Skeleton: React.FC 
                 >
                   <UserAvatar
                     userId={user.id}
-                    src={user.avatar}
-                    name={user.name || ''}
                     size="md"
-                    initialStatus={user.status}
                   />
                   <div className="flex-1 min-w-0">
                     <div className="font-medium text-text-primary truncate">
-                      {user.name}
+                      {user.fullName}
                     </div>
                   </div>
                   <Button
@@ -165,14 +160,11 @@ export const SearchResults: React.FC<SearchResultsProps> & { Skeleton: React.FC 
           >
             <UserAvatar
               userId={user.id}
-              src={user.avatar}
-              name={user.name}
               size="md"
-              initialStatus={user.status}
             />
             <div className="flex-1 min-w-0">
               <div className="font-medium text-text-primary truncate flex items-center gap-1.5">
-                {user.name}
+                {user.fullName}
               </div>
             </div>
           </div>
@@ -183,7 +175,7 @@ export const SearchResults: React.FC<SearchResultsProps> & { Skeleton: React.FC 
 };
 
 interface HistoryConversationItemProps {
-  conversation: Conversation;
+  conversation: { id: string; data: RtdbConversation; userChat: RtdbUserChat };
   currentUserId: string;
   onSelect: () => void;
   onRemove: () => void;
@@ -195,10 +187,10 @@ const HistoryConversationItem: React.FC<HistoryConversationItemProps> = ({
   onSelect,
   onRemove
 }) => {
-  const participants = useConversationParticipants(conversation.participantIds);
+  const participants = useConversationParticipants(Object.keys(conversation.data.members));
   const partner = participants.find(p => p.id !== currentUserId);
-  const displayName = conversation.isGroup ? conversation.groupName : partner?.name;
-  const avatar = conversation.isGroup ? conversation.groupAvatar : partner?.avatar;
+  const displayName = conversation.data.isGroup ? conversation.data.name : partner?.fullName;
+  const avatar = conversation.data.isGroup ? conversation.data.avatar : partner?.avatar;
 
   return (
     <div
@@ -206,10 +198,10 @@ const HistoryConversationItem: React.FC<HistoryConversationItemProps> = ({
       onClick={onSelect}
     >
       <Avatar
-        src={avatar}
+        src={avatar?.url}
         name={displayName || ''}
         size="md"
-        isGroup={conversation.isGroup}
+        isGroup={conversation.data.isGroup}
         members={participants}
       />
       <div className="flex-1 min-w-0">

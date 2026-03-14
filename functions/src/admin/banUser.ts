@@ -4,12 +4,19 @@ import { db, auth } from '../app';
 import { NotificationType, UserStatus, FriendRequestStatus } from '../types';
 import { createNotification } from '../helpers/notificationHelper';
 
-// Admin khóa/mở khóa tài khoản người dùng
 export const banUser = onCall(
-  { region: 'us-central1' },
+  {
+    region: 'us-central1',
+    cors: true
+  },
   async (request) => {
     if (!request.auth) throw new HttpsError('unauthenticated', 'Chưa đăng nhập');
-    if (!request.auth.token.admin) throw new HttpsError('permission-denied', 'Không có quyền Admin');
+
+    const callerDoc = await db.collection('users').doc(request.auth.uid).get();
+    const callerRole = callerDoc.data()?.role;
+    if (callerRole !== 'admin') {
+      throw new HttpsError('permission-denied', 'Không có quyền Admin');
+    }
 
     const { userId, action = 'ban' } = request.data as {
       userId: string;
@@ -22,19 +29,13 @@ export const banUser = onCall(
     const adminId = request.auth.uid;
 
     if (action === 'ban') {
-      // Update user status
       await db.collection('users').doc(userId).update({
         status: UserStatus.BANNED,
         lastSeen: FieldValue.serverTimestamp()
       });
 
-      // Set custom claim
-      await auth.setCustomUserClaims(userId, { banned: true });
-
-      // Revoke tokens to force logout
       await auth.revokeRefreshTokens(userId);
 
-      // Cleanup friend requests (sent + received)
       const sentRequestsQuery = db.collection('friendRequests')
         .where('senderId', '==', userId)
         .where('status', '==', FriendRequestStatus.PENDING);
@@ -50,13 +51,11 @@ export const banUser = onCall(
 
       const batch = db.batch();
 
-      // Delete all pending friend requests
       sentSnapshot.docs.forEach(doc => batch.delete(doc.ref));
       receivedSnapshot.docs.forEach(doc => batch.delete(doc.ref));
 
       await batch.commit();
 
-      // Remove from group conversations
       const conversationsQuery = db.collection('conversations')
         .where('isGroup', '==', true)
         .where('participantIds', 'array-contains', userId);
@@ -73,30 +72,24 @@ export const banUser = onCall(
 
       await conversationBatch.commit();
 
-      // Send notification to banned user
       await createNotification({
         receiverId: userId,
-        senderId: adminId,
-        type: NotificationType.CONTENT_VIOLATION,
+        actorId: adminId,
+        type: NotificationType.SYSTEM,
         data: {
           contentSnippet: 'Tài khoản của bạn đã bị khóa do vi phạm quy định cộng đồng. Vui lòng liên hệ admin để biết thêm chi tiết.'
         }
       });
 
     } else {
-      // Unban user
       await db.collection('users').doc(userId).update({
-        status: UserStatus.OFFLINE
+        status: 'active'
       });
 
-      // Remove banned claim properly
-      await auth.setCustomUserClaims(userId, { banned: false });
-
-      // Send notification to unbanned user
       await createNotification({
         receiverId: userId,
-        senderId: adminId,
-        type: NotificationType.CONTENT_VIOLATION,
+        actorId: adminId,
+        type: NotificationType.SYSTEM,
         data: {
           contentSnippet: 'Tài khoản của bạn đã được mở khóa. Bạn có thể đăng nhập lại.'
         }

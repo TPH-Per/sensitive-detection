@@ -196,9 +196,9 @@ export const ReportDetailModal: React.FC<ReportDetailModalProps> = ({ reportId, 
                 <div className="p-4 bg-bg-secondary/30 rounded-2xl border border-border-light space-y-3">
                   <span className="text-[9px] font-black text-text-tertiary uppercase tracking-widest block">Người báo cáo</span>
                   <div className="flex items-center gap-3">
-                    <UserAvatar userId={reporter?.id || ''} src={reporter?.avatar} name={reporter?.name} size="sm" />
+                    <UserAvatar userId={reporter?.id || ''} src={reporter?.avatar?.url} name={reporter?.fullName} size="sm" />
                     <div className="min-w-0">
-                      <div className="text-xs font-bold text-text-primary truncate">{reporter?.name}</div>
+                      <div className="text-xs font-bold text-text-primary truncate">{reporter?.fullName}</div>
                       <div className="text-[10px] text-text-tertiary truncate">{reporter?.email}</div>
                     </div>
                   </div>
@@ -206,9 +206,9 @@ export const ReportDetailModal: React.FC<ReportDetailModalProps> = ({ reportId, 
                 <div className="p-4 bg-bg-secondary/30 rounded-2xl border border-border-light space-y-3">
                   <span className="text-[9px] font-black text-text-tertiary uppercase tracking-widest block">Bị khiếu nại</span>
                   <div className="flex items-center gap-3">
-                    <UserAvatar userId={targetOwner?.id || ''} src={targetOwner?.avatar} name={targetOwner?.name} size="sm" />
+                    <UserAvatar userId={targetOwner?.id || ''} src={targetOwner?.avatar?.url} name={targetOwner?.fullName} size="sm" />
                     <div className="min-w-0">
-                      <div className="text-xs font-bold text-text-primary truncate">{targetOwner?.name}</div>
+                      <div className="text-xs font-bold text-text-primary truncate">{targetOwner?.fullName}</div>
                       <div className="text-[10px] text-text-tertiary truncate">{targetOwner?.email}</div>
                     </div>
                   </div>
@@ -226,11 +226,11 @@ export const ReportDetailModal: React.FC<ReportDetailModalProps> = ({ reportId, 
                         className="aspect-square rounded-xl overflow-hidden border border-border-light bg-bg-secondary group cursor-pointer relative"
                         onClick={() => setViewerState({
                           isOpen: true,
-                          media: (report.images || []).map(url => ({ type: 'image' as const, url })),
+                          media: (report.images || []).map(mediaObj => ({ type: 'image' as const, url: mediaObj.url })),
                           index: idx
                         })}
                       >
-                        <img src={img} className="w-full h-full object-cover transition-all duration-base" />
+                        <img src={img.url} className="w-full h-full object-cover transition-all duration-base" />
                         <div className="absolute inset-0 bg-black/20 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all duration-base flex items-center justify-center text-white text-[10px] font-bold uppercase">Xem ảnh</div>
                       </div>
                     ))}
@@ -267,8 +267,8 @@ export const ReportDetailModal: React.FC<ReportDetailModalProps> = ({ reportId, 
                     <div className="flex items-center gap-2 pt-3 border-t border-border-light/50">
                       <span className="text-[10px] text-text-tertiary font-bold uppercase tracking-wider">Người xử lý:</span>
                       <div className="flex items-center gap-2">
-                        <UserAvatar userId={resolver.id} src={resolver.avatar} name={resolver.name} size="xs" />
-                        <span className="text-xs font-bold text-text-primary">{resolver.name}</span>
+                        <UserAvatar userId={resolver.id} src={resolver.avatar?.url} name={resolver.fullName} size="xs" />
+                        <span className="text-xs font-bold text-text-primary">{resolver.fullName}</span>
                       </div>
                     </div>
                   )}
@@ -293,12 +293,10 @@ export const ReportDetailModal: React.FC<ReportDetailModalProps> = ({ reportId, 
                       {report?.targetType === ReportType.POST && content && (
                         <div className="mt-4">
                           <PostMediaGrid
-                            images={(content as Post).images}
-                            videos={(content as Post).videos}
-                            videoThumbnails={(content as Post).videoThumbnails}
+                            media={(content as Post).media || []}
                             onClick={() => setViewerState({
                               isOpen: true,
-                              media: (content as Post).images?.map(url => ({ type: 'image' as const, url })) || [],
+                              media: (content as Post).media?.map(m => ({ type: m.mimeType.startsWith('video') ? 'video' as const : 'image' as const, url: m.url })) || [],
                               index: 0
                             })}
                           />
@@ -310,11 +308,11 @@ export const ReportDetailModal: React.FC<ReportDetailModalProps> = ({ reportId, 
                           className="mt-4 aspect-video rounded-xl bg-black overflow-hidden cursor-pointer group relative"
                           onClick={() => setViewerState({
                             isOpen: true,
-                            media: [{ type: 'image' as const, url: (content as Comment).image! }],
+                            media: [{ type: 'image' as const, url: (content as Comment).image!.url }],
                             index: 0
                           })}
                         >
-                          <img src={(content as Comment).image} className="w-full h-full object-contain transition-all duration-base" />
+                          <img src={(content as Comment).image!.url} className="w-full h-full object-contain transition-all duration-base" />
                           <div className="absolute inset-0 bg-black/20 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all duration-base flex items-center justify-center text-white text-xs font-bold uppercase tracking-widest">Xem ảnh cỡ lớn</div>
                         </div>
                       )}

@@ -33,17 +33,14 @@ const FriendItemInner: React.FC<FriendItemProps> = ({
       <div className="flex items-center gap-4 flex-1">
         <UserAvatar
           userId={friend.id}
-          src={friend.avatar}
-          name={friend.name}
           size="md"
-          initialStatus={friend.status}
         />
         <div>
           <div className="flex items-center gap-1.5">
             <h3 className="font-semibold text-text-primary">
-              {friend.name}
+              {friend.fullName}
             </h3>
-            {friend.status === UserStatus.BANNED && (
+            {friend.status === 'banned' && (
               <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-medium bg-error/10 text-error">
                 <Lock size={10} />
                 Đã khóa

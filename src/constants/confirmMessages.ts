@@ -7,11 +7,6 @@ export const CONFIRM_MESSAGES = {
       MESSAGE: (name: string) => `Bạn có chắc chắn muốn hủy kết bạn với ${name}?`,
       CONFIRM: 'Hủy kết bạn',
     },
-    BLOCK: {
-      TITLE: 'Chặn người dùng',
-      MESSAGE: (name: string) => `Bạn có chắc chắn muốn chặn ${name}? Hai bạn sẽ không thể tìm thấy nhau hoặc gửi tin nhắn mới.`,
-      CONFIRM: 'Chặn ngay',
-    },
     UNBLOCK: {
       TITLE: 'Bỏ chặn người dùng',
       MESSAGE: (name: string) => `Bạn có chắc chắn muốn bỏ chặn ${name}? Họ sẽ có thể gửi tin nhắn cho bạn.`,
@@ -83,11 +78,6 @@ export const CONFIRM_MESSAGES = {
       TITLE: 'Xóa cuộc trò chuyện',
       MESSAGE: 'Bạn có chắc chắn muốn xóa cuộc trò chuyện này? Hành động này không thể hoàn tác.',
       CONFIRM: 'Xóa ngay',
-    },
-    BLOCK_USER: {
-      TITLE: 'Chặn người dùng',
-      MESSAGE: 'Bạn có chắc chắn muốn chặn người này? Cả hai bên sẽ không thể nhắn tin cho nhau.',
-      CONFIRM: 'Chặn ngay',
     },
     LEAVE_GROUP: {
       TITLE: 'Rời khỏi nhóm',

@@ -30,7 +30,7 @@ export const MobileMenuPage: React.FC = () => {
   const handleConfirmLogout = useLogout();
   const [showLogoutConfirm, setShowLogoutConfirm] = React.useState(false);
 
-  const isAdmin = user?.role === 'admin';
+  const isAdmin = !!user;
 
   const totalUnread = useUnreadCount();
   const hasNewRequests = receivedRequests.length > 0;
@@ -52,13 +52,13 @@ export const MobileMenuPage: React.FC = () => {
           {user && (
             <UserAvatar
               userId={user.id}
-              src={user.avatar}
+              src={user.avatar.url}
               size="lg"
               initialStatus={user.status}
             />
           )}
           <div className="flex-1">
-            <h2 className="font-bold text-lg text-text-primary">{user?.name}</h2>
+            <h2 className="font-bold text-lg text-text-primary">{user?.fullName}</h2>
             <p className="text-sm text-text-tertiary">{user?.email}</p>
           </div>
         </div>

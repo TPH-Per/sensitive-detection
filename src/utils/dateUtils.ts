@@ -6,13 +6,13 @@ export type DateLike = Date | Timestamp | string | number | null | undefined;
 
 export const toDate = (val: DateLike): Date | null => {
   if (!val) return null;
-  
+
   if (val instanceof Date) {
     return isNaN(val.getTime()) ? null : val;
   }
-  
+
   if (val instanceof Timestamp) return val.toDate();
-  
+
   if (typeof val === 'object' && val !== null && 'seconds' in (val as object)) {
     return new Date((val as { seconds: number }).seconds * 1000);
   }
@@ -51,7 +51,7 @@ export const formatRelativeTime = (date: DateLike): string => {
   }
 
   const timeStr = formatDistanceToNow(d, { locale: vi });
-  
+
   // Chuẩn hóa thành cụm từ ngắn gọn
   return timeStr
     .replace('khoảng ', '')
@@ -66,7 +66,7 @@ export const formatChatTime = (date: DateLike): string => {
 
   if (isToday(d)) return format(d, 'HH:mm');
   if (isYesterday(d)) return 'Hôm qua';
-  
+
   if (differenceInDays(new Date(), d) < 7) {
     return format(d, 'eeee', { locale: vi });
   }
@@ -80,7 +80,7 @@ export const formatStatusTime = (date: DateLike): string => {
   if (!d) return '';
 
   const now = new Date();
-  
+
   if (differenceInDays(now, d) >= 7) {
     return `Hoạt động ngày ${format(d, 'dd/MM/yyyy')}`;
   }
@@ -104,7 +104,7 @@ export const formatTimeOnly = (date: DateLike): string => {
 };
 
 // Ngày sinh dạng "01 tháng 1 2000"
-export const formatBirthDate = (date: DateLike): string => {
+export const formatDob = (date: DateLike): string => {
   const d = toDate(date);
   if (!d) return '';
   return format(d, 'dd MMMM yyyy', { locale: vi });

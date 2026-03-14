@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Ban,
   UserCheck,
@@ -6,23 +6,31 @@ import {
   Key,
   Moon,
   Sun,
+  MessageCircle,
+  Phone,
+  EyeOff,
+  Settings2,
+  Eye,
+  Globe,
+  Users,
+  Lock,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { useThemeStore } from '../store/themeStore';
 import { useUserCache } from '../store/userCacheStore';
 import { useLoadingStore } from '../store/loadingStore';
-import { User } from '../types';
-import { UserAvatar, ConfirmDialog, Button, Skeleton } from '../components/ui';
+import { User, BlockOptions, UserSettings, Visibility, BlockedUserEntry } from '../types';
+import { UserAvatar, ConfirmDialog, Button, Skeleton, BlockOptionsModal, Dropdown, DropdownItem } from '../components/ui';
 import { CONFIRM_MESSAGES } from '../constants';
 import ChangePasswordModal from '../components/settings/ChangePasswordModal';
 import { userService } from '../services/userService';
-import { friendService } from '../services/friendService';
 
-type SettingSection = 'appearance' | 'security' | 'blocked';
+type SettingSection = 'appearance' | 'privacy' | 'security' | 'blocked';
 
 const BASE_MENU_ITEMS: { id: SettingSection; label: string; icon: React.ReactNode; adminOnly?: boolean }[] = [
   { id: 'appearance', label: 'Giao diện', icon: <Moon size={20} /> },
+  { id: 'privacy', label: 'Quyền riêng tư', icon: <Eye size={20} /> },
   { id: 'security', label: 'Bảo mật', icon: <Shield size={20} /> },
   { id: 'blocked', label: 'Người dùng đã chặn', icon: <Ban size={20} /> },
 ];
@@ -69,6 +77,29 @@ const SettingItem = React.memo(({
   </div>
 ));
 
+// Tag hiển thị options đang active
+const BlockOptionTags: React.FC<{ options: BlockOptions }> = ({ options }) => {
+  const tags: { icon: React.ReactNode; label: string }[] = [];
+  if (options.blockMessages) tags.push({ icon: <MessageCircle size={10} />, label: 'Tin nhắn' });
+  if (options.blockCalls) tags.push({ icon: <Phone size={10} />, label: 'Gọi điện' });
+  if (options.blockViewMyActivity || options.hideTheirActivity) tags.push({ icon: <EyeOff size={10} />, label: 'Nhật ký' });
+
+  return (
+    <div className="flex gap-1 flex-wrap mt-1">
+      {tags.map(t => (
+        <span key={t.label} className="flex items-center gap-1 text-[10px] text-text-tertiary bg-bg-secondary px-1.5 py-0.5 rounded-full border border-border-light">
+          {t.icon} {t.label}
+        </span>
+      ))}
+    </div>
+  );
+};
+
+interface BlockedUserWithOptions {
+  user: User;
+  options: BlockedUserEntry;
+}
+
 const SettingsPage: React.FC = () => {
   const navigate = useNavigate();
   const { user: currentUser } = useAuthStore();
@@ -76,52 +107,77 @@ const SettingsPage: React.FC = () => {
   const { users: userCache, fetchUsers } = useUserCache();
 
   const [activeSection, setActiveSection] = useState<SettingSection>('appearance');
-  const [blockedUsers, setBlockedUsers] = useState<User[]>([]);
+  const [blockedList, setBlockedList] = useState<BlockedUserWithOptions[]>([]);
+  const [settings, setSettings] = useState<UserSettings | null>(null);
   const setLoading = useLoadingStore(state => state.setLoading);
   const isLoading = useLoadingStore(state => state.loadingStates['settings']);
   const [unblockUserId, setUnblockUserId] = useState<string | null>(null);
   const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
+  const [manageBlockTarget, setManageBlockTarget] = useState<BlockedUserWithOptions | null>(null);
 
-  const isAdmin = currentUser?.role === 'admin';
+  const isAdmin = !!currentUser;
   const MENU_ITEMS = BASE_MENU_ITEMS.filter(item => !item.adminOnly || isAdmin);
 
-  useEffect(() => {
-    const loadBlockedUsers = async () => {
-      if (!currentUser) return;
+  const loadSettings = useCallback(async () => {
+    if (!currentUser) return;
+    try {
+      const data = await userService.getUserSettings(currentUser.id);
+      setSettings(data);
+    } catch (error) {
+      console.error("Lỗi load settings", error);
+    }
+  }, [currentUser?.id]);
 
-      try {
-        const blockedIds = await userService.getBlockedUserIds(currentUser.id);
-        if (blockedIds.length === 0) {
-          setBlockedUsers([]);
-          setLoading('settings', false);
-          return;
-        }
-        await fetchUsers(blockedIds);
-        const users = blockedIds.map(id => userCache[id]).filter((u): u is User => !!u);
-        setBlockedUsers(users);
-      } finally {
-        setLoading('settings', false);
+  const loadBlockedUsers = useCallback(async () => {
+    if (!currentUser) return;
+    try {
+      const blockedMap = await userService.getBlockedUsers(currentUser.id);
+      const ids = Object.keys(blockedMap);
+      if (ids.length === 0) {
+        setBlockedList([]);
+        return;
       }
-    };
-
-    loadBlockedUsers();
+      await fetchUsers(ids);
+      const list: BlockedUserWithOptions[] = ids
+        .map(id => {
+          const user = userCache[id];
+          if (!user) return null;
+          return { user, options: blockedMap[id] };
+        })
+        .filter((item): item is BlockedUserWithOptions => !!item);
+      setBlockedList(list);
+    } finally {
+      setLoading('settings', false);
+    }
   }, [currentUser?.id, fetchUsers]);
 
   useEffect(() => {
-    if (!currentUser) return;
+    loadSettings();
+    loadBlockedUsers();
+  }, [loadSettings, loadBlockedUsers]);
 
-    userService.getBlockedUserIds(currentUser.id).then(blockedIds => {
-      const users = blockedIds.map(id => userCache[id]).filter((u): u is User => !!u);
-      setBlockedUsers(users);
+  // Cập nhật lại khi userCache thay đổi
+  useEffect(() => {
+    if (!currentUser) return;
+    userService.getBlockedUsers(currentUser.id).then(blockedMap => {
+      const ids = Object.keys(blockedMap);
+      const list: BlockedUserWithOptions[] = ids
+        .map(id => {
+          const user = userCache[id];
+          if (!user) return null;
+          return { user, options: blockedMap[id] };
+        })
+        .filter((item): item is BlockedUserWithOptions => !!item);
+      setBlockedList(list);
     });
   }, [userCache, currentUser?.id]);
 
   const handleUnblock = async () => {
     if (!unblockUserId || !currentUser) return;
-
     try {
       await userService.unblockUser(currentUser.id, unblockUserId);
-      setBlockedUsers(prev => prev.filter(u => u.id !== unblockUserId));
+      useAuthStore.getState().updateBlockEntry('remove', unblockUserId);
+      setBlockedList(prev => prev.filter(item => item.user.id !== unblockUserId));
     } catch (error) {
       console.error("Lỗi bỏ chặn", error);
     } finally {
@@ -129,7 +185,15 @@ const SettingsPage: React.FC = () => {
     }
   };
 
-  // Render section content
+  const handleUpdateBlockOptions = async (options: BlockOptions) => {
+    if (!manageBlockTarget || !currentUser) return;
+    await userService.blockUser(currentUser.id, manageBlockTarget.user.id, options);
+    useAuthStore.getState().updateBlockEntry('add', manageBlockTarget.user.id, options);
+    setBlockedList(prev => prev.map(item =>
+      item.user.id === manageBlockTarget.user.id ? { ...item, options: { ...item.options, ...options } } : item
+    ));
+  };
+
   const renderContent = () => {
     switch (activeSection) {
       case 'appearance':
@@ -141,6 +205,98 @@ const SettingsPage: React.FC = () => {
               description={mode === 'dark' ? 'Đang bật' : 'Đang tắt'}
               action={<Toggle enabled={mode === 'dark'} onToggle={toggleTheme} />}
             />
+          </div>
+        );
+      case 'privacy':
+        if (!settings) return <Skeleton height={200} />;
+        return (
+          <div className="space-y-4">
+            <SettingItem
+              icon={<Eye size={20} />}
+              title="Trạng thái online"
+              description="Cho phép người khác thấy bạn đang hoạt động"
+              action={
+                <Toggle
+                  enabled={settings.showOnlineStatus}
+                  onToggle={async () => {
+                    const newValue = !settings.showOnlineStatus;
+                    setSettings({ ...settings, showOnlineStatus: newValue });
+                    await userService.updateUserSettings(currentUser!.id, { showOnlineStatus: newValue });
+                  }}
+                />
+              }
+            />
+            <SettingItem
+              icon={<MessageCircle size={20} />}
+              title="Thông báo đã xem"
+              description="Cho phép người khác biết khi bạn đã xem tin nhắn"
+              action={
+                <Toggle
+                  enabled={settings.showReadReceipts}
+                  onToggle={async () => {
+                    const newValue = !settings.showReadReceipts;
+                    setSettings({ ...settings, showReadReceipts: newValue });
+                    await userService.updateUserSettings(currentUser!.id, { showReadReceipts: newValue });
+                  }}
+                />
+              }
+            />
+            <div className="p-4 bg-bg-primary rounded-xl border-2 border-border-light">
+              <div className="flex items-center gap-4 mb-3">
+                <div className="p-2 bg-primary-light rounded-lg text-primary">
+                  <Globe size={20} />
+                </div>
+                <div>
+                  <h3 className="font-medium text-text-primary">Quyền riêng tư bài viết mặc định</h3>
+                  <p className="text-sm text-text-tertiary">Áp dụng cho các bài viết mới của bạn</p>
+                </div>
+              </div>
+              <Dropdown
+                align="left"
+                className="w-full"
+                matchTriggerWidth
+                trigger={
+                  <div className="flex items-center justify-between w-full px-4 py-2.5 bg-bg-secondary rounded-xl border border-border-light hover:bg-bg-hover transition-all duration-base cursor-pointer">
+                    <div className="flex items-center gap-3">
+                      {settings.defaultPostVisibility === Visibility.PUBLIC && <Globe size={16} className="text-primary" />}
+                      {settings.defaultPostVisibility === Visibility.FRIENDS && <Users size={16} className="text-primary" />}
+                      {settings.defaultPostVisibility === Visibility.PRIVATE && <Lock size={16} className="text-primary" />}
+                      <span className="text-sm font-medium text-text-primary">
+                        {settings.defaultPostVisibility === Visibility.PUBLIC && 'Công khai'}
+                        {settings.defaultPostVisibility === Visibility.FRIENDS && 'Bạn bè'}
+                        {settings.defaultPostVisibility === Visibility.PRIVATE && 'Chỉ mình tôi'}
+                      </span>
+                    </div>
+                    <Settings2 size={14} className="text-text-tertiary" />
+                  </div>
+                }
+              >
+                <DropdownItem
+                  icon={<Globe size={16} />}
+                  label="Công khai"
+                  onClick={async () => {
+                    setSettings({ ...settings, defaultPostVisibility: Visibility.PUBLIC });
+                    await userService.updateUserSettings(currentUser!.id, { defaultPostVisibility: Visibility.PUBLIC });
+                  }}
+                />
+                <DropdownItem
+                  icon={<Users size={16} />}
+                  label="Bạn bè"
+                  onClick={async () => {
+                    setSettings({ ...settings, defaultPostVisibility: Visibility.FRIENDS });
+                    await userService.updateUserSettings(currentUser!.id, { defaultPostVisibility: Visibility.FRIENDS });
+                  }}
+                />
+                <DropdownItem
+                  icon={<Lock size={16} />}
+                  label="Chỉ mình tôi"
+                  onClick={async () => {
+                    setSettings({ ...settings, defaultPostVisibility: Visibility.PRIVATE });
+                    await userService.updateUserSettings(currentUser!.id, { defaultPostVisibility: Visibility.PRIVATE });
+                  }}
+                />
+              </Dropdown>
+            </div>
           </div>
         );
       case 'security':
@@ -171,46 +327,52 @@ const SettingsPage: React.FC = () => {
                   </div>
                 ))}
               </div>
-            ) : blockedUsers.length === 0 ? (
+            ) : blockedList.length === 0 ? (
               <div className="text-center py-12 text-text-tertiary bg-bg-primary rounded-xl border-2 border-border-light">
                 <Ban size={48} className="mx-auto mb-3 opacity-30" />
                 <p>Chưa có người dùng nào bị chặn</p>
               </div>
             ) : (
               <div className="bg-bg-primary rounded-xl border-2 border-border-light overflow-hidden">
-                {blockedUsers.map(user => (
+                {blockedList.map(({ user, options }) => (
                   <div
                     key={user.id}
                     className="flex items-center gap-3 p-3 border-b border-border-light last:border-b-0"
                   >
                     <UserAvatar
                       userId={user.id}
-                      src={user.avatar}
-                      name={user.name}
+                      src={user.avatar.url}
+                      name={user.fullName}
                       size="md"
                     />
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-medium text-text-primary truncate">{user.name}</h3>
-                      <p className="text-sm text-text-tertiary truncate">
-                        @{user.email?.split('@')[0]}
-                      </p>
+                      <h3 className="font-medium text-text-primary truncate">{user.fullName}</h3>
+                      <BlockOptionTags options={options} />
                     </div>
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      onClick={() => setUnblockUserId(user.id)}
-                      icon={<UserCheck size={16} />}
-                    >
-                      Bỏ chặn
-                    </Button>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => setManageBlockTarget({ user, options })}
+                        icon={<Settings2 size={14} />}
+                      >
+                        Chỉnh sửa
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => setUnblockUserId(user.id)}
+                        icon={<UserCheck size={16} />}
+                      >
+                        Bỏ chặn
+                      </Button>
+                    </div>
                   </div>
                 ))}
               </div>
             )}
           </div>
         );
-
-
 
       default:
         return null;
@@ -237,9 +399,9 @@ const SettingsPage: React.FC = () => {
             >
               {item.icon}
               <span className="font-medium">{item.label}</span>
-              {item.id === 'blocked' && blockedUsers.length > 0 && (
+              {item.id === 'blocked' && blockedList.length > 0 && (
                 <span className="ml-auto text-xs bg-bg-secondary px-2 py-0.5 rounded-full border-2 border-border-light">
-                  {blockedUsers.length}
+                  {blockedList.length}
                 </span>
               )}
             </div>
@@ -287,9 +449,20 @@ const SettingsPage: React.FC = () => {
         onClose={() => setUnblockUserId(null)}
         onConfirm={handleUnblock}
         title={CONFIRM_MESSAGES.FRIEND.UNBLOCK.TITLE}
-        message={CONFIRM_MESSAGES.FRIEND.UNBLOCK.MESSAGE(blockedUsers.find(u => u.id === unblockUserId)?.name || 'người này')}
+        message={CONFIRM_MESSAGES.FRIEND.UNBLOCK.MESSAGE(blockedList.find(item => item.user.id === unblockUserId)?.user.fullName || 'người này')}
         confirmLabel={CONFIRM_MESSAGES.FRIEND.UNBLOCK.CONFIRM}
       />
+
+      {manageBlockTarget && (
+        <BlockOptionsModal
+          isOpen
+          targetName={manageBlockTarget.user.fullName}
+          initialOptions={manageBlockTarget.options}
+          onApply={handleUpdateBlockOptions}
+          onClose={() => setManageBlockTarget(null)}
+        />
+      )}
+
       <ChangePasswordModal
         isOpen={isChangePasswordOpen}
         onClose={() => setIsChangePasswordOpen(false)}

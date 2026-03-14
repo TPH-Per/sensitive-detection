@@ -3,11 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { ChevronDown, ChevronRight, Ellipsis, Flag, PenTool, Pencil, Trash2 } from 'lucide-react';
 import { UserAvatar, LazyImage, Skeleton, ReactionSelector, ReactionDisplay, ReactionDetailsModal, Dropdown, DropdownItem } from '../../ui';
 import { CommentInput } from './CommentInput';
-import { Comment, User, ReactionType, ReportType } from '../../../types';
+import { Comment, User, ReactionType, ReportType, MediaObject } from '../../../types';
 import { formatRelativeTime, formatDateTime } from '../../../utils/dateUtils';
 import { TruncatedText } from '../shared';
 import { useCommentStore } from '../../../store/commentStore';
-import { useFriendIds } from '../../../hooks';
+import { useFriendIds, useFilteredReactions } from '../../../hooks';
+import { REACTION_LABELS } from '../../../constants';
 
 interface CommentItemProps {
   comment: Comment;
@@ -25,14 +26,13 @@ interface CommentItemProps {
   rootAuthorId?: string;
   handleReplyClick: (comment: Comment) => void;
   handleEditClick: (comment: Comment) => void;
-  handleCommentSubmit: (content: string, image?: string) => Promise<void>;
+  handleCommentSubmit: (content: string, image?: MediaObject) => Promise<void>;
   handleDeleteClick: (comment: Comment) => void;
-  handleUploadMedia: (file: File) => Promise<string | undefined>;
+  handleUploadMedia: (file: File) => Promise<MediaObject | undefined>;
   loadReplies: (parentId: string) => Promise<void>;
   resetInput: () => void;
   onProfileClick?: () => void;
   openReportModal: (type: ReportType, id: string, userId: string) => void;
-  onViewReactions?: (reactions: Record<string, string>) => void;
 }
 
 const CommentItemInner: React.FC<CommentItemProps> = ({
@@ -57,8 +57,7 @@ const CommentItemInner: React.FC<CommentItemProps> = ({
   loadReplies,
   resetInput,
   onProfileClick,
-  openReportModal,
-  onViewReactions
+  openReportModal
 }) => {
   const navigate = useNavigate();
   const { reactToComment } = useCommentStore();
@@ -67,7 +66,7 @@ const CommentItemInner: React.FC<CommentItemProps> = ({
   const [showReactions, setShowReactions] = useState(false);
   const [showReactionDetails, setShowReactionDetails] = useState(false);
 
-  const author = users[comment.userId];
+  const author = users[comment.authorId];
   const commentReplies = replies[comment.id] || [];
   const hasMoreR = hasMoreReply[comment.id];
   const isLoadingR = isLoadingReplyMap[comment.id];
@@ -75,16 +74,21 @@ const CommentItemInner: React.FC<CommentItemProps> = ({
   const isReplying = activeInputId === comment.id && inputMode === 'reply';
 
   const onProfileNavigate = useCallback(() => {
-    if (comment.userId) {
+    if (comment.authorId) {
       onProfileClick?.();
-      navigate(`/profile/${comment.userId}`);
+      navigate(`/profile/${comment.authorId}`);
     }
-  }, [comment.userId, onProfileClick, navigate]);
+  }, [comment.authorId, onProfileClick, navigate]);
 
-  const myReaction = useCommentStore(state => state.myCommentReactions[comment.id]);
-  const reactionCount = comment.reactionCount;
+  const myReaction = useCommentStore(state => state.myCommentReactions[comment.id] as ReactionType | null);
+  
+  const { filteredSummary, filteredCount } = useFilteredReactions(
+    comment.id,
+    'comment',
+    comment.authorId
+  );
 
-  const handleReact = useCallback((reaction: string | ReactionType) => {
+  const handleReact = useCallback((reaction: ReactionType | 'REMOVE') => {
     reactToComment(postId, comment.id, currentUser.id, reaction, comment.parentId);
     setShowReactions(false);
   }, [postId, comment.id, comment.parentId, currentUser.id, reactToComment]);
@@ -92,7 +96,7 @@ const CommentItemInner: React.FC<CommentItemProps> = ({
   return (
     <div className={`${isReply ? 'ml-2 mt-2' : 'mt-4 px-4'} animate-in fade-in slide-in-from-top-1`}>
       <div className="flex gap-3">
-        <UserAvatar userId={comment.userId} src={author?.avatar} name={author?.name} size={isReply ? 'xs' : 'sm'} onClick={onProfileNavigate} />
+        <UserAvatar userId={comment.authorId} src={author?.avatar.url} name={author?.fullName} size={isReply ? 'xs' : 'sm'} onClick={onProfileNavigate} />
         <div className="flex-1 min-w-0">
           <div className="flex items-start gap-1.5 group/comment">
             <div className="relative inline-block max-w-full">
@@ -105,27 +109,28 @@ const CommentItemInner: React.FC<CommentItemProps> = ({
                     className="font-bold text-[13px] text-text-primary whitespace-nowrap truncate cursor-pointer hover:underline leading-none min-w-0"
                     onClick={onProfileNavigate}
                   >
-                    {author?.name
-                      ? author.name
+                    {author?.fullName
+                      ? author.fullName
                       : <Skeleton width={80} height={12} className="opacity-60" />}
                   </h4>
-                  {comment.userId === postOwnerId && (
+                  {comment.authorId === postOwnerId && (
                     <span className="bg-primary/10 text-primary text-[10px] px-1.5 py-0.5 rounded-md font-bold flex-shrink-0 leading-none mt-[1px] flex items-center gap-0.5">
                       <PenTool size={10} className="stroke-[2.5px]" />
                       Tác giả
                     </span>
                   )}
-                  {isReply && comment.replyToUserId && users[comment.replyToUserId] && (comment.replyToUserId !== rootAuthorId || comment.replyToUserId === comment.userId) && (
+                  {isReply && comment.parentId && users[comment.parentId] && (comment.parentId !== rootAuthorId || comment.parentId === comment.authorId) && (
                     <>
                       <ChevronRight size={12} className="text-text-tertiary flex-shrink-0 mx-0.5" />
                       <h4
                         className="font-bold text-[13px] text-text-primary whitespace-nowrap truncate cursor-pointer hover:underline"
                         onClick={() => {
                           onProfileClick?.();
-                          navigate(`/profile/${comment.replyToUserId}`);
+                          const parentUser = users[comment.parentId!];
+                          if (parentUser) navigate(`/profile/${parentUser.id}`);
                         }}
                       >
-                        {users[comment.replyToUserId].name}
+                        {users[comment.parentId!]?.fullName}
                       </h4>
                     </>
                   )}
@@ -134,7 +139,11 @@ const CommentItemInner: React.FC<CommentItemProps> = ({
                 {isEditing ? (
                   <div className="mt-2 min-w-[200px] md:min-w-[300px]">
                     <CommentInput
-                      user={currentUser}
+                      user={{
+                        id: currentUser.id,
+                        fullName: currentUser.fullName,
+                        avatar: currentUser.avatar
+                      }}
                       initialValue={comment.content}
                       initialImage={comment.image}
                       onSubmit={handleCommentSubmit}
@@ -154,7 +163,11 @@ const CommentItemInner: React.FC<CommentItemProps> = ({
                     </div>
                     {comment.image && (
                       <div className="mt-3 rounded-xl overflow-hidden bg-bg-primary/50">
-                        <LazyImage src={comment.image} className="max-h-60 w-full object-contain" alt="attach" />
+                        <LazyImage
+                          src={comment.image.url}
+                          className={`max-h-60 w-full object-contain ${comment.image.isSensitive ? 'blur-md' : ''}`}
+                          alt="attach"
+                        />
                       </div>
                     )}
                   </>
@@ -176,13 +189,13 @@ const CommentItemInner: React.FC<CommentItemProps> = ({
                   align="right"
                   menuClassName="z-[var(--z-popover)]"
                 >
-                  {comment.userId === currentUser.id ? (
+                  {comment.authorId === currentUser.id ? (
                     <>
                       <DropdownItem icon={<Pencil size={14} />} label="Chỉnh sửa" onClick={() => handleEditClick(comment)} />
                       <DropdownItem icon={<Trash2 size={14} />} label="Xóa" variant="danger" onClick={() => handleDeleteClick(comment)} />
                     </>
                   ) : (
-                    <DropdownItem icon={<Flag size={14} />} label="Báo cáo" onClick={() => openReportModal(ReportType.COMMENT, comment.id, comment.userId)} />
+                    <DropdownItem icon={<Flag size={14} />} label="Báo cáo" onClick={() => openReportModal(ReportType.COMMENT, comment.id, comment.authorId)} />
                   )}
                 </Dropdown>
               </div>
@@ -208,14 +221,14 @@ const CommentItemInner: React.FC<CommentItemProps> = ({
                   onClick={() => handleReact(myReaction ? 'REMOVE' : ReactionType.LIKE)}
                   className={`hover:underline active:underline transition-all duration-base cursor-pointer ${myReaction ? 'text-primary' : ''}`}
                 >
-                  Thích
+                  {myReaction ? REACTION_LABELS[myReaction] : 'Thích'}
                 </button>
               </div>
               <button onClick={() => handleReplyClick(comment)} className="hover:underline active:underline transition-all duration-base cursor-pointer">Trả lời</button>
-              {reactionCount > 0 && (
+              {filteredCount > 0 && (
                 <ReactionDisplay
-                  reactionSummary={comment.reactionSummary}
-                  reactionCount={reactionCount}
+                  reactionSummary={filteredSummary}
+                  reactionCount={filteredCount}
                   variant="minimal"
                   onClick={() => setShowReactionDetails(true)}
                 />
@@ -226,8 +239,12 @@ const CommentItemInner: React.FC<CommentItemProps> = ({
           {isReplying && (
             <div className="mt-3 pl-2">
               <CommentInput
-                user={currentUser}
-                placeholder={`Trả lời ${author?.name}...`}
+                user={{
+                  id: currentUser.id,
+                  fullName: currentUser.fullName,
+                  avatar: currentUser.avatar
+                }}
+                placeholder={`Trả lời ${author?.fullName}...`}
                 onSubmit={handleCommentSubmit}
                 onCancel={resetInput}
                 onUploadMedia={handleUploadMedia}
@@ -262,7 +279,7 @@ const CommentItemInner: React.FC<CommentItemProps> = ({
                         activeInputId={activeInputId}
                         inputMode={inputMode}
                         isReply
-                        rootAuthorId={comment.userId}
+                        rootAuthorId={comment.authorId}
                         handleReplyClick={handleReplyClick}
                         handleEditClick={handleEditClick}
                         handleCommentSubmit={handleCommentSubmit}
@@ -272,7 +289,6 @@ const CommentItemInner: React.FC<CommentItemProps> = ({
                         resetInput={resetInput}
                         onProfileClick={onProfileClick}
                         openReportModal={openReportModal}
-                        onViewReactions={onViewReactions}
                       />
                     ))}
                   </div>
@@ -292,13 +308,14 @@ const CommentItemInner: React.FC<CommentItemProps> = ({
         </div>
       </div>
 
-      {showReactionDetails && reactionCount > 0 && (
+      {showReactionDetails && filteredCount > 0 && (
         <ReactionDetailsModal
           isOpen={showReactionDetails}
           onClose={() => setShowReactionDetails(false)}
           sourceId={comment.id}
           sourceType="comment"
           currentUserId={currentUser.id}
+          authorId={comment.authorId}
           context="POST"
           friendsIds={friendIds}
         />

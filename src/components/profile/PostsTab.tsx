@@ -33,10 +33,11 @@ export const PostsTab: React.FC<PostsTabProps> = ({ userId, currentUser }) => {
 
   const handleDelete = async () => {
     if (!postToDelete) return;
-    
+
     try {
       const post = posts.find(p => p.id === postToDelete);
-      await performDelete(postToDelete, post?.images);
+      const mediaUrls = post?.media?.map(m => m.url) || [];
+      await performDelete(postToDelete, mediaUrls);
       setPostToDelete(null);
     } catch (error) {
       console.error("Lỗi xóa post", error);
@@ -63,7 +64,7 @@ export const PostsTab: React.FC<PostsTabProps> = ({ userId, currentUser }) => {
       <div className="bg-bg-primary rounded-lg shadow-sm border border-border-light p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-theme">
         <h3 className="font-bold text-lg text-text-primary">Bài viết</h3>
       </div>
-      
+
       {posts.length === 0 ? (
         <div className="bg-bg-primary rounded-lg shadow-sm border border-border-light p-8 text-center transition-theme">
           <FileText size={48} className="mx-auto mb-3 text-text-secondary" />
@@ -75,22 +76,22 @@ export const PostsTab: React.FC<PostsTabProps> = ({ userId, currentUser }) => {
             <PostItem
               key={post.id}
               post={post}
-              author={users[post.userId]}
+              author={users[post.authorId]}
               currentUser={currentUser}
               onReact={handleReact}
-              onEdit={() => {}}
+              onEdit={() => { }}
               onDelete={(id) => setPostToDelete(id)}
               onViewDetail={(post) => setSelectedPost(post)}
             />
           ))}
-          
+
           <div ref={observerRef} className="h-4 w-full" />
           {loadingMore && (
-             <div className="space-y-4 mt-4">
-               {[...Array(2)].map((_, i) => (
-                 <PostItem.Skeleton key={`more-${i}`} />
-               ))}
-             </div>
+            <div className="space-y-4 mt-4">
+              {[...Array(2)].map((_, i) => (
+                <PostItem.Skeleton key={`more-${i}`} />
+              ))}
+            </div>
           )}
         </>
       )}

@@ -114,10 +114,10 @@ export const Select: React.FC<SelectProps> = ({
               position: 'fixed'
             }}
             className={`
-              z-[var(--z-popover)] bg-bg-primary border border-border-light rounded-xl shadow-dropdown py-1.5 transition-all animate-in fade-in zoom-in-95 duration-base
+              z-[var(--z-popover)] bg-bg-primary border border-border-light rounded-xl shadow-dropdown overflow-hidden transition-all animate-in fade-in zoom-in-95 duration-base
             `}
           >
-            <div className="max-h-60 overflow-y-auto custom-scrollbar">
+            <div className="max-h-60 overflow-y-auto overflow-x-hidden custom-scrollbar rounded-inherit">
               {options.map((option) => (
                 <button
                   key={option.value}

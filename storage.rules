@@ -3,72 +3,104 @@ rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
 
-    // Avatar người dùng - chủ sở hữu ghi, mọi người đọc
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isValidImage() {
+      return request.resource.contentType.matches('image/.*');
+    }
+
+    function isValidVideo() {
+      return request.resource.contentType.matches('video/.*');
+    }
+
+    function isValidFile() {
+      return request.resource.contentType.matches('image/.*') ||
+             request.resource.contentType.matches('video/.*') ||
+             request.resource.contentType.matches('audio/.*') ||
+             request.resource.contentType.matches('application/.*') ||
+             request.resource.contentType.matches('text/.*');
+    }
+
+    // Avatar người dùng - MediaObject (max 5MB)
     match /avatars/{userId}/{allPaths=**} {
       allow read: if true;
-      allow write: if request.auth != null && request.auth.uid == userId
+      allow write: if isOwner(userId)
                    && request.resource.size < 5 * 1024 * 1024
-                   && request.resource.contentType.matches('image/.*');
-      allow delete: if request.auth != null && request.auth.uid == userId;
+                   && isValidImage();
+      allow delete: if isOwner(userId);
     }
 
-    // Ảnh bìa - chủ sở hữu ghi, mọi người đọc
+    // Ảnh bìa - MediaObject (max 10MB)
     match /covers/{userId}/{allPaths=**} {
       allow read: if true;
-      allow write: if request.auth != null && request.auth.uid == userId
+      allow write: if isOwner(userId)
                    && request.resource.size < 10 * 1024 * 1024
-                   && request.resource.contentType.matches('image/.*');
-      allow delete: if request.auth != null && request.auth.uid == userId;
+                   && isValidImage();
+      allow delete: if isOwner(userId);
     }
 
-    // Media bài viết (ảnh + video) - chủ sở hữu ghi, mọi người đọc
+    // Media bài viết - MediaObject[] (max 50MB per file)
     match /posts/{userId}/{allPaths=**} {
       allow read: if true;
-      allow write: if request.auth != null && request.auth.uid == userId
-                   && request.resource.size < 50 * 1024 * 1024;
-      allow delete: if request.auth != null && request.auth.uid == userId;
+      allow write: if isOwner(userId)
+                   && request.resource.size < 50 * 1024 * 1024
+                   && (isValidImage() || isValidVideo());
+      allow delete: if isOwner(userId);
     }
 
-    // Ảnh bình luận - người đã đăng nhập ghi, mọi người đọc
+    // Ảnh bình luận - MediaObject (max 5MB)
     match /comments/{userId}/{allPaths=**} {
       allow read: if true;
-      allow write: if request.auth != null && request.auth.uid == userId
+      allow write: if isOwner(userId)
                    && request.resource.size < 5 * 1024 * 1024
-                   && request.resource.contentType.matches('image/.*');
-      allow delete: if request.auth != null && request.auth.uid == userId;
+                   && isValidImage();
+      allow delete: if isOwner(userId);
     }
 
-    // File chat - người đã đăng nhập ghi/đọc
+    // File chat - MediaObject[] (max 50MB per file)
+    // Bao gồm: images, videos, files, voice messages
+    // Pattern hỗ trợ: chats/{convId}/{timestamp}_{filename}
+    // convId có thể là: direct_{uid1}_{uid2} hoặc group_{groupId}
     match /chats/{conversationId}/{allPaths=**} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null
-                   && request.resource.size < 50 * 1024 * 1024;
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated()
+                   && request.resource.size < 50 * 1024 * 1024
+                   && isValidFile();
+      allow delete: if isAuthenticated();
     }
 
-    // Avatar nhóm - người đã đăng nhập ghi, mọi người đọc
+    // Avatar nhóm - MediaObject (max 5MB)
     match /group-avatars/{conversationId}/{allPaths=**} {
       allow read: if true;
-      allow write: if request.auth != null
+      allow write: if isAuthenticated()
                    && request.resource.size < 5 * 1024 * 1024
-                   && request.resource.contentType.matches('image/.*');
+                   && isValidImage();
+      allow delete: if isAuthenticated();
     }
 
-    // Ảnh báo cáo - người đã đăng nhập ghi/đọc
+    // Ảnh báo cáo - MediaObject[] (max 5MB per image, max 5 images)
     match /reports/{userId}/{allPaths=**} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null && request.auth.uid == userId
+      allow read: if isAuthenticated();
+      allow write: if isOwner(userId)
                    && request.resource.size < 5 * 1024 * 1024
-                   && request.resource.contentType.matches('image/.*');
-      allow delete: if request.auth != null && request.auth.uid == userId;
+                   && isValidImage();
+      allow delete: if isOwner(userId);
     }
 
-    // Video thumbnails - client ghi (extract frame), mọi người đọc
+    // Video thumbnails - MediaObject (max 2MB)
     match /thumbnails/{allPaths=**} {
       allow read: if true;
-      allow write: if request.auth != null
+      allow write: if isAuthenticated()
                    && request.resource.size < 2 * 1024 * 1024
-                   && request.resource.contentType.matches('image/.*');
-      allow delete: if request.auth != null;
+                   && isValidImage();
+      allow delete: if isAuthenticated();
     }
   }
 }

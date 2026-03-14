@@ -1,19 +1,17 @@
 import { useMemo } from 'react';
-import { Conversation, LastMessagePreview, User, UserStatus } from '../../types';
-import { formatChatTime, toDate } from '../../utils/dateUtils';
-import { getLastName } from '../../utils/uiUtils';
+import { RtdbConversation, User, RtdbUserChat } from '../../types';
+import { formatChatTime } from '../../utils/dateUtils';
 import { useUserCache } from '../../store/userCacheStore';
 import { useConversationParticipants } from './useConversationParticipants';
-import { useChatStore } from '../../store/chatStore';
 
 interface UseConversationItemProps {
-  conversation: Conversation;
+  conversation: { id: string; data: RtdbConversation; userChat: RtdbUserChat };
   currentUserId: string;
   isActive: boolean;
   currentUserFriendIds: string[];
 }
 
-// Logic dữ liệu cho từng hội thoại
+// Logic dữ liệu cho từng hội thoại (RTDB version)
 export const useConversationItem = ({
   conversation,
   currentUserId,
@@ -22,14 +20,14 @@ export const useConversationItem = ({
 }: UseConversationItemProps) => {
 
   const { users: usersMap } = useUserCache();
-  const participants = useConversationParticipants(conversation.participantIds);
-  const memberSettings = useChatStore(state => state.memberSettings[conversation.id] ?? null);
+  const participantIds = Object.keys(conversation.data.members);
+  const participants = useConversationParticipants(participantIds);
 
   const partnerId = useMemo(() =>
-    conversation.isGroup
+    conversation.data.isGroup
       ? null
-      : conversation.participantIds.find(id => id !== currentUserId),
-    [conversation, currentUserId]
+      : participantIds.find(id => id !== currentUserId),
+    [conversation.data.isGroup, participantIds, currentUserId]
   );
 
   const partner = useMemo(() =>
@@ -37,73 +35,57 @@ export const useConversationItem = ({
     [partnerId, usersMap, participants]
   );
 
-  const isDataMissing = !conversation.isGroup && (!partner || !partner.name);
+  const isDataMissing = !conversation.data.isGroup && (!partner || !partner.fullName);
 
   const chatInfo = useMemo(() => ({
-    name: conversation.isGroup ? conversation.groupName || 'Nhóm chưa đặt tên' : partner?.name || '',
-    avatar: conversation.isGroup ? conversation.groupAvatar : partner?.avatar,
+    name: conversation.data.isGroup ? conversation.data.name || 'Nhóm chưa đặt tên' : partner?.fullName || '',
+    avatar: conversation.data.isGroup ? conversation.data.avatar : partner?.avatar,
     status: partner?.status
-  }), [conversation, partner]);
+  }), [conversation.data, partner]);
 
   const isMessageRequest = useMemo(() =>
-    !conversation.isGroup && partner && !currentUserFriendIds.includes(partner.id),
-    [conversation.isGroup, partner, currentUserFriendIds]
+    !conversation.data.isGroup && partner && !currentUserFriendIds.includes(partner.id),
+    [conversation.data.isGroup, partner, currentUserFriendIds]
   );
 
-  const unreadCount = memberSettings?.unreadCount || 0;
-  const isUnread = (unreadCount > 0 || memberSettings?.markedUnread) && !isActive;
+  const unreadCount = conversation.userChat?.unreadCount || 0;
+  const isUnread = unreadCount > 0 && !isActive;
 
-  // Lọc tin nhắn theo mốc thời gian
-  const lastMessage = useMemo((): LastMessagePreview | undefined => {
-    const joinedAt = memberSettings?.joinedAt;
-    const deletedAt = memberSettings?.deletedAt;
-
-    let startTime = joinedAt;
-    if (deletedAt && (!startTime || deletedAt.toMillis() > startTime.toMillis())) {
-      startTime = deletedAt;
-    }
-
-    if (!conversation.lastMessage) return undefined;
-    const lastMsgDate = toDate(conversation.lastMessage.createdAt);
-    if (startTime && lastMsgDate && lastMsgDate < toDate(startTime)) return undefined;
-
-    return conversation.lastMessage;
-  }, [conversation, memberSettings]);
+  const lastMessage = conversation.data.lastMessage;
 
   const lastMessagePreview = useMemo(() => {
-    if (!lastMessage) return 'Chưa có tin nhắn';
+    const clearedAt = conversation.userChat?.clearedAt || 0;
+    if (!lastMessage || (lastMessage.timestamp && lastMessage.timestamp <= clearedAt)) {
+      return 'Chưa có tin nhắn';
+    }
 
     let content = lastMessage.content;
-
-    if (lastMessage.reactorId === currentUserId) {
-      const enumEmojiRegex = /^([A-Z_]+)\s+(.+)\s+(đã bày tỏ cảm xúc)$/;
-      const match = content.match(enumEmojiRegex);
-      if (match) {
-        const [_, type, oldName, suffix] = match;
-        content = `${type} Bạn ${suffix}`;
-      }
-    }
 
     if (lastMessage.type === 'text') {
       return content.replace(/@\[([^\]]+)\]/g, '@$1');
     }
     return content;
-  }, [lastMessage, currentUserId]);
+  }, [lastMessage]);
 
-  const readers = useMemo(() =>
-    (lastMessage?.readBy || [])
+  const readers = useMemo(() => {
+    if (!lastMessage || isMessageRequest) return [];
+    const readBy = lastMessage.readBy || {};
+    return Object.keys(readBy)
       .filter(uid => uid !== currentUserId)
       .map(uid => participants.find(p => p.id === uid))
-      .filter((u): u is User => !!u),
-    [lastMessage, participants, currentUserId]
-  );
+      .filter((u): u is User => !!u);
+  }, [lastMessage, participants, currentUserId]);
+
+  const deliveredUsers = useMemo(() => {
+    if (!lastMessage) return [];
+    const deliveredTo = lastMessage.deliveredTo || {};
+    return Object.keys(deliveredTo).filter(uid => uid !== currentUserId);
+  }, [lastMessage, currentUserId]);
 
   const displayTime = useMemo(() => {
-    const time = (!lastMessage && conversation.isGroup && memberSettings?.joinedAt)
-      ? memberSettings.joinedAt
-      : conversation.updatedAt;
-    return time ? formatChatTime(time) : '';
-  }, [lastMessage, conversation, memberSettings]);
+    const time = conversation.data.updatedAt;
+    return time ? formatChatTime(new Date(time)) : '';
+  }, [conversation.data.updatedAt]);
 
   return {
     partner,
@@ -118,7 +100,7 @@ export const useConversationItem = ({
     isLastMessageMine: lastMessage?.senderId === currentUserId,
     readers,
     isLastMessageRead: readers.length > 0,
-    isLastMessageDelivered: !!lastMessage?.deliveredAt,
+    isLastMessageDelivered: deliveredUsers.length > 0,
     displayTime
   };
 };

@@ -1,12 +1,12 @@
 import React, { useState, useMemo } from 'react';
-import { Message, User } from '../../../types';
+import { RtdbMessage, User } from '../../../types';
 import { Search, X, MessageCircle } from 'lucide-react';
 import { formatTimeOnly } from '../../../utils/dateUtils';
 import { Input, IconButton } from '../../ui';
 import { PAGINATION } from '../../../constants';
 
 interface ChatDetailsSearchProps {
-  messages: Message[];
+  messages: Array<{ id: string; data: RtdbMessage }>;
   usersMap: Record<string, User>;
   onMessageClick?: (messageId: string) => void;
 }
@@ -25,11 +25,11 @@ export const ChatDetailsSearch: React.FC<ChatDetailsSearchProps> = ({
     const term = searchTerm.toLowerCase();
     return messages
       .filter((msg) => {
-        const contentMatch = msg.content?.toLowerCase().includes(term);
-        const fileNameMatch = msg.type === 'file' && msg.fileName?.toLowerCase().includes(term);
+        const contentMatch = msg.data.content?.toLowerCase().includes(term);
+        const fileNameMatch = msg.data.type === 'file' && msg.data.media?.[0]?.fileName?.toLowerCase().includes(term);
         return contentMatch || fileNameMatch;
       })
-      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+      .sort((a, b) => b.data.createdAt - a.data.createdAt)
       .slice(0, PAGINATION.MESSAGES);
   }, [messages, searchTerm]);
 
@@ -84,7 +84,7 @@ export const ChatDetailsSearch: React.FC<ChatDetailsSearchProps> = ({
                 Tìm thấy {searchResults.length} tin nhắn
               </p>
               {searchResults.map((msg) => {
-                const sender = usersMap[msg.senderId];
+                const sender = usersMap[msg.data.senderId];
                 return (
                   <button
                     key={msg.id}
@@ -93,20 +93,20 @@ export const ChatDetailsSearch: React.FC<ChatDetailsSearchProps> = ({
                   >
                     <div className="flex items-center justify-between mb-1">
                       <span className="text-xs font-medium text-text-secondary">
-                        {sender?.name || 'Unknown'}
+                        {sender?.fullName || 'Unknown'}
                       </span>
                       <span className="text-xs text-text-tertiary">
-                        {formatTimeOnly(msg.createdAt)}
+                        {formatTimeOnly(msg.data.createdAt)}
                       </span>
                     </div>
                     <p className="text-sm text-text-primary line-clamp-2">
-                      {msg.type === 'file' ? (
+                      {msg.data.type === 'file' ? (
                         <span className="flex items-center gap-1">
                           <span className="text-primary font-medium shrink-0">[File]</span>
-                          {highlightText(msg.fileName || msg.content, searchTerm)}
+                          {highlightText(msg.data.media?.[0]?.fileName || msg.data.content, searchTerm)}
                         </span>
                       ) : (
-                        highlightText(msg.content, searchTerm)
+                        highlightText(msg.data.content, searchTerm)
                       )}
                     </p>
                   </button>

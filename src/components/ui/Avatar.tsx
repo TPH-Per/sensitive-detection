@@ -1,12 +1,12 @@
 import React from 'react';
 import { getInitials, getAvatarGradient } from '../../utils';
-import { User, UserStatus } from '../../types';
+import { User, MediaObject } from '../../types';
 
 interface AvatarProps {
-  src?: string;
+  src?: string | MediaObject;
   name?: string;
   size?: '2xs' | 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl';
-  status?: UserStatus;
+  status?: 'active' | 'banned';
   className?: string;
   isGroup?: boolean;
   members?: User[];
@@ -24,26 +24,29 @@ const sizeClasses = {
 };
 
 const statusColor = {
-  [UserStatus.ONLINE]: 'bg-status-online border-bg-primary',
-  [UserStatus.OFFLINE]: 'bg-status-offline border-bg-primary',
+  'active': 'bg-status-online border-bg-primary',
+  'banned': 'bg-status-offline border-bg-primary',
 };
 
-const AvatarInner: React.FC<AvatarProps> = ({ 
-  src, 
-  name, 
-  size = 'md', 
-  status, 
-  className = '', 
+const AvatarInner: React.FC<AvatarProps> = ({
+  src,
+  name,
+  size = 'md',
+  status,
+  className = '',
   isGroup,
   members = [],
   onClick
 }) => {
   const renderContent = () => {
-    if (src && src !== '/blank-avatar.png') {
+    const avatarUrl = typeof src === 'string' ? src : src?.url;
+    const isSensitive = typeof src === 'object' && src?.isSensitive;
+
+    if (avatarUrl && avatarUrl !== '/blank-avatar.png') {
       return (
         <img
-          className="w-full h-full object-cover"
-          src={src}
+          className={`w-full h-full object-cover ${isSensitive ? 'blur-md' : ''}`}
+          src={avatarUrl}
           alt={name}
           onError={(e) => {
             (e.target as HTMLImageElement).style.display = 'none';
@@ -58,10 +61,10 @@ const AvatarInner: React.FC<AvatarProps> = ({
 
       const getPositionClasses = (index: number, total: number) => {
         if (total === 1) return 'w-full h-full';
-        
+
         if (total === 2) {
-          return index === 0 
-            ? 'w-[62%] h-[62%] top-0 left-0 z-10' 
+          return index === 0
+            ? 'w-[62%] h-[62%] top-0 left-0 z-10'
             : 'w-[62%] h-[62%] bottom-0 right-0';
         }
 
@@ -81,10 +84,10 @@ const AvatarInner: React.FC<AvatarProps> = ({
         <div className="relative w-full h-full bg-transparent">
           {displayMembers.map((member, idx) => {
             const isLastOfMany = idx === 3 && members.length > 4;
-            
+
             return (
-              <div 
-                key={member.id || idx} 
+              <div
+                key={member.id || idx}
                 className={`absolute rounded-full overflow-hidden border-2 border-bg-primary bg-bg-secondary flex items-center justify-center ${getPositionClasses(idx, count)}`}
               >
                 {isLastOfMany ? (
@@ -92,13 +95,17 @@ const AvatarInner: React.FC<AvatarProps> = ({
                     +{members.length - 3}
                   </div>
                 ) : member.avatar ? (
-                  <img src={member.avatar} alt="" className="w-full h-full object-cover" />
+                  <img
+                    src={typeof member.avatar === 'string' ? member.avatar : member.avatar.url}
+                    alt=""
+                    className={`w-full h-full object-cover ${typeof member.avatar === 'object' && member.avatar.isSensitive ? 'blur-sm' : ''}`}
+                  />
                 ) : (
-                  <div 
+                  <div
                     className="w-full h-full flex items-center justify-center text-[8px] font-bold text-text-on-primary uppercase"
-                    style={{ background: getAvatarGradient(member.name || member.id) }}
+                    style={{ background: getAvatarGradient(member.fullName || member.id) }}
                   >
-                    {getInitials(member.name).substring(0, 1)}
+                    {getInitials(member.fullName).substring(0, 1)}
                   </div>
                 )}
               </div>
@@ -109,7 +116,7 @@ const AvatarInner: React.FC<AvatarProps> = ({
     }
 
     return (
-      <div 
+      <div
         className="w-full h-full flex items-center justify-center font-bold text-text-on-primary uppercase leading-none"
         style={{ background: getAvatarGradient(name || '?') }}
       >
@@ -119,7 +126,7 @@ const AvatarInner: React.FC<AvatarProps> = ({
   };
 
   return (
-    <div 
+    <div
       className={`relative inline-flex flex-shrink-0 ${sizeClasses[size]} rounded-full ${className} ${onClick ? 'cursor-pointer' : ''}`}
       onClick={onClick}
     >

@@ -1,14 +1,52 @@
 {
   "rules": {
-    "status": {
+    "presence": {
       "$uid": {
         ".read": "auth != null",
         ".write": "auth != null && auth.uid === $uid"
       }
     },
-    "callNotifications": {
-      "$userId": {
-        ".read": "auth != null",
+    "conversations": {
+      "$convId": {
+        ".read": "auth != null && (!data.exists() || data.child('members').child(auth.uid).exists())",
+        ".write": "auth != null && ((!data.exists() && newData.child('members').child(auth.uid).val() === 'admin') || (data.exists() && data.child('members').child(auth.uid).exists() && (newData.child('lastMessage').exists() || newData.child('updatedAt').exists() || newData.child('name').exists() || newData.child('avatar').exists() || newData.child('typing').child(auth.uid).exists() || !newData.child('typing').child(auth.uid).exists() || data.child('members').child(auth.uid).val() === 'admin')) || (data.exists() && data.child('creatorId').val() === auth.uid && !newData.exists()))"
+      }
+    },
+    "messages": {
+      "$convId": {
+        ".read": "auth != null && root.child('conversations').child($convId).child('members').child(auth.uid).exists()",
+        ".indexOn": ["createdAt"],
+        "$msgId": {
+          ".write": "auth != null && root.child('conversations').child($convId).child('members').child(auth.uid).exists() && (!data.exists() || data.child('senderId').val() === auth.uid || newData.child('reactions').child(auth.uid).exists() || !newData.child('reactions').child(auth.uid).exists())",
+          "readBy": {
+            "$uid": {
+              ".write": "auth != null && auth.uid === $uid"
+            }
+          },
+          "deliveredTo": {
+            "$uid": {
+              ".write": "auth != null && auth.uid === $uid"
+            }
+          },
+          "reactions": {
+            "$uid": {
+              ".write": "auth != null && auth.uid === $uid"
+            }
+          }
+        }
+      }
+    },
+    "user_chats": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        "$convId": {
+          ".write": "auth != null && (auth.uid === $uid || newData.exists())"
+        }
+      }
+    },
+    "call_signaling": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
         ".write": "auth != null"
       }
     }

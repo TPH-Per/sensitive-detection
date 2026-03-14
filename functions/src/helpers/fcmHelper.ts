@@ -3,15 +3,10 @@ import { NotificationType } from '../types';
 
 // Titles cho từng loại notification
 const NOTIFICATION_TITLES: Partial<Record<NotificationType, string>> = {
-  [NotificationType.LIKE_POST]: '❤️ Lượt thích mới',
-  [NotificationType.COMMENT_POST]: '💬 Bình luận mới',
-  [NotificationType.REPLY_COMMENT]: '↩️ Phản hồi mới',
-  [NotificationType.REACT_COMMENT]: '😊 Cảm xúc bình luận',
+  [NotificationType.REACTION]: '❤️ Cảm xúc mới',
+  [NotificationType.COMMENT]: '💬 Bình luận mới',
   [NotificationType.FRIEND_REQUEST]: '👋 Lời mời kết bạn',
-  [NotificationType.FRIEND_ACCEPT]: '🤝 Chấp nhận kết bạn',
-  [NotificationType.REPORT_NEW]: '🚨 Báo cáo mới',
-  [NotificationType.REPORT_RESOLVED]: '✅ Báo cáo đã xử lý',
-  [NotificationType.CONTENT_VIOLATION]: '⚠️ Cảnh báo vi phạm',
+  [NotificationType.SYSTEM]: '🔔 Thông báo hệ thống',
 };
 
 async function getUserFcmTokens(userId: string): Promise<string[]> {

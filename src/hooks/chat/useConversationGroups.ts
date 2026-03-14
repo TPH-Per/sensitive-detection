@@ -1,9 +1,9 @@
 import { useMemo } from 'react';
-import { Conversation } from '../../types';
-import { useChatStore } from '../../store/chatStore';
+import { RtdbConversation, RtdbUserChat } from '../../types';
+import { useRtdbChatStore } from '../../store';
 
 interface UseConversationGroupsProps {
-  conversations: Conversation[];
+  conversations: Array<{ id: string; data: RtdbConversation; userChat: RtdbUserChat }>;
   currentUserId: string;
   currentUserFriendIds: string[];
   blockedUserIds: string[];
@@ -11,7 +11,7 @@ interface UseConversationGroupsProps {
   activeFilter: 'all' | 'group';
 }
 
-// Phân loại và sắp xếp hội thoại
+// Phân loại và sắp xếp hội thoại (RTDB version)
 export const useConversationGroups = ({
   conversations,
   currentUserId,
@@ -21,18 +21,18 @@ export const useConversationGroups = ({
   activeFilter
 }: UseConversationGroupsProps) => {
 
-  const memberSettings = useChatStore(state => state.memberSettings);
   const { friendConversations, requestConversations } = useMemo(() => {
-    const friends: Conversation[] = [];
-    const requests: Conversation[] = [];
+    const friends: Array<{ id: string; data: RtdbConversation; userChat: RtdbUserChat }> = [];
+    const requests: Array<{ id: string; data: RtdbConversation; userChat: RtdbUserChat }> = [];
 
     // Phân loại: Bạn bè/Nhóm vs Người lạ (Tin nhắn chờ)
     conversations.forEach(conv => {
-      if (conv.isGroup) {
+      if (conv.data.isGroup) {
         friends.push(conv);
       } else {
-        const partnerId = conv.participantIds.find(id => id !== currentUserId);
-        if (partnerId && currentUserFriendIds.includes(partnerId)) {
+        const participantIds = Object.keys(conv.data.members);
+        const partnerId = participantIds.find(id => id !== currentUserId);
+        if (partnerId && (currentUserFriendIds.includes(partnerId) || blockedUserIds.includes(partnerId))) {
           friends.push(conv);
         } else {
           requests.push(conv);
@@ -41,37 +41,54 @@ export const useConversationGroups = ({
     });
 
     // Sắp xếp: Ghim ưu tiên, sau đó theo thời gian cập nhật
-    const sortFn = (a: Conversation, b: Conversation) => {
-        const isAPinned = memberSettings[a.id]?.isPinned ?? false;
-        const isBPinned = memberSettings[b.id]?.isPinned ?? false;
+    const sortFn = (a: typeof friends[0], b: typeof friends[0]) => {
+      const isAPinned = a.userChat?.isPinned ?? false;
+      const isBPinned = b.userChat?.isPinned ?? false;
+      if (isAPinned && !isBPinned) return -1;
       if (!isAPinned && isBPinned) return 1;
-      return (b.updatedAt?.toMillis() ?? 0) - (a.updatedAt?.toMillis() ?? 0);
+      return (b.data.updatedAt ?? 0) - (a.data.updatedAt ?? 0);
     };
 
     return {
       friendConversations: friends.sort(sortFn),
       requestConversations: requests.sort(sortFn)
     };
-  }, [conversations, currentUserId, currentUserFriendIds, memberSettings]);
+  }, [conversations, currentUserId, currentUserFriendIds]);
 
   // Danh sách hiển thị dựa trên chế độ xem và bộ lọc
   const displayConversations = useMemo(() => {
     if (viewMode === 'archived') {
-      return conversations.filter(c => memberSettings[c.id]?.isArchived).sort((a, b) =>
-        (b.updatedAt?.toMillis() ?? 0) - (a.updatedAt?.toMillis() ?? 0)
-      );
+      return conversations
+        .filter(c => c.userChat?.isArchived)
+        .sort((a, b) => (b.data.updatedAt ?? 0) - (a.data.updatedAt ?? 0));
     }
 
-    let list = friendConversations;
+    // Lọc bỏ các hội thoại đã lưu trữ hoặc đã xóa khỏi danh sách chính
+    const filteredList = friendConversations.filter(conv => {
+      // Không hiện hội thoại đã lưu trữ trong danh sách chính
+      if (conv.userChat?.isArchived) return false;
+
+      // Nếu đã xóa (clearedAt), chỉ hiện lại nếu có tin nhắn mới hơn thời điểm xóa
+      const clearedAt = conv.userChat?.clearedAt || 0;
+      const lastMsgTimestamp = conv.data.lastMessage?.timestamp || conv.data.updatedAt || 0;
+      if (clearedAt > 0 && lastMsgTimestamp <= clearedAt) return false;
+
+      return true;
+    });
+
     if (activeFilter === 'group') {
-      list = list.filter(c => c.isGroup);
+      return filteredList.filter(c => c.data.isGroup);
     }
-    return list;
-  }, [viewMode, friendConversations, conversations, activeFilter, memberSettings]);
+    return filteredList;
+  }, [viewMode, friendConversations, conversations, activeFilter]);
 
   return {
     friendConversations,
-    requestConversations,
+    requestConversations: requestConversations.filter(conv => {
+      const clearedAt = conv.userChat?.clearedAt || 0;
+      const lastMsgTimestamp = conv.data.lastMessage?.timestamp || conv.data.updatedAt || 0;
+      return !(clearedAt > 0 && lastMsgTimestamp <= clearedAt);
+    }),
     displayConversations
   };
 };

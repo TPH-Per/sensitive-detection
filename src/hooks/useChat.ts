@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { Message, User, Conversation, FriendStatus, FriendRequest } from '../types';
+import { RtdbMessage, User, FriendStatus, FriendRequest } from '../types';
 import { useAuthStore } from '../store/authStore';
-import { useChatStore } from '../store/chatStore';
+import { useRtdbChatStore } from '../store';
 import { useContactStore } from '../store/contactStore';
 import { useUserCache } from '../store/userCacheStore';
 import { useLoadingStore } from '../store/loadingStore';
@@ -12,24 +12,19 @@ import { useChatBlock } from './chat/useChatBlock';
 import { useChatGroups } from './chat/useChatGroups';
 import { useConversationParticipants } from './chat/useConversationParticipants';
 
-const EMPTY_MESSAGES: Message[] = [];
+const EMPTY_MESSAGES: Array<{ id: string; data: RtdbMessage }> = [];
 const EMPTY_TYPING: string[] = [];
-const EMPTY_SEARCH_HISTORY: (Conversation | User)[] = [];
 
 export const useChat = () => {
   const { user: currentUser } = useAuthStore();
   const {
     conversations,
-    memberSettings,
     selectedConversationId,
     messages,
-    typingUsers,
     selectConversation,
     subscribeToMessages,
     markAsRead,
     markAsDelivered,
-    setTyping,
-    subscribeToTyping,
     searchConversations,
     isSearchFocused,
     searchResults,
@@ -41,54 +36,57 @@ export const useChat = () => {
     clearSearchHistory,
     setIsChatVisible,
     loadMoreMessages,
-  } = useChatStore();
+    typingUsers,
+    setTyping,
+    subscribeToTyping,
+  } = useRtdbChatStore();
 
   const { users: usersMap, fetchUsers } = useUserCache();
   const chatIsLoading = useLoadingStore(state => state.loadingStates['chat'] ?? false);
   const [viewMode, setViewMode] = useState<'normal' | 'archived'>('normal');
-  const [forwardingMessage, setForwardingMessage] = useState<Message | null>(null);
-  const [replyingTo, setReplyingTo] = useState<Message | null>(null);
-  const [editingMessage, setEditingMessage] = useState<Message | null>(null);
+  const [forwardingMessage, setForwardingMessage] = useState<{ id: string; data: RtdbMessage } | null>(null);
+  const [replyingTo, setReplyingTo] = useState<{ id: string; data: RtdbMessage } | null>(null);
+  const [editingMessage, setEditingMessage] = useState<{ id: string; data: RtdbMessage } | null>(null);
   const [sentRequests, setSentRequests] = useState<FriendRequest[]>([]);
   const [receivedRequests, setReceivedRequests] = useState<FriendRequest[]>([]);
 
+  // RTDB structure: conversations is Array<{id, data: RtdbConversation, userChat: RtdbUserChat}>
   const selectedConversation = useMemo(
     () => conversations.find(c => c.id === selectedConversationId),
     [conversations, selectedConversationId]
   );
 
-  const filteredConversations = useMemo(() =>
-    conversations.filter(c => {
-      const ms = memberSettings[c.id];
-      if (ms?.deletedAt) return false;
-      const isArchived = ms?.isArchived ?? false;
-      return viewMode === 'archived' ? isArchived : !isArchived;
-    }),
-    [conversations, memberSettings, viewMode]
-  );
+  // Dữ liệu hội thoại gốc từ store
+  const filteredConversations = conversations;
 
   const archivedCount = useMemo(
-    () => conversations.filter(c => memberSettings[c.id]?.isArchived).length,
-    [conversations, memberSettings]
+    () => conversations.filter(c => c.userChat?.isArchived).length,
+    [conversations]
   );
 
+  // RTDB messages structure: Record<convId, Array<{id, data: RtdbMessage}>>
   const currentMessages = selectedConversationId ? (messages[selectedConversationId] ?? EMPTY_MESSAGES) : EMPTY_MESSAGES;
   const currentTypingUsers = selectedConversationId ? (typingUsers[selectedConversationId] ?? EMPTY_TYPING) : EMPTY_TYPING;
 
-  const { isLoadingMore: storeIsLoadingMore, hasMoreMessages: storeHasMoreMessages } = useChatStore();
+  const { isLoadingMore: storeIsLoadingMore, hasMoreMessages: storeHasMoreMessages } = useRtdbChatStore();
   const isLoadingMore = selectedConversationId ? (storeIsLoadingMore[selectedConversationId] || false) : false;
   const hasMoreMessages = selectedConversationId ? (storeHasMoreMessages[selectedConversationId] || false) : false;
 
-  // Get participants for selected conversation
-  const participants = useConversationParticipants(selectedConversation?.participantIds || []);
+  // Get participants for selected conversation - RTDB uses members map
+  const participantIds = useMemo(() => {
+    if (!selectedConversation) return [];
+    return Object.keys(selectedConversation.data.members);
+  }, [selectedConversation]);
 
-  const partnerId = selectedConversation && !selectedConversation.isGroup
-    ? selectedConversation.participantIds.find(id => id !== currentUser?.id) ?? null
+  const participants = useConversationParticipants(participantIds);
+
+  const partnerId = selectedConversation && !selectedConversation.data.isGroup
+    ? participantIds.find(id => id !== currentUser?.id) ?? null
     : null;
 
   const partner = partnerId ? (usersMap[partnerId] ?? null) : null;
 
-  // Subscribe friend requests để lấy pendingRequestId
+  // Subscribe friend requests
   useEffect(() => {
     if (!currentUser?.id) return;
     const unsubSent = friendService.subscribeToSentRequests(currentUser.id, setSentRequests);
@@ -96,14 +94,14 @@ export const useChat = () => {
     return () => { unsubSent(); unsubReceived(); };
   }, [currentUser?.id]);
 
-  // Tính trạng thái bạn bè với partner từ contactStore
+  // Friend status with partner
   const friendIds = useContactStore(state => state.friends.map(f => f.id));
   const partnerFriendStatus = useMemo(() => {
     if (!partnerId) return undefined;
     return friendIds.includes(partnerId) ? FriendStatus.FRIEND : undefined;
   }, [partnerId, friendIds]);
 
-  // Tìm pending request ID giữa currentUser và partner
+  // Pending request ID
   const partnerPendingRequestId = useMemo(() => {
     if (!partnerId) return undefined;
     const sent = sentRequests.find(r => r.receiverId === partnerId);
@@ -112,7 +110,7 @@ export const useChat = () => {
     return received?.id;
   }, [partnerId, sentRequests, receivedRequests]);
 
-  // Trạng thái lời mời kết bạn với partner (cho UI ChatBox)
+  // Friend request status
   const friendRequestStatus = useMemo(() => {
     if (!partnerId) return 'none' as const;
     if (sentRequests.some(r => r.receiverId === partnerId)) return 'sent' as const;
@@ -120,7 +118,6 @@ export const useChat = () => {
     return 'none' as const;
   }, [partnerId, sentRequests, receivedRequests]);
 
-  // Lời mời kết bạn đang nhận từ partner
   const currentReceivedRequest = useMemo(() =>
     partnerId ? receivedRequests.find(r => r.senderId === partnerId) ?? null : null,
     [partnerId, receivedRequests]
@@ -142,11 +139,9 @@ export const useChat = () => {
     partnerId,
     currentUser: currentUser ?? null,
     partner,
-    isGroup: selectedConversation?.isGroup ?? false,
+    isGroup: selectedConversation?.data.isGroup ?? false,
     usersMap,
-    friendStatus: partnerFriendStatus,
-    pendingRequestId: partnerPendingRequestId,
-    conversation: selectedConversation,
+    conversation: selectedConversation?.data,
   });
 
   const groups = useChatGroups({
@@ -155,35 +150,44 @@ export const useChat = () => {
     conversations,
   });
 
-  // Đồng bộ tin nhắn và typing
+  // Subscribe to messages and typing
   useEffect(() => {
     if (!selectedConversationId || !currentUser) return;
     const unsubMessages = subscribeToMessages(selectedConversationId);
     const unsubTyping = subscribeToTyping(selectedConversationId);
     markAsDelivered(selectedConversationId, currentUser.id);
-    return () => { unsubMessages(); unsubTyping(); };
+    return () => {
+      unsubMessages();
+      unsubTyping();
+    };
   }, [selectedConversationId, currentUser, subscribeToMessages, subscribeToTyping, markAsDelivered]);
 
-  // Tự động đánh dấu đã đọc
+  // Auto mark as read
   useEffect(() => {
     if (!selectedConversationId || !currentUser) return;
+    
+    const activeParticipantIds = Object.keys(conversations.find(c => c.id === selectedConversationId)?.data.members || {});
+    const activePartnerId = activeParticipantIds.find(id => id !== currentUser.id);
+    const isMessageRequest = activePartnerId ? !friendIds.includes(activePartnerId) : false;
+
+    if (isMessageRequest) return;
+
     const msgs = messages[selectedConversationId] || [];
     const hasUnread = msgs.some(m =>
-      m.senderId !== currentUser.id && (!m.readBy || !m.readBy.includes(currentUser.id))
+      m.data.senderId !== currentUser.id && (!m.data.readBy || !m.data.readBy[currentUser.id])
     );
     if (hasUnread) markAsRead(selectedConversationId, currentUser.id);
-  }, [messages, selectedConversationId, currentUser, markAsRead]);
+  }, [messages, selectedConversationId, currentUser, markAsRead, conversations, friendIds]);
 
-  // Tải thông tin user
+  // Fetch user info
   useEffect(() => {
     if (!selectedConversationId || !currentUser) return;
     const msgs = messages[selectedConversationId] || [];
     if (msgs.length === 0) return;
-    const userIds = [...new Set(msgs.map(m => m.senderId))];
-    const conv = conversations.find(c => c.id === selectedConversationId);
-    if (conv) conv.participantIds.forEach(id => userIds.push(id));
+    const userIds = [...new Set(msgs.map(m => m.data.senderId))];
+    participantIds.forEach(id => userIds.push(id));
     fetchUsers(userIds);
-  }, [messages, selectedConversationId, currentUser, conversations, fetchUsers]);
+  }, [messages, selectedConversationId, currentUser, participantIds, fetchUsers]);
 
   const handleSelectConversation = useCallback((id: string) => selectConversation(id), [selectConversation]);
 
@@ -191,7 +195,7 @@ export const useChat = () => {
     if (selectedConversationId) await loadMoreMessages(selectedConversationId);
   }, [selectedConversationId, loadMoreMessages]);
 
-  const handleForwardMessage = useCallback((message: Message) => setForwardingMessage(message), []);
+  const handleForwardMessage = useCallback((message: { id: string; data: RtdbMessage }) => setForwardingMessage(message), []);
 
   const handleTyping = useCallback(async (isTyping: boolean) => {
     if (!selectedConversationId || !currentUser) return;
@@ -202,10 +206,6 @@ export const useChat = () => {
     if (!currentUser) return;
     await searchConversations(currentUser.id, term);
   }, [currentUser, searchConversations]);
-
-  const handleToggleBlock = useCallback(async () => {
-    block.handleToggleBlock(selectConversation);
-  }, [block.handleToggleBlock, selectConversation]);
 
   return {
     currentUser,
@@ -237,9 +237,8 @@ export const useChat = () => {
     handleForwardMessage,
     handleTyping,
     handleSearch,
-    handleToggleBlock,
     setSearchFocused,
-    addToSearchHistory: (item: Conversation | User) => {
+    addToSearchHistory: (item: User) => {
       if (currentUser?.id) addToSearchHistory(item, currentUser.id);
     },
     removeFromSearchHistory: (id: string) => {
@@ -254,10 +253,15 @@ export const useChat = () => {
     // Block
     isBlocked: block.isBlocked,
     isBlockedByMe: block.isBlockedByMe,
+    isMessageBlockedByMe: block.isMessageBlockedByMe,
+    isCallBlockedByMe: block.isCallBlockedByMe,
+    isCallBlockedByPartner: block.isCallBlockedByPartner,
+    myBlockOptions: block.myBlockOptions,
     partnerId,
     blockedMessage: block.blockedMessage,
     getBlockedMessage: block.getBlockedMessage,
-
+    handleApplyBlock: block.handleApplyBlock,
+    handleUnblock: block.handleUnblock,
     // Friend requests
     friendRequestStatus,
     currentReceivedRequest,

@@ -1,13 +1,14 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MessageSquare } from 'lucide-react';
+import { BlockOptionsModal } from '../components/ui';
 import { useChat } from '../hooks';
 import { useLoadingStore } from '../store/loadingStore';
 import { useContactStore } from '../store/contactStore';
 import { useFriendIds } from '../hooks';
 import { useBlockedUsers } from '../hooks';
 import { friendService } from '../services/friendService';
-import { useChatStore } from '../store/chatStore';
+import { useRtdbChatStore } from '../store';
 import { useConversationMemberSettings } from '../hooks/chat/useConversationMemberSettings';
 import {
   ConversationList, ChatBox, ChatInput, ChatDetailsPanel,
@@ -40,6 +41,8 @@ const ChatPage: React.FC = () => {
     usersMap,
     isBlocked,
     isBlockedByMe,
+    isCallBlockedByMe,
+    isCallBlockedByPartner,
     blockedMessage,
     forwardingMessage,
     setForwardingMessage,
@@ -67,7 +70,9 @@ const ChatPage: React.FC = () => {
     handleMarkUnread,
     handleDelete,
     handleMarkAllRead,
-    handleToggleBlock,
+    handleApplyBlock,
+    handleUnblock,
+    myBlockOptions,
     handleCreateGroup,
     handleAddMembers,
     handleRemoveMember,
@@ -110,6 +115,10 @@ const ChatPage: React.FC = () => {
   const [showAddMember, setShowAddMember] = useState(false);
   const [showEditGroup, setShowEditGroup] = useState(false);
   const [showAssignAdmin, setShowAssignAdmin] = useState(false);
+  const [isBlockModalOpen, setIsBlockModalOpen] = useState(false);
+
+  const openBlockModal = () => setIsBlockModalOpen(true);
+  const closeBlockModal = () => setIsBlockModalOpen(false);
 
   const {
     callPhase,
@@ -132,7 +141,7 @@ const ChatPage: React.FC = () => {
     endCall,
   } = useCallStore();
 
-  const partner = selectedConversation?.isGroup
+  const partner = selectedConversation?.data.isGroup
     ? null
     : participants.find(p => p.id !== currentUser.id);
 
@@ -145,11 +154,11 @@ const ChatPage: React.FC = () => {
     setActiveRoomId(selectedConversationId);
     setCallConversationId(selectedConversationId);
 
-    const isGroup = selectedConversation?.isGroup || false;
+    const isGroup = selectedConversation?.data.isGroup || false;
     setIsGroupCall(isGroup);
 
     if (isGroup) {
-      const groupMembersIds = selectedConversation?.participantIds.filter(id => id !== currentUser.id) || [];
+      const groupMembersIds = Object.keys(selectedConversation?.data.members || {}).filter(id => id !== currentUser.id);
       if (groupMembersIds.length === 0) return;
       if (startCall) {
         setIsCaller(true);
@@ -159,8 +168,8 @@ const ChatPage: React.FC = () => {
         await startCall(
           groupMembersIds,
           currentUser.id,
-          currentUser.name,
-          currentUser.avatar,
+          currentUser.fullName,
+          currentUser.avatar.url,
           type,
           selectedConversationId,
           true
@@ -168,14 +177,24 @@ const ChatPage: React.FC = () => {
       }
     } else {
       if (!partner || !startCall) return;
+
+      if (isCallBlockedByMe) {
+        import('../store/toastStore').then(({ toast }) => toast.error('Bạn đã chặn cuộc gọi với người dùng này.'));
+        return;
+      }
+      if (isCallBlockedByPartner) {
+        import('../store/toastStore').then(({ toast }) => toast.error('Không thể thực hiện cuộc gọi cho người dùng này.'));
+        return;
+      }
+
       setIsCaller(true);
       setOtherUserIds([partner.id]);
       setCallPhase('outgoing');
       const result = await startCall(
         [partner.id],
         currentUser.id,
-        currentUser.name,
-        currentUser.avatar,
+        currentUser.fullName,
+        currentUser.avatar.url,
         type,
         selectedConversationId,
         false
@@ -183,7 +202,6 @@ const ChatPage: React.FC = () => {
 
       if (result && !result.success) {
         if (result.reason === 'busy') {
-          useChatStore.getState().sendCallMessage(selectedConversationId, currentUser.id, type, 'missed');
           playSound('busy');
           resetCall();
         }
@@ -229,7 +247,7 @@ const ChatPage: React.FC = () => {
     const request = receivedRequests.find(r => r.senderId === userId);
     if (request) {
       try {
-        await friendService.acceptFriendRequest(request.id);
+        await friendService.acceptFriendRequest(request.id, request.senderId, currentUser.id);
       } catch (error) {
         console.error('Lỗi chấp nhận kết bạn:', error);
       }
@@ -255,10 +273,10 @@ const ChatPage: React.FC = () => {
           viewMode={viewMode}
           archivedCount={archivedCount}
           onViewModeChange={setViewMode}
-          onBlock={handleToggleBlock}
+          onBlock={openBlockModal}
           isSearchFocused={isSearchFocused}
           onSearchFocus={setSearchFocused}
-          searchResults={searchResults}
+          searchResults={{ conversations: [], users: searchResults.users }}
           searchHistory={searchHistory}
           onRemoveFromHistory={removeFromSearchHistory}
           onClearHistory={clearSearchHistory}
@@ -269,8 +287,6 @@ const ChatPage: React.FC = () => {
             setSearchFocused(false);
           }}
           onSelectConversation={(id) => {
-            const conv = conversations.find(c => c.id === id);
-            if (conv) addToSearchHistory(conv);
             handleSelectConversation(id);
             setSearchFocused(false);
           }}
@@ -302,7 +318,7 @@ const ChatPage: React.FC = () => {
               onInfoClick={() => setShowDetails(true)}
               onRecall={handleRecallMessage}
               onDeleteForMe={handleDeleteForMe}
-              onForward={handleForwardMessage}
+              onForward={(msg) => handleForwardMessage(msg)}
               onReply={(msg) => {
                 setReplyingTo(msg);
                 setEditingMessage(null);
@@ -313,14 +329,14 @@ const ChatPage: React.FC = () => {
               }}
               onAddFriend={handleSendFriendRequest}
               onAcceptFriend={handleAcceptFriendRequest}
-              onBlock={handleToggleBlock}
+              onBlock={openBlockModal}
               isLoading={isLoading}
               isLoadingMore={isLoadingMore}
               hasMoreMessages={hasMoreMessages}
               onLoadMore={handleLoadMoreMessages}
               isBlocked={isBlocked}
               isBlockedByMe={isBlockedByMe}
-              onUnblock={handleToggleBlock}
+              onUnblock={handleUnblock}
               onCall={(isVideo) => handleInitiateCall(isVideo ? 'video' : 'voice')}
               onVideoCall={() => handleInitiateCall('video')}
             />
@@ -338,7 +354,7 @@ const ChatPage: React.FC = () => {
               currentUserId={currentUser.id}
               usersMap={usersMap}
               participants={participants}
-              isGroup={selectedConversation.isGroup}
+              isGroup={selectedConversation.data.isGroup}
               onCancelAction={() => {
                 setReplyingTo(null);
                 setEditingMessage(null);
@@ -374,10 +390,10 @@ const ChatPage: React.FC = () => {
           onToggleMute={() => handleMute(selectedConversation.id, !(selectedMemberSettings?.isMuted || false))}
           onTogglePin={() => handlePin(selectedConversation.id, !(selectedMemberSettings?.isPinned || false))}
           onToggleArchive={() => handleArchive(selectedConversation.id, !(selectedMemberSettings?.isArchived || false))}
-          onToggleMarkUnread={() => handleMarkUnread(selectedConversation.id, !(selectedMemberSettings?.markedUnread || false))}
-          onToggleBlock={handleToggleBlock}
+          onToggleMarkUnread={() => handleMarkUnread(selectedConversation.id, false)}
+          onToggleBlock={openBlockModal}
           onDelete={() => {
-            if (selectedConversation.isGroup && selectedConversation.creatorId === currentUser.id) {
+            if (selectedConversation.data.isGroup && selectedConversation.data.creatorId === currentUser.id) {
               handleDisbandGroup();
             } else {
               handleDelete(selectedConversation.id);
@@ -419,7 +435,7 @@ const ChatPage: React.FC = () => {
         />
       )}
 
-      {selectedConversation && selectedConversation.isGroup && (
+      {selectedConversation && selectedConversation.data.isGroup && (
         <EditGroupModal
           isOpen={showEditGroup}
           conversation={selectedConversation}
@@ -429,7 +445,7 @@ const ChatPage: React.FC = () => {
         />
       )}
 
-      {selectedConversation && selectedConversation.isGroup && (
+      {selectedConversation && selectedConversation.data.isGroup && (
         <TransferAdminModal
           isOpen={showAssignAdmin}
           conversation={selectedConversation}
@@ -451,11 +467,21 @@ const ChatPage: React.FC = () => {
       {/* Cuộc gọi đi – chờ đối phương bắt máy */}
       {callPhase === 'outgoing' && partner && (
         <OutgoingCallDialog
-          calleeName={partner.name || 'Người dùng'}
+          calleeName={partner.fullName || 'Người dùng'}
           calleeId={partner.id}
           callType={callType}
           onCancel={handleCancelOutgoingCall}
           onTimeout={handleMissedCallTimeout}
+        />
+      )}
+      {/* Block options modal */}
+      {partner && (
+        <BlockOptionsModal
+          isOpen={isBlockModalOpen}
+          targetName={partner.fullName}
+          initialOptions={myBlockOptions}
+          onApply={handleApplyBlock}
+          onClose={closeBlockModal}
         />
       )}
     </div>

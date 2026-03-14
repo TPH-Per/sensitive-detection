@@ -9,7 +9,6 @@ interface LazyImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
   wrapperClassName?: string;
 }
 
-// Lazy load image.
 export const LazyImage: React.FC<LazyImageProps> = ({
   src,
   alt,
@@ -22,7 +21,7 @@ export const LazyImage: React.FC<LazyImageProps> = ({
   const [isLoaded, setIsLoaded] = useState(false);
   const [isInView, setIsInView] = useState(false);
   const [error, setError] = useState(false);
-  const imgRef = useRef<HTMLImageElement>(null);
+  const imgRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -32,7 +31,7 @@ export const LazyImage: React.FC<LazyImageProps> = ({
           observer.disconnect();
         }
       },
-      { rootMargin: '100px' }
+      { rootMargin: '300px' } 
     );
 
     if (imgRef.current) {
@@ -48,26 +47,35 @@ export const LazyImage: React.FC<LazyImageProps> = ({
     setIsLoaded(true);
   };
 
-  const imageSrc = error ? fallback : (isInView ? src : placeholder);
+  const currentSrc = error ? fallback : src;
 
   return (
-    <div className={`relative overflow-hidden ${wrapperClassName}`}>
-      {/* Placeholder skeleton */}
-      {!isLoaded && (
+    <div ref={imgRef} className={`relative overflow-hidden ${wrapperClassName}`}>
+      {!isLoaded && !placeholder && (
         <div className="absolute inset-0 bg-bg-secondary animate-pulse" />
       )}
+      {!isLoaded && placeholder && (
+        <img
+          src={placeholder}
+          alt={`Placeholder for ${alt}`}
+          className={`absolute inset-0 w-full h-full object-cover blur-md scale-110 opacity-70 transition-opacity duration-300 ${className}`}
+          aria-hidden="true"
+        />
+      )}
 
-      <img
-        ref={imgRef}
-        src={imageSrc}
-        alt={alt}
-        onLoad={handleLoad}
-        onError={handleError}
-        className={`transition-all duration-base ${isLoaded ? 'opacity-100' : 'opacity-0'
+      {isInView && (
+        <img
+          src={currentSrc}
+          alt={alt}
+          onLoad={handleLoad}
+          onError={handleError}
+          className={`relative z-10 w-full h-full object-cover transition-opacity duration-500 ease-out ${
+            isLoaded ? 'opacity-100' : 'opacity-0'
           } ${className}`}
-        loading="lazy"
-        {...props}
-      />
+          loading="lazy"
+          {...props}
+        />
+      )}
     </div>
   );
 };
@@ -99,7 +107,7 @@ export const LazyVideo: React.FC<LazyVideoProps> = ({
           observer.disconnect();
         }
       },
-      { rootMargin: '50px' }
+      { rootMargin: '300px' }
     );
 
     if (containerRef.current) {
@@ -115,13 +123,13 @@ export const LazyVideo: React.FC<LazyVideoProps> = ({
     <div ref={containerRef} className={`relative ${wrapperClassName}`}>
       {!showVideo && thumbnail ? (
         <div
-          className="relative cursor-pointer group"
+          className="relative cursor-pointer group w-full h-full"
           onClick={handlePlay}
         >
           <img
             src={thumbnail}
             alt="Video thumbnail"
-            className={`w-full h-auto ${className}`}
+            className={`w-full h-full object-cover ${className}`}
           />
           <div className="absolute inset-0 flex items-center justify-center bg-black/30 group-hover:bg-black/40 transition-all duration-base">
             <div className="w-12 h-12 rounded-full bg-white/90 flex items-center justify-center">
@@ -134,14 +142,15 @@ export const LazyVideo: React.FC<LazyVideoProps> = ({
       ) : isInView ? (
         <video
           src={src}
-          className={className}
+          poster={thumbnail}
+          className={`w-full h-full object-cover ${className}`}
           controls
-          preload="metadata"
+          preload="none"
           playsInline
           {...props}
         />
       ) : (
-        <div className={`bg-bg-secondary animate-pulse ${className}`} style={{ aspectRatio: '16/9' }} />
+        <div className={`w-full h-full bg-bg-secondary animate-pulse ${className}`} style={{ aspectRatio: '16/9' }} />
       )}
     </div>
   );

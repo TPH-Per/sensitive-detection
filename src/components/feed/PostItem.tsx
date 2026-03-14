@@ -3,10 +3,10 @@ import { MoreHorizontal, Edit, Trash2, Flag } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { formatRelativeTime, formatDateTime } from '../../utils/dateUtils';
 import { UserAvatar, Skeleton, Dropdown, DropdownItem, IconButton } from '../ui';
-import { Post, User, ReportType, PostType } from '../../types';
+import { Post, PostStatus, Visibility, PostType, User, ReportType, ReactionType } from '../../types';
 import { useReportStore } from '../../store/reportStore';
 import { usePostStore } from '../../store/postStore';
-import { useFriendIds } from '../../hooks';
+import { useFriendIds, useFilteredReactions } from '../../hooks';
 import { VisibilityBadge, TruncatedText, ReactionActions, PostMediaGrid } from './shared';
 import { ReactionDetailsModal } from '../ui';
 
@@ -14,7 +14,7 @@ interface PostItemProps {
   post: Post;
   author: User;
   currentUser: User;
-  onReact: (postId: string, reaction: string) => void;
+  onReact: (postId: string, reaction: ReactionType | 'REMOVE') => void;
   onEdit?: (postId: string) => void;
   onDelete?: (postId: string) => void;
   onViewDetail?: (post: Post) => void;
@@ -25,7 +25,7 @@ const PostItemInner: React.FC<PostItemProps> = ({
   post,
   author,
   currentUser,
-  onReact,
+  onReact: onReactProp,
   onEdit,
   onDelete,
   onViewDetail,
@@ -40,12 +40,17 @@ const PostItemInner: React.FC<PostItemProps> = ({
   const uploadState = uploadingStates[post.id];
   const isUploading = !!uploadState && !uploadState.error;
   const error = uploadState?.error;
-  const progress = uploadState?.progress || 0;
 
-  const myReaction = usePostStore(state => state.myPostReactions[post.id]);
-  const isOwner = post.userId === currentUser.id;
+  const myReaction = usePostStore(state => state.myPostReactions[post.id] as ReactionType | null);
+  const isOwner = post.authorId === currentUser.id;
 
-  const hasMedia = (post.images?.length ?? 0) > 0 || (post.videos?.length ?? 0) > 0;
+  const { filteredSummary, filteredCount } = useFilteredReactions(
+    post.id,
+    'post',
+    post.authorId
+  );
+
+  const hasMedia = (post.media?.length ?? 0) > 0;
 
   const handleProfileClick = useCallback(() => {
     if (author?.id) {
@@ -58,6 +63,10 @@ const PostItemInner: React.FC<PostItemProps> = ({
   const handleOpenReactions = useCallback(() => setIsReactionsModalOpen(true), []);
   const handleCloseReactions = useCallback(() => setIsReactionsModalOpen(false), []);
 
+  const onReact = (type: ReactionType | 'REMOVE') => {
+    onReactProp(post.id, type);
+  };
+
   return (
     <div className="bg-bg-primary rounded-xl shadow-sm border-2 border-border-light overflow-hidden mb-4 transition-all duration-base relative">
 
@@ -66,32 +75,33 @@ const PostItemInner: React.FC<PostItemProps> = ({
         <div className="flex gap-3">
           <UserAvatar
             userId={author?.id}
-            src={author?.avatar}
-            name={author?.name}
+            src={author?.avatar.url}
+            name={author?.fullName}
             size="md"
             initialStatus={author?.status}
             onClick={handleProfileClick}
           />
-          <div className="flex flex-col">
-            <div className="flex items-center gap-1.5 flex-wrap">
-              <h3
-                className="font-semibold text-text-primary text-[15px] cursor-pointer hover:underline"
-                onClick={handleProfileClick}
-              >
-                {author?.name || 'Unknown User'}
-              </h3>
-              {post.type && post.type !== PostType.NORMAL && (
-                <span className="text-[14px] text-text-secondary font-normal">
-                  {post.content}
-                </span>
-              )}
-              {isUploading && !hasMedia && (
-                <span className="text-xs text-info font-medium">
-                  Đang đăng...
-                </span>
-              )}
-            </div>
-            <div className="flex items-center gap-1.5 text-xs text-text-secondary mt-0.5">
+            <div className="flex flex-col">
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <h3
+                  className="font-semibold text-text-primary text-[15px] cursor-pointer hover:underline"
+                  onClick={handleProfileClick}
+                >
+                  {author?.fullName || 'Unknown User'}
+                </h3>
+                {post.type === PostType.AVATAR_UPDATE && (
+                  <span className="text-[14.5px] text-text-secondary font-normal">vừa cập nhật ảnh đại diện mới.</span>
+                )}
+                {post.type === PostType.COVER_UPDATE && (
+                  <span className="text-[14.5px] text-text-secondary font-normal">vừa cập nhật ảnh bìa mới.</span>
+                )}
+                {isUploading && !hasMedia && (
+                  <span className="text-xs text-info font-medium">
+                    Đang đăng...
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-1.5 text-xs text-text-secondary mt-0.5">
               <span title={formatDateTime(post.createdAt)}>
                 {formatRelativeTime(post.createdAt)}
               </span>
@@ -125,21 +135,18 @@ const PostItemInner: React.FC<PostItemProps> = ({
               icon={<Flag size={16} />}
               label="Báo cáo"
               variant="danger"
-              onClick={() => openReportModal(ReportType.POST, post.id, post.userId)}
+              onClick={() => openReportModal(ReportType.POST, post.id, post.authorId)}
             />
           </Dropdown>
         )}
       </div>
 
-      {(!post.type || post.type === PostType.NORMAL) && (
-        <div
-          className="px-4 pb-3 relative"
-        >
-          <p className="text-text-primary whitespace-pre-line text-[15px] leading-relaxed">
+      {(post.type === PostType.REGULAR || post.content) && post.type === PostType.REGULAR && (
+        <div className="px-4 pb-3 relative w-full overflow-hidden">
+          <p className="text-text-primary whitespace-pre-line break-words break-all text-[15px] leading-relaxed w-full">
             <TruncatedText content={post.content} threshold={300} />
           </p>
 
-          {/* Hiển thị lỗi tải lên */}
           {error && (
             <div className="mt-2 p-2 bg-error-light dark:bg-error/10 border border-error/20 rounded-lg">
               <span className="text-xs text-error font-medium">{error}</span>
@@ -148,27 +155,15 @@ const PostItemInner: React.FC<PostItemProps> = ({
         </div>
       )}
 
-      {/* Vẫn hiển thị lỗi nếu có, kể cả khi ẩn content */}
-      {(post.type && post.type !== PostType.NORMAL && error) && (
-        <div className="px-4 pb-3">
-          <div className="p-2 bg-error-light dark:bg-error/10 border border-error/20 rounded-lg">
-            <span className="text-xs text-error font-medium">{error}</span>
-          </div>
-        </div>
-      )}
-
       <PostMediaGrid
-        images={post.images}
-        videos={post.videos}
-        videoThumbnails={post.videoThumbnails}
+        media={post.media || []}
         onClick={handleViewDetail}
         uploadProgress={uploadState?.progress}
       />
 
       <ReactionActions
-        postId={post.id}
-        reactionSummary={post.reactionSummary}
-        reactionCount={post.reactionCount}
+        reactionSummary={filteredSummary}
+        reactionCount={filteredCount}
         myReaction={myReaction}
         commentCount={post.commentCount}
         onReact={onReact}
@@ -183,6 +178,7 @@ const PostItemInner: React.FC<PostItemProps> = ({
         sourceId={post.id}
         sourceType="post"
         currentUserId={currentUser.id}
+        authorId={post.authorId}
         context="POST"
         friendsIds={friendIds}
       />

@@ -35,11 +35,11 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode; requireAdmin?: boole
     return <Navigate to="/login" replace />;
   }
 
-  if (user.status === UserStatus.BANNED) {
+  if (user.status === 'banned') {
     return <Navigate to="/banned" replace />;
   }
 
-  if (requireAdmin && user.role !== 'admin') {
+  if (requireAdmin && user?.role !== 'admin') {
     return <Navigate to="/" replace />;
   }
 
@@ -58,24 +58,20 @@ const App: React.FC = () => {
     return () => unsubscribeAuth();
   }, [initializeAuth]);
 
-  // Cập nhật trạng thái người dùng.
   useEffect(() => {
     if (!user) return;
 
-    const userStatusRef = ref(rtdb, `/status/${user.id}`);
+    const presenceRef = ref(rtdb, `/presence/${user.id}`);
     const connectedRef = ref(rtdb, '.info/connected');
 
-    // Đồng bộ với trạng thái kết nối server.
     const unsubscribeConnected = onValue(connectedRef, (snap) => {
       if (snap.val() === true) {
-        // Thiết lập tự động offline khi mất kết nối.
-        onDisconnect(userStatusRef).set({
-          status: UserStatus.OFFLINE,
+        onDisconnect(presenceRef).set({
+          isOnline: false,
           lastSeen: serverTimestamp()
         }).then(() => {
-          // Đánh dấu người dùng đang hoạt động.
-          set(userStatusRef, {
-            status: UserStatus.ONLINE,
+          set(presenceRef, {
+            isOnline: true,
             lastSeen: serverTimestamp()
           });
         });
@@ -84,9 +80,8 @@ const App: React.FC = () => {
 
     return () => {
       unsubscribeConnected();
-      // Ngắt kết nối và cập nhật offline.
-      set(userStatusRef, {
-        status: UserStatus.OFFLINE,
+      set(presenceRef, {
+        isOnline: false,
         lastSeen: serverTimestamp()
       });
     };

@@ -10,73 +10,91 @@ service cloud.firestore {
       return request.auth.uid == userId;
     }
 
-    // Admin và banned dùng Custom Claims — không cần Firestore read
     function isAdmin() {
-      return isAuthenticated() && request.auth.token.admin == true;
+      return isAuthenticated() && 
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
     }
 
     function isNotBanned() {
-      return isAuthenticated() && request.auth.token.banned != true;
+      return isAuthenticated() && 
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.status == 'active';
     }
 
-    // Danh sách các trường dữ liệu thay đổi.
     function changed() {
       return request.resource.data.diff(resource.data).affectedKeys();
     }
 
-    // QUẢN LÝ NGƯỜI DÙNG
+    function isBlockedWith(otherUserId) {
+      return isAuthenticated() && (
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)/blockedUsers/$(otherUserId)) ||
+        exists(/databases/$(database)/documents/users/$(otherUserId)/blockedUsers/$(request.auth.uid))
+      );
+    }
+
     match /users/{userId} {
-      // Dữ liệu nhạy cảm — chỉ owner
-      match /private/security {
-        allow read, write: if isOwner(userId) && isNotBanned();
-      }
-      // FCM tokens — CF-only write
       match /private/fcm {
         allow read: if isOwner(userId);
-        allow write: if false;
+        allow write: if isOwner(userId) && isNotBanned();
       }
+
+      match /private/settings {
+        allow read: if isOwner(userId);
+        allow write: if isOwner(userId) && isNotBanned();
+      }
+
       allow read: if isAuthenticated();
 
       allow create: if isAuthenticated() && isOwner(userId) &&
-        request.resource.data.status in ['online', 'offline'] &&
-        // Role chỉ được set qua Custom Claims — chặn ghi trực tiếp
-        !('role' in request.resource.data);
+        request.resource.data.status in ['active', 'banned'] &&
+        request.resource.data.role == 'user';
 
       allow update: if isAuthenticated() && (
-        // Quyền admin toàn phần.
         isAdmin() ||
-        // Chủ sở hữu không được tự đổi role (CF xử lý).
-        (isOwner(userId) && isNotBanned() && !changed().hasAny(['role']))
+        (isOwner(userId) && isNotBanned() && !changed().hasAny(['role', 'status']))
       );
 
       allow delete: if isAuthenticated() && isOwner(userId) && isNotBanned();
 
-      // Bạn bè — chỉ CF write, tất cả authenticated đều có thể đọc
       match /friends/{friendId} {
-        allow read: if isAuthenticated();
+        allow read: if isAuthenticated() && (isOwner(userId) || isOwner(friendId));
+
+        allow create: if isNotBanned() &&
+          (isOwner(userId) || isOwner(friendId)) &&
+          request.resource.data.keys().hasOnly(['friendId', 'createdAt']) &&
+          request.resource.data.friendId == friendId;
+
+        allow delete: if isAuthenticated() && (isOwner(userId) || isOwner(friendId));
+      }
+
+      match /blockedUsers/{blockedUid} {
+        allow read: if isOwner(userId) || (isAuthenticated() && blockedUid == request.auth.uid);
+        allow create, update, delete: if isOwner(userId) && isNotBanned();
+      }
+
+      match /feeds/{postId} {
+        allow read: if isOwner(userId);
         allow write: if false;
       }
     }
 
-    // LỜI MỜI KẾT BẠN
     match /friendRequests/{requestId} {
       allow read: if isAuthenticated() &&
         (resource.data.senderId == request.auth.uid ||
          resource.data.receiverId == request.auth.uid);
 
-      // Chặn tự mời kết bạn, mặc định chờ duyệt.
       allow create: if isNotBanned() &&
         request.resource.data.senderId == request.auth.uid &&
         request.resource.data.senderId != request.resource.data.receiverId &&
+        !isBlockedWith(request.resource.data.receiverId) &&
         request.resource.data.status == 'pending';
 
       allow update: if isNotBanned() &&
         (resource.data.senderId == request.auth.uid ||
          resource.data.receiverId == request.auth.uid) &&
-        // Không cho phép đổi thông tin người gửi/nhận.
         request.resource.data.senderId == resource.data.senderId &&
         request.resource.data.receiverId == resource.data.receiverId &&
-        // Chỉ người nhận mới có quyền chấp nhận.
         (request.resource.data.status != 'accepted' ||
          resource.data.receiverId == request.auth.uid);
 
@@ -85,174 +103,83 @@ service cloud.firestore {
          resource.data.receiverId == request.auth.uid);
     }
 
-    // BÀI VIẾT
     match /posts/{postId} {
-      allow read: if isAuthenticated() && (
+      allow read: if isAuthenticated() && !isBlockedWith(resource.data.authorId) && (
         resource.data.visibility == 'public' ||
-        resource.data.userId == request.auth.uid ||
+        resource.data.authorId == request.auth.uid ||
         (resource.data.visibility == 'friends' &&
-         exists(/databases/$(database)/documents/users/$(resource.data.userId)/friends/$(request.auth.uid))) ||
+         exists(/databases/$(database)/documents/users/$(resource.data.authorId)/friends/$(request.auth.uid))) ||
         isAdmin()
       );
 
-      // Số lượng bình luận khởi tạo bằng 0.
       allow create: if isNotBanned() &&
-        request.resource.data.userId == request.auth.uid &&
+        request.resource.data.authorId == request.auth.uid &&
         request.resource.data.visibility in ['public', 'friends', 'private'] &&
-        request.resource.data.type in ['normal', 'avatar_update', 'cover_update'] &&
         request.resource.data.status == 'active' &&
         request.resource.data.commentCount == 0;
 
       allow update: if isAuthenticated() && (
-        // Chủ bài viết có thể edit hoặc soft delete
-        (resource.data.userId == request.auth.uid && isNotBanned() &&
-         (changed().hasOnly(['content', 'images', 'videos', 'visibility', 'isEdited', 'editedAt', 'videoThumbnails']) ||
-          changed().hasOnly(['status', 'deletedAt', 'deletedBy']))) ||
-        // Chỉ cho phép cập nhật tương tác.
-        (isNotBanned() && changed().hasOnly(['commentCount', 'reactionCount', 'reactionSummary']))
+        (resource.data.authorId == request.auth.uid && isNotBanned() &&
+         (changed().hasOnly(['content', 'media', 'visibility', 'isEdited', 'editedAt']) ||
+          changed().hasOnly(['status', 'deletedAt', 'deletedBy', 'updatedAt']))) ||
+        (isNotBanned() && !isBlockedWith(resource.data.authorId) && changed().hasOnly(['commentCount', 'reactions']))
       );
 
       allow delete: if isAuthenticated() && (
-        (resource.data.userId == request.auth.uid && isNotBanned()) ||
+        (resource.data.authorId == request.auth.uid && isNotBanned()) ||
         isAdmin()
       );
 
-      // Reactions subcollection — client ghi trực tiếp theo userId
       match /reactions/{reactorId} {
-        allow read: if isAuthenticated();
-        allow write: if isNotBanned() && reactorId == request.auth.uid;
+        // Cho phép đọc danh sách reaction. Client tự chia quyền hiển thị.
+        allow read: if isAuthenticated() && !isBlockedWith(get(/databases/$(database)/documents/posts/$(postId)).data.authorId);
+        allow write: if isNotBanned() && reactorId == request.auth.uid && !isBlockedWith(get(/databases/$(database)/documents/posts/$(postId)).data.authorId);
       }
     }
 
-    // BÌNH LUẬN
     match /comments/{commentId} {
-      // Quyền xem phụ thuộc vào bài viết.
-      allow read: if isAuthenticated();
+      // Cho phép đọc danh sách comment để Client tự chia quyền hiển thị.
+      allow read: if isAuthenticated() && !isBlockedWith(get(/databases/$(database)/documents/posts/$(resource.data.postId)).data.authorId);
 
-      // Số lượng phản hồi khởi tạo bằng 0.
       allow create: if isNotBanned() &&
-        request.resource.data.userId == request.auth.uid &&
-        request.resource.data.postId is string &&
+        request.resource.data.authorId == request.auth.uid &&
+        !isBlockedWith(get(/databases/$(database)/documents/posts/$(request.resource.data.postId)).data.authorId) &&
+        (request.resource.data.parentId == null || !isBlockedWith(get(/databases/$(database)/documents/comments/$(request.resource.data.parentId)).data.authorId)) &&
         request.resource.data.status == 'active' &&
         request.resource.data.replyCount == 0;
 
       allow update: if isAuthenticated() && (
-        // Chủ comment có thể edit content, image, và các edit flags
-        (resource.data.userId == request.auth.uid && isNotBanned() && 
+        (resource.data.authorId == request.auth.uid && isNotBanned() && 
          changed().hasOnly(['content', 'image', 'isEdited', 'editedAt'])) ||
-        // Chủ comment có thể chỉ edit content
-        (resource.data.userId == request.auth.uid && isNotBanned() && 
+        (resource.data.authorId == request.auth.uid && isNotBanned() && 
          changed().hasOnly(['content', 'isEdited', 'editedAt'])) ||
-        // Chủ comment có thể soft delete
-        (resource.data.userId == request.auth.uid && isNotBanned() &&
-         changed().hasOnly(['status', 'deletedAt', 'deletedBy'])) ||
-        // Chỉ cho phép cập nhật cảm xúc/phản hồi.
-        (isNotBanned() && changed().hasOnly(['replyCount', 'reactionCount', 'reactionSummary']))
+        (resource.data.authorId == request.auth.uid && isNotBanned() &&
+         changed().hasOnly(['status', 'deletedAt', 'deletedBy', 'updatedAt'])) ||
+        (isNotBanned() && !isBlockedWith(resource.data.authorId) && changed().hasOnly(['replyCount', 'reactions']))
       );
 
       allow delete: if isAuthenticated() && (
-        (resource.data.userId == request.auth.uid && isNotBanned()) ||
-        // Chủ bài viết được quyền xóa mọi bình luận.
+        (resource.data.authorId == request.auth.uid && isNotBanned()) ||
         (isNotBanned() &&
-         get(/databases/$(database)/documents/posts/$(resource.data.postId)).data.userId == request.auth.uid) ||
-        // Chủ bình luận được xóa các phản hồi.
+         get(/databases/$(database)/documents/posts/$(resource.data.postId)).data.authorId == request.auth.uid) ||
         (resource.data.parentId != null &&
-         get(/databases/$(database)/documents/comments/$(resource.data.parentId)).data.userId == request.auth.uid) ||
+         get(/databases/$(database)/documents/comments/$(resource.data.parentId)).data.authorId == request.auth.uid) ||
         isAdmin()
       );
 
-      // Reactions subcollection — client ghi trực tiếp theo userId
       match /reactions/{reactorId} {
-        allow read: if isAuthenticated();
-        allow write: if isNotBanned() && reactorId == request.auth.uid;
+        // Cho phép đọc danh sách nếu có quyền đọc bình luận.
+        allow read: if isAuthenticated() && !isBlockedWith(get(/databases/$(database)/documents/comments/$(commentId)).data.authorId);
+        allow write: if isNotBanned() && reactorId == request.auth.uid && !isBlockedWith(get(/databases/$(database)/documents/comments/$(commentId)).data.authorId);
       }
     }
 
-    // CUỘC TRÒ CHUYỆN
-    match /conversations/{conversationId} {
-      allow read: if isAuthenticated() &&
-        request.auth.uid in resource.data.participantIds;
-
-      // Yêu cầu nhóm tối thiểu 2 người.
-      allow create: if isNotBanned() &&
-        request.auth.uid in request.resource.data.participantIds &&
-        request.resource.data.participantIds.size() >= 2 &&
-        request.resource.data.creatorId is string &&
-        request.resource.data.adminIds is list;
-
-      allow update: if isAuthenticated() &&
-        request.auth.uid in resource.data.participantIds && (
-          // Quyền quản trị viên nhóm.
-          resource.data.creatorId == request.auth.uid ||
-          ('adminIds' in resource.data && request.auth.uid in resource.data.adminIds) ||
-          // Thành viên không có quyền đổi thông tin nhóm.
-          !changed().hasAny(['adminIds', 'creatorId', 'groupName', 'groupAvatar'])
-        );
-
-      allow delete: if isAuthenticated() &&
-        request.auth.uid in resource.data.participantIds;
-
-      // Cài đặt riêng của từng thành viên (pin, mute, archive...)
-      match /members/{memberId} {
-        allow read: if isAuthenticated() &&
-          request.auth.uid in get(/databases/$(database)/documents/conversations/$(conversationId)).data.participantIds;
-
-        // Participant tạo member doc khi tạo conversation (batch)
-        allow create: if isNotBanned() &&
-          request.auth.uid in get(/databases/$(database)/documents/conversations/$(conversationId)).data.participantIds;
-
-        // Chỉ chủ sở hữu cập nhật settings của mình
-        allow update: if isNotBanned() && memberId == request.auth.uid &&
-          request.auth.uid in get(/databases/$(database)/documents/conversations/$(conversationId)).data.participantIds;
-
-        allow delete: if false;
-      }
-    }
-
-    // TIN NHẮN
-    match /messages/{messageId} {
-      allow read: if isAuthenticated() &&
-        request.auth.uid in
-          get(/databases/$(database)/documents/conversations/$(resource.data.conversationId)).data.participantIds;
-
-      // Chỉ hệ thống mới được gửi tin nhắn tự động.
-      allow create: if isNotBanned() &&
-        request.auth.uid in
-          get(/databases/$(database)/documents/conversations/$(request.resource.data.conversationId)).data.participantIds &&
-        (request.resource.data.senderId == request.auth.uid ||
-         (request.resource.data.senderId == 'system' && request.resource.data.type == 'system')) &&
-        request.resource.data.readBy is list &&
-        request.resource.data.deliveredTo is list &&
-        request.resource.data.deletedBy is list;
-
-      allow update: if isAuthenticated() && (
-        // Người gửi được thu hồi hoặc sửa tin nhắn.
-        (resource.data.senderId == request.auth.uid && isNotBanned() &&
-         changed().hasOnly(['content', 'isRecalled', 'recalledAt', 'isEdited', 'editedAt'])) ||
-        // Thành viên thực hiện tương tác tin nhắn.
-        (request.auth.uid in
-          get(/databases/$(database)/documents/conversations/$(resource.data.conversationId)).data.participantIds &&
-         changed().hasOnly(['readBy', 'deliveredAt', 'deliveredTo', 'deletedBy']))
-      );
-
-      allow delete: if isAuthenticated() &&
-        resource.data.senderId == request.auth.uid && isNotBanned();
-
-      // Reactions subcollection — client ghi trực tiếp theo userId
-      match /reactions/{reactorId} {
-        allow read: if isAuthenticated();
-        allow write: if isNotBanned() && reactorId == request.auth.uid;
-      }
-    }
-
-    // THÔNG BÁO
     match /notifications/{notificationId} {
       allow read: if isAuthenticated() && (
         resource.data.receiverId == request.auth.uid ||
-        resource.data.senderId == request.auth.uid
+        resource.data.actorId == request.auth.uid
       );
 
-      // Notifications chỉ được tạo bửi Cloud Functions (server-side)
       allow create: if false;
 
       allow update: if isAuthenticated() &&
@@ -261,37 +188,26 @@ service cloud.firestore {
 
       allow delete: if isAuthenticated() && (
         resource.data.receiverId == request.auth.uid ||
-        resource.data.senderId == request.auth.uid ||
+        resource.data.actorId == request.auth.uid ||
         isAdmin()
       );
     }
 
-    // CẤU HÌNH HỆ THỐNG (CF-only write)
-    match /config/{document} {
-      allow read: if isAuthenticated();
-      allow write: if false;
-    }
 
-    // BÁO CÁO VI PHẠM
     match /reports/{reportId} {
-      // Chặn tự báo cáo, mặc định chờ xử lý.
       allow create: if isNotBanned() &&
         request.resource.data.reporterId == request.auth.uid &&
         request.resource.data.reporterId != request.resource.data.targetOwnerId &&
         request.resource.data.status == 'pending' &&
         request.resource.data.targetType in ['post', 'comment', 'user'];
 
-      // Truy cập để xử lý báo cáo khi nội dung bị xóa.
       allow read: if isAuthenticated() && (
         resource.data.reporterId == request.auth.uid ||
         resource.data.targetOwnerId == request.auth.uid ||
         isAdmin()
       );
 
-      allow update: if isAuthenticated() && (
-        // Chỉ Admin mới được cập nhật (resolve/reject) — CF xử lý orphaned tự động
-        isAdmin()
-      );
+      allow update: if isAuthenticated() && isAdmin();
 
       allow delete: if isAuthenticated() && (
         resource.data.reporterId == request.auth.uid ||
@@ -301,3 +217,4 @@ service cloud.firestore {
     }
   }
 }
+

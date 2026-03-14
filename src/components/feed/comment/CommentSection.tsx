@@ -3,7 +3,7 @@ import { X } from 'lucide-react';
 import { Button, ConfirmDialog, UploadProgress } from '../../ui';
 import { CONFIRM_MESSAGES } from '../../../constants';
 import { toast } from '../../../store/toastStore';
-import { Comment, User, ReportType } from '../../../types';
+import { Comment, User, ReportType, MediaObject } from '../../../types';
 import { postService } from '../../../services/postService';
 import { useCommentStore } from '../../../store/commentStore';
 import { useUserCache } from '../../../store/userCacheStore';
@@ -75,9 +75,9 @@ export const CommentSection: React.FC<CommentSectionProps> = ({
 
   const filteredRootComments = useMemo(() =>
     currentRootComments.filter(c =>
-      c.userId === currentUser.id ||
-      c.userId === postOwnerId ||
-      friendIds.includes(c.userId)
+      c.authorId === currentUser.id ||
+      c.authorId === postOwnerId ||
+      friendIds.includes(c.authorId)
     ), [currentRootComments, currentUser.id, friendIds, postOwnerId]
   );
 
@@ -113,7 +113,7 @@ export const CommentSection: React.FC<CommentSectionProps> = ({
 
   useEffect(() => {
     if (currentRootComments.length > 0) {
-      const userIds = [...new Set(currentRootComments.map(c => c.userId))];
+      const userIds = [...new Set(currentRootComments.map(c => c.authorId))];
       fetchUsers(userIds);
     }
   }, [currentRootComments, fetchUsers]);
@@ -149,10 +149,7 @@ export const CommentSection: React.FC<CommentSectionProps> = ({
     Object.keys(postReplies).forEach(async (parentId) => {
       const parentReplies = postReplies[parentId] || [];
       if (parentReplies.length > 0) {
-        const userIds = [...new Set([
-          ...parentReplies.map(r => r.userId),
-          ...parentReplies.map(r => r.replyToUserId).filter(id => !!id) as string[]
-        ])];
+        const userIds = [...new Set(parentReplies.map(r => r.authorId))];
         if (userIds.length > 0) {
           await fetchUsers(userIds);
         }
@@ -181,7 +178,7 @@ export const CommentSection: React.FC<CommentSectionProps> = ({
     setInputMode('comment');
   }, []);
 
-  const handleCommentSubmit = useCallback(async (content: string, image?: string) => {
+  const handleCommentSubmit = useCallback(async (content: string, image?: MediaObject) => {
     try {
       if (inputMode === 'edit' && editingComment) {
         await updateComment(postId, editingComment.id, content, editingComment.parentId, image);
@@ -192,7 +189,6 @@ export const CommentSection: React.FC<CommentSectionProps> = ({
           currentUser.id,
           content,
           parentId,
-          replyingTo?.userId,
           image
         );
       }
@@ -208,6 +204,8 @@ export const CommentSection: React.FC<CommentSectionProps> = ({
       await deleteComment(postId, commentToDelete.id, currentUser.id, commentToDelete.parentId);
       setCommentToDelete(null);
     } catch (error) {
+      console.error("Lỗi xóa bình luận:", error);
+      toast.error("Không thể xóa bình luận này");
     }
   }, [commentToDelete, postId, currentUser.id, deleteComment]);
 
@@ -216,7 +214,8 @@ export const CommentSection: React.FC<CommentSectionProps> = ({
     try {
       const onProgress = (p: { progress: number }) => setUploadProgress(p.progress);
       if (file.type.startsWith('image/')) {
-        return await postService.uploadCommentImage(file, currentUser.id, onProgress);
+        const mediaObject = await postService.uploadCommentImage(file, currentUser.id, onProgress);
+        return mediaObject;
       }
       throw new Error('Chỉ hỗ trợ tải ảnh');
     } finally {
@@ -259,7 +258,7 @@ export const CommentSection: React.FC<CommentSectionProps> = ({
                     handleReplyClick={handleReplyClick}
                     handleEditClick={handleEditClick}
                     handleCommentSubmit={handleCommentSubmit}
-                    handleDeleteClick={setCommentToDelete}
+                    handleDeleteClick={() => setCommentToDelete(comment)}
                     handleUploadMedia={handleUploadMedia}
                     loadReplies={loadReplies}
                     resetInput={resetInput}
@@ -268,6 +267,14 @@ export const CommentSection: React.FC<CommentSectionProps> = ({
                   />
                 </div>
               ))}
+              
+              {totalCommentCount > filteredRootComments.length && filteredRootComments.length > 0 && (
+                <div className="text-center py-4 px-6 mt-2 border-t border-border-light/30">
+                  <p className="text-text-tertiary text-[13px] italic">
+                    Còn {totalCommentCount - filteredRootComments.length} bình luận khác. Bạn chỉ xem được bình luận của bạn bè.
+                  </p>
+                </div>
+              )}
               {currentHasMoreRoot && (
                 <div className="px-6 py-4">
                   <Button
@@ -294,7 +301,7 @@ export const CommentSection: React.FC<CommentSectionProps> = ({
           <div className="flex items-center justify-between mb-2 px-3 py-1.5 bg-primary/5 rounded-xl text-[11px] text-primary border border-primary/10 backdrop-blur-sm">
             <span className="font-medium flex items-center gap-1.5">
               <div className="w-1 h-1 rounded-full bg-primary animate-pulse" />
-              Đang trả lời <strong>{users[replyingTo.userId || '']?.name}</strong>
+              Đang trả lời <strong>{users[replyingTo.authorId || '']?.fullName}</strong>
             </span>
             <button onClick={resetInput} className="p-0.5 hover:bg-primary/10 active:bg-primary/20 rounded-full transition-all duration-base">
               <X size={12} />
@@ -313,7 +320,11 @@ export const CommentSection: React.FC<CommentSectionProps> = ({
 
         {activeInputId === 'root' && (
           <CommentInput
-            user={currentUser}
+            user={{
+              id: currentUser.id,
+              fullName: currentUser.fullName,
+              avatar: currentUser.avatar
+            }}
             onSubmit={handleCommentSubmit}
             onUploadMedia={handleUploadMedia}
             autoFocus={autoFocus}

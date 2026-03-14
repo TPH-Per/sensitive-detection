@@ -37,8 +37,8 @@ const FriendRequestItemInner: React.FC<FriendRequestItemProps> = ({
       <div className="flex items-center gap-3 flex-1 min-w-0">
         <UserAvatar
           userId={user.id}
-          src={user.avatar}
-          name={user.name}
+          src={user.avatar.url}
+          name={user.fullName}
           size="lg"
           initialStatus={user.status}
           onClick={handleProfileClick}
@@ -48,11 +48,8 @@ const FriendRequestItemInner: React.FC<FriendRequestItemProps> = ({
             className="font-semibold text-text-primary cursor-pointer hover:underline truncate"
             onClick={handleProfileClick}
           >
-            {user.name}
+            {user.fullName}
           </h3>
-          {request.message && (
-            <p className="text-sm text-text-secondary mt-1 line-clamp-2">"{request.message}"</p>
-          )}
           <p className="text-xs text-text-tertiary mt-1 flex items-center gap-1">
             <Clock size={12} />
             {formatRelativeTime(request.createdAt)}

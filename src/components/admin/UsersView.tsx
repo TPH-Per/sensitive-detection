@@ -11,7 +11,8 @@ import {
 } from 'lucide-react';
 import { User, UserStatus } from '../../types';
 import { userService } from '../../services/userService';
-import { getFunctions, httpsCallable } from 'firebase/functions';
+import { functions } from '../../firebase/config';
+import { httpsCallable } from 'firebase/functions';
 import { Button, UserAvatar, Skeleton, IconButton, Select, Input, ConfirmDialog } from '../ui';
 import { CONFIRM_MESSAGES, TOAST_MESSAGES } from '../../constants';
 import { toast } from '../../store/toastStore';
@@ -80,7 +81,7 @@ export const UsersView: React.FC = () => {
   const handleConfirmAction = async () => {
     const { type, userId, userName } = confirmDialog;
     try {
-      const fn = httpsCallable(getFunctions(), 'banUser');
+      const fn = httpsCallable(functions, 'banUser');
       await fn({ userId, action: type });
       if (type === 'ban') {
         toast.success(TOAST_MESSAGES.ADMIN.BAN_SUCCESS(userName));
@@ -96,7 +97,7 @@ export const UsersView: React.FC = () => {
 
   const filteredUsers = users.filter(user => {
     const matchSearch = !searchTerm ||
-      user.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.email?.toLowerCase().includes(searchTerm.toLowerCase());
 
     const matchStatus = statusFilter === 'all' ||
@@ -159,16 +160,14 @@ export const UsersView: React.FC = () => {
                 <div className="flex items-center gap-4 overflow-hidden">
                   <UserAvatar
                     userId={user.id}
-                    src={user.avatar}
-                    name={user.name}
                     size="md"
                     className="shrink-0"
                     onClick={() => navigate(`/profile/${user.id}`)}
                   />
                   <div className="overflow-hidden">
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-bold text-text-primary truncate">{user.name}</span>
-                      {user.role === 'admin' && (
+                      <span className="text-sm font-bold text-text-primary truncate">{user.fullName}</span>
+                      {user.status === 'banned' && (
                         <div className="flex items-center">
                           <span className="hidden sm:inline-block px-1.5 py-0.5 rounded text-[10px] font-bold bg-primary/10 text-primary border border-primary/20">
                             Quản trị viên
@@ -200,10 +199,10 @@ export const UsersView: React.FC = () => {
                     variant="secondary"
                     title="Xem chi tiết"
                   />
-                  {user.status === UserStatus.BANNED ? (
+                  {user.status === 'banned' ? (
                     <IconButton
                       icon={<Unlock size={18} />}
-                      onClick={() => handleUnbanClick(user.id, user.name)}
+                      onClick={() => handleUnbanClick(user.id, user.fullName)}
                       variant="secondary"
                       className="text-error hover:bg-error/10"
                       title="Mở khóa tài khoản"
@@ -211,7 +210,7 @@ export const UsersView: React.FC = () => {
                   ) : (
                     <IconButton
                       icon={<Lock size={18} />}
-                      onClick={() => handleBanClick(user.id, user.name)}
+                      onClick={() => handleBanClick(user.id, user.fullName)}
                       variant="secondary"
                       className="text-text-tertiary hover:text-error hover:bg-error/10"
                       title="Khóa tài khoản"

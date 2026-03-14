@@ -3,10 +3,11 @@ import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { MessageCircle, Users, LayoutGrid, Settings, LogOut, User as UserIcon, Moon, Sun, Bell, Flag, Menu, Shield } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 import { useThemeStore } from '../../store/themeStore';
-import { useChatStore } from '../../store/chatStore';
+import { useRtdbChatStore } from '../../store';
 import { useContactStore } from '../../store/contactStore';
 import { useLoadingStore } from '../../store/loadingStore';
-import { Avatar, UserAvatar, ConfirmDialog, Button, IconButton } from '../ui';
+import { Avatar, UserAvatar, ConfirmDialog, Button, IconButton, ScreenLoader } from '../ui';
+import { Post, Visibility, ReactionType } from '../../types';
 import { PostViewModal } from '../feed';
 import { usePostStore } from '../../store/postStore';
 import { useUserCache } from '../../store/userCacheStore';
@@ -24,8 +25,8 @@ import { CONFIRM_MESSAGES } from '../../constants';
 export const AppLayout: React.FC = () => {
   const { user } = useAuthStore();
   const { mode, toggleTheme } = useThemeStore();
-  const { subscribeToConversations, selectedConversationId } = useChatStore();
-  const { receivedRequests, subscribeToRequests } = useContactStore();
+  const { subscribeToConversations, selectedConversationId } = useRtdbChatStore();
+  const { receivedRequests, subscribeToRequests, subscribeToFriends } = useContactStore();
   const { initialize: initNotifications, unreadCount: unreadNotifications } = useNotificationStore();
 
   const { selectedPost, setSelectedPost, reactToPost } = usePostStore();
@@ -42,7 +43,7 @@ export const AppLayout: React.FC = () => {
   const isChatRoom = location.pathname === '/' && !!selectedConversationId;
 
   // Global Call State
-  const { 
+  const {
     callPhase,
     setCallPhase,
     callType,
@@ -62,8 +63,6 @@ export const AppLayout: React.FC = () => {
     resetCall
   } = useCallStore();
 
-  const sendCallMessage = useChatStore(state => state.sendCallMessage);
-
   const { playSound } = useCallSounds();
 
   const { incomingCall, startCall, acceptCall, rejectCall, endCall } = useCallSignaling(
@@ -79,23 +78,11 @@ export const AppLayout: React.FC = () => {
         }
       },
       onCallRejected: () => {
-        if (isCaller && callConversationId && user) {
-          sendCallMessage(callConversationId, user.id, callType, 'rejected');
-        }
         playSound('busy');
         resetCall();
       },
       onCallEnded: () => {
-        if (isCaller && callConversationId && user) {
-          if (callPhase === 'outgoing') {
-            sendCallMessage(callConversationId, user.id, callType, 'missed');
-            playSound('busy');
-          } else if (callPhase === 'in-call' && callStartTime) {
-            const durationSecs = Math.floor((Date.now() - callStartTime) / 1000);
-            sendCallMessage(callConversationId, user.id, callType, 'ended', durationSecs);
-            playSound('ended');
-          }
-        } else if (callPhase === 'in-call') {
+        if (callPhase === 'in-call') {
           playSound('ended');
         }
         resetCall();
@@ -129,17 +116,19 @@ export const AppLayout: React.FC = () => {
     if (!user) return;
     const unsubscribeChat = subscribeToConversations(user.id);
     const unsubscribeContacts = subscribeToRequests(user.id);
+    const unsubscribeFriends = subscribeToFriends(user.id);
     const unsubscribeNotifications = initNotifications(user.id);
     return () => {
       unsubscribeChat();
       unsubscribeContacts();
+      unsubscribeFriends();
       unsubscribeNotifications();
     };
-  }, [user, subscribeToConversations, subscribeToRequests, initNotifications]);
+  }, [user, subscribeToConversations, subscribeToRequests, subscribeToFriends, initNotifications]);
 
   useEffect(() => {
-    if (selectedPost && !usersMap[selectedPost.userId]) {
-      fetchUsers([selectedPost.userId]);
+    if (selectedPost && !usersMap[selectedPost.authorId]) {
+      fetchUsers([selectedPost.authorId]);
     }
   }, [selectedPost, usersMap, fetchUsers]);
 
@@ -155,7 +144,7 @@ export const AppLayout: React.FC = () => {
 
   const hasNewRequests = receivedRequests.length > 0;
 
-  const handlePostReact = async (postId: string, reaction: string) => {
+  const handlePostReact = async (postId: string, reaction: ReactionType | 'REMOVE') => {
     if (user) {
       await reactToPost(postId, user.id, reaction);
     }
@@ -248,7 +237,7 @@ export const AppLayout: React.FC = () => {
               {user && (
                 <UserAvatar
                   userId={user.id}
-                  src={user.avatar}
+                  src={user.avatar.url}
                   size="sm"
                   className="cursor-pointer ring-2 ring-transparent group-hover:ring-primary/30 transition-all duration-base"
                   initialStatus={user.status}
@@ -269,7 +258,9 @@ export const AppLayout: React.FC = () => {
 
       {/* Main Content */}
       <main className={`flex-1 relative flex flex-col h-full overflow-hidden transition-theme md:pb-0 ${isChatRoom ? 'pb-0' : 'pb-[calc(3.5rem+env(safe-area-inset-bottom))]'}`}>
-        <Outlet />
+        <React.Suspense fallback={<ScreenLoader />}>
+          <Outlet />
+        </React.Suspense>
       </main>
 
       {/* Mobile Navigation */}
@@ -342,7 +333,7 @@ export const AppLayout: React.FC = () => {
           isOpen={!!selectedPost || isModalLoading}
           onClose={() => setSelectedPost(null)}
           post={selectedPost}
-          author={selectedPost ? usersMap[selectedPost.userId] : null}
+          author={selectedPost ? usersMap[selectedPost.authorId] : null}
           currentUser={user}
           onReact={handlePostReact}
           isLoading={isModalLoading}
@@ -365,8 +356,8 @@ export const AppLayout: React.FC = () => {
         <CallWindow
           roomId={activeRoomId}
           userId={user.id}
-          userName={user.name}
-          userAvatar={user.avatar}
+          userName={user.fullName}
+          userAvatar={user.avatar.url}
           isGroupCall={isGroupCall}
           callType={callType}
           onClose={() => {

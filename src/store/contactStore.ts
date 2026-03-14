@@ -15,12 +15,11 @@ interface ContactState {
   subscribeToRequests: (userId: string) => () => void;
   searchUsers: (searchTerm: string, userId: string) => Promise<User[]>;
 
-  sendFriendRequest: (senderId: string, receiverId: string, message?: string) => Promise<void>;
-  acceptFriendRequest: (requestId: string) => Promise<void>;
+  sendFriendRequest: (senderId: string, receiverId: string) => Promise<void>;
+  acceptFriendRequest: (requestId: string, senderId: string, receiverId: string) => Promise<void>;
   rejectFriendRequest: (requestId: string) => Promise<void>;
   cancelFriendRequest: (requestId: string) => Promise<void>;
   unfriend: (userId: string, friendId: string) => Promise<void>;
-  blockUser: (userId: string, blockedUserId: string) => Promise<void>;
 
   clearSearchResults: () => void;
   reset: () => void;
@@ -82,23 +81,23 @@ export const useContactStore = create<ContactState>()(
         }
       },
 
-      sendFriendRequest: async (senderId: string, receiverId: string, message?: string) => {
+      sendFriendRequest: async (senderId: string, receiverId: string) => {
         try {
-          await friendService.sendFriendRequest(senderId, receiverId, message);
+          await friendService.sendFriendRequest(senderId, receiverId);
         } catch (error) {
           console.error("Lỗi gửi lời mời:", error);
           throw error;
         }
       },
 
-      acceptFriendRequest: async (requestId: string) => {
+      acceptFriendRequest: async (requestId: string, senderId: string, receiverId: string) => {
         const previousRequests = get().receivedRequests;
         set(state => ({
           receivedRequests: state.receivedRequests.filter(r => r.id !== requestId)
         }));
 
         try {
-          await friendService.acceptFriendRequest(requestId);
+          await friendService.acceptFriendRequest(requestId, senderId, receiverId);
         } catch (error) {
           set({ receivedRequests: previousRequests });
           console.error("Lỗi chấp nhận kết bạn:", error);
@@ -147,22 +146,6 @@ export const useContactStore = create<ContactState>()(
         } catch (error) {
           set({ friends: previousFriends });
           console.error("Lỗi hủy kết bạn:", error);
-          throw error;
-        }
-      },
-
-      blockUser: async (userId: string, blockedUserId: string) => {
-        try {
-          const isFriend = get().friends.some(f => f.id === blockedUserId);
-          if (isFriend) {
-            await friendService.unfriend(userId, blockedUserId);
-          }
-          await userService.blockUser(userId, blockedUserId);
-          set((state) => ({
-            friends: state.friends.filter(f => f.id !== blockedUserId)
-          }));
-        } catch (error) {
-          console.error("Lỗi chặn người dùng:", error);
           throw error;
         }
       },

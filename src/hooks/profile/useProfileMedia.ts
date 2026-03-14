@@ -1,13 +1,11 @@
 import { useState, useCallback } from 'react';
-import { User } from '../../types';
+import { User, MediaObject } from '../../types';
 import { useAuthStore } from '../../store/authStore';
 import { userService } from '../../services/userService';
-import { postService } from '../../services/postService';
 import { useUserCache } from '../../store/userCacheStore';
 import { toast } from '../../store/toastStore';
 import { validateFileSize } from '../../utils';
-import { TOAST_MESSAGES, SOCIAL_MESSAGES } from '../../constants';
-import { Visibility, PostType } from '../../types';
+import { TOAST_MESSAGES } from '../../constants';
 
 interface UseProfileMediaProps {
   profile: User | null;
@@ -26,7 +24,7 @@ export const useProfileMedia = ({
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
 
-  const handleAvatarChange = useCallback(async (file: File, shareToFeed: boolean = true) => {
+  const handleAvatarChange = useCallback(async (file: File, shouldShare: boolean = false) => {
     if (!profile || !isOwnProfile) return;
     if (!file.type.startsWith('image/')) {
       toast.error(TOAST_MESSAGES.MEDIA.INVALID_FILE);
@@ -41,30 +39,18 @@ export const useProfileMedia = ({
     setUploading(true);
     setUploadProgress(0);
     try {
-      const newAvatarUrl = await userService.uploadAvatar(profile.id, file, (p) => {
+      const newAvatarMedia = await userService.uploadAvatar(profile.id, file, shouldShare, (p) => {
         setUploadProgress(p.progress);
       });
-      const updatedProfile = { ...profile, avatar: newAvatarUrl };
+      const updatedProfile = { ...profile, avatar: newAvatarMedia };
       setProfile(updatedProfile);
       useUserCache.getState().setUser(updatedProfile);
 
       if (currentUser) {
-        useAuthStore.getState().updateAvatar(newAvatarUrl);
+        useAuthStore.getState().updateAvatar(newAvatarMedia);
       }
 
-      // Tạo bài viết nếu có yêu cầu chia sẻ
-      if (shareToFeed) {
-        await postService.createPost({
-          userId: profile.id,
-          content: SOCIAL_MESSAGES.UPDATE_AVATAR,
-          images: [newAvatarUrl],
-          videos: [],
-          visibility: Visibility.PUBLIC,
-          type: PostType.AVATAR_UPDATE,
-          reactionCount: 0,
-          reactionSummary: {},
-        });
-      }
+      toast.success('Đã cập nhật ảnh đại diện!');
     } catch (error) {
       console.error("Lỗi upload avatar", error);
       toast.error(TOAST_MESSAGES.MEDIA.UPLOAD_AVATAR_FAILED);
@@ -74,7 +60,7 @@ export const useProfileMedia = ({
     }
   }, [profile, isOwnProfile, currentUser, setProfile]);
 
-  const handleCoverChange = useCallback(async (file: File, shareToFeed: boolean = true) => {
+  const handleCoverChange = useCallback(async (file: File, shouldShare: boolean = false) => {
     if (!profile || !isOwnProfile) return;
     if (!file.type.startsWith('image/')) {
       toast.error(TOAST_MESSAGES.MEDIA.INVALID_FILE);
@@ -89,26 +75,14 @@ export const useProfileMedia = ({
     setUploading(true);
     setUploadProgress(0);
     try {
-      const newCoverUrl = await userService.uploadCoverImage(profile.id, file, (p) => {
+      const newCoverMedia = await userService.uploadCoverImage(profile.id, file, shouldShare, (p) => {
         setUploadProgress(p.progress);
       });
-      const updatedProfile = { ...profile, coverImage: newCoverUrl };
+      const updatedProfile = { ...profile, cover: newCoverMedia };
       setProfile(updatedProfile);
       useUserCache.getState().setUser(updatedProfile);
 
-      // Tạo bài viết nếu có yêu cầu chia sẻ
-      if (shareToFeed) {
-        await postService.createPost({
-          userId: profile.id,
-          content: SOCIAL_MESSAGES.UPDATE_COVER,
-          images: [newCoverUrl],
-          videos: [],
-          visibility: Visibility.PUBLIC,
-          type: PostType.COVER_UPDATE,
-          reactionCount: 0,
-          reactionSummary: {},
-        });
-      }
+      toast.success('Đã cập nhật ảnh bìa!');
     } catch (error) {
       console.error("Lỗi upload cover", error);
       toast.error(TOAST_MESSAGES.MEDIA.UPLOAD_COVER_FAILED);
@@ -122,13 +96,14 @@ export const useProfileMedia = ({
     if (!profile || !isOwnProfile) return;
     setUploading(true);
     try {
-      await userService.deleteAvatar(profile.id);
-      const updatedProfile = { ...profile, avatar: '' };
+      const emptyAvatar: MediaObject = { url: '', fileName: '', mimeType: '', size: 0, isSensitive: false };
+      await userService.updateProfile(profile.id, { avatar: emptyAvatar });
+      const updatedProfile = { ...profile, avatar: emptyAvatar };
       setProfile(updatedProfile);
       useUserCache.getState().setUser(updatedProfile);
 
       if (currentUser) {
-        useAuthStore.getState().updateAvatar('');
+        useAuthStore.getState().updateAvatar(emptyAvatar);
       }
       toast.success(TOAST_MESSAGES.MEDIA.DELETE_AVATAR_SUCCESS);
     } catch (error) {
@@ -142,8 +117,9 @@ export const useProfileMedia = ({
     if (!profile || !isOwnProfile) return;
     setUploading(true);
     try {
-      await userService.deleteCoverImage(profile.id);
-      const updatedProfile = { ...profile, coverImage: '' };
+      const emptyCover: MediaObject = { url: '', fileName: '', mimeType: '', size: 0, isSensitive: false };
+      await userService.updateProfile(profile.id, { cover: emptyCover });
+      const updatedProfile = { ...profile, cover: emptyCover };
       setProfile(updatedProfile);
       useUserCache.getState().setUser(updatedProfile);
       toast.success(TOAST_MESSAGES.MEDIA.DELETE_COVER_SUCCESS);

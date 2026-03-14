@@ -2,12 +2,12 @@ import React, { useState, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { X, ChevronLeft, ChevronRight, MoreHorizontal, Edit, Trash2, Flag } from 'lucide-react';
 import { UserAvatar, IconButton, Modal, Dropdown, DropdownItem, Skeleton, ReactionDetailsModal } from '../../ui';
-import { Post, User, ReportType } from '../../../types';
+import { Post, User, ReportType, ReactionType } from '../../../types';
 import { CommentSection } from '../comment/CommentSection';
 import { formatRelativeTime, formatDateTime } from '../../../utils/dateUtils';
 import { useReportStore } from '../../../store/reportStore';
 import { usePostStore } from '../../../store/postStore';
-import { useFriendIds } from '../../../hooks';
+import { useFriendIds, useFilteredReactions } from '../../../hooks';
 import { VisibilityBadge, TruncatedText, ReactionActions } from '../shared';
 
 interface PostViewModalProps {
@@ -16,7 +16,7 @@ interface PostViewModalProps {
   currentUser: User;
   isOpen: boolean;
   onClose: () => void;
-  onReact: (postId: string, reaction: string) => void;
+  onReact: (postId: string, reaction: ReactionType | 'REMOVE') => void;
   onEdit?: (postId: string) => void;
   onDelete?: (postId: string) => void;
   isLoading?: boolean;
@@ -36,8 +36,15 @@ export const PostViewModal: React.FC<PostViewModalProps> = ({
   const navigate = useNavigate();
   const { openReportModal } = useReportStore();
   const friendIds = useFriendIds();
+  const myReaction = usePostStore(state => state.myPostReactions[post?.id || '']);
   const [mediaIndex, setMediaIndex] = useState(0);
   const [isReactionsModalOpen, setIsReactionsModalOpen] = useState(false);
+
+  const { filteredSummary, filteredCount } = useFilteredReactions(
+    post?.id || '',
+    'post',
+    post?.authorId || ''
+  );
 
   const handleProfileClick = useCallback(() => {
     if (author?.id) {
@@ -65,7 +72,7 @@ export const PostViewModal: React.FC<PostViewModalProps> = ({
     const isLeftSwipe = distance > minSwipeDistance;
     const isRightSwipe = distance < -minSwipeDistance;
 
-    if (isLeftSwipe && post && mediaIndex < (post.images?.length || 0) + (post.videos?.length || 0) - 1) {
+    if (isLeftSwipe && post && mediaIndex < allMedia.length - 1) {
       setMediaIndex(prev => prev + 1);
     }
     if (isRightSwipe && mediaIndex > 0) {
@@ -82,11 +89,12 @@ export const PostViewModal: React.FC<PostViewModalProps> = ({
 
   const allMedia = useMemo(() => {
     if (!post) return [];
-    return [
-      ...(post.images || []).map(url => ({ url, type: 'image' })),
-      ...(post.videos || []).map(url => ({ url, type: 'video' }))
-    ];
-  }, [post?.images, post?.videos]);
+    return (post.media || []).map(m => ({
+      url: m.url,
+      type: m.mimeType.startsWith('video/') ? 'video' as const : 'image' as const,
+      thumbnailUrl: m.thumbnailUrl
+    }));
+  }, [post?.media]);
 
   if (!isOpen) return null;
 
@@ -129,8 +137,7 @@ export const PostViewModal: React.FC<PostViewModalProps> = ({
     );
   }
 
-  const myReaction = usePostStore(state => state.myPostReactions[post.id]);
-  const isOwner = post.userId === currentUser.id;
+  const isOwner = post.authorId === currentUser.id;
   const hasMedia = allMedia.length > 0;
 
   return (
@@ -156,8 +163,10 @@ export const PostViewModal: React.FC<PostViewModalProps> = ({
               {allMedia[mediaIndex].type === 'video' ? (
                 <video
                   src={allMedia[mediaIndex].url}
+                  poster={allMedia[mediaIndex].thumbnailUrl}
                   controls
                   playsInline
+                  preload="none"
                   className="max-w-full max-h-full object-contain"
                 />
               ) : (
@@ -217,8 +226,8 @@ export const PostViewModal: React.FC<PostViewModalProps> = ({
           <div className="flex gap-3 items-center flex-1 min-w-0">
             <UserAvatar
               userId={author?.id}
-              src={author?.avatar}
-              name={author?.name}
+              src={author?.avatar.url}
+              name={author?.fullName}
               size="md"
               initialStatus={author?.status}
               onClick={handleProfileClick}
@@ -228,7 +237,7 @@ export const PostViewModal: React.FC<PostViewModalProps> = ({
                 className="font-bold text-text-primary text-[15px] truncate cursor-pointer hover:underline transition-all duration-base"
                 onClick={handleProfileClick}
               >
-                {author?.name || 'Unknown User'}
+                {author?.fullName || 'Unknown User'}
               </h3>
               <div className="flex items-center gap-2 text-[12px] text-text-tertiary mt-0.5">
                 <span title={formatDateTime(post.createdAt)}>
@@ -258,7 +267,7 @@ export const PostViewModal: React.FC<PostViewModalProps> = ({
                   icon={<Flag size={18} />}
                   label="Báo cáo bài viết"
                   variant="danger"
-                  onClick={() => openReportModal(ReportType.POST, post.id, post.userId)}
+                  onClick={() => openReportModal(ReportType.POST, post.id, post.authorId)}
                 />
               </Dropdown>
             )}
@@ -277,7 +286,7 @@ export const PostViewModal: React.FC<PostViewModalProps> = ({
           autoFocus={true}
           className="flex-1 min-h-0"
           onProfileClick={onClose}
-          postOwnerId={post.userId}
+          postOwnerId={post.authorId}
           totalCommentCount={post.commentCount}
           header={
             <div className="flex flex-col">
@@ -291,7 +300,7 @@ export const PostViewModal: React.FC<PostViewModalProps> = ({
                 >
                   <div className="w-full h-full flex items-center justify-center">
                     {allMedia[mediaIndex].type === 'video' ? (
-                      <video src={allMedia[mediaIndex].url} controls playsInline className="max-w-full max-h-full" />
+                      <video src={allMedia[mediaIndex].url} poster={allMedia[mediaIndex].thumbnailUrl} controls playsInline className="max-w-full max-h-full" />
                     ) : (
                       <img src={allMedia[mediaIndex].url} alt="" className="max-w-full max-h-full object-contain" />
                     )}
@@ -314,19 +323,18 @@ export const PostViewModal: React.FC<PostViewModalProps> = ({
               )}
 
               {/* Noi dung van ban */}
-              <div className="px-5 md:px-6 py-4 pb-3">
-                <p className="text-text-primary whitespace-pre-line text-[15px] md:text-[16px] leading-[1.6]">
+              <div className="px-5 md:px-6 py-4 pb-3 w-full overflow-hidden">
+                <p className="text-text-primary whitespace-pre-line break-words break-all text-[15px] md:text-[16px] leading-[1.6] w-full">
                   <TruncatedText content={post.content} threshold={300} />
                 </p>
               </div>
 
               <ReactionActions
-                postId={post.id}
-                reactionSummary={post.reactionSummary}
-                reactionCount={post.reactionCount}
+                reactionSummary={filteredSummary}
+                reactionCount={filteredCount}
                 myReaction={myReaction}
                 commentCount={post.commentCount}
-                onReact={onReact}
+                onReact={(type) => onReact(post.id, type)}
                 onViewReactions={() => setIsReactionsModalOpen(true)}
                 statsClassName="px-5 md:px-6 py-4 flex justify-between items-center border-b border-border-light/60"
                 actionClassName="flex px-2 py-1 border-b border-border-light relative"
@@ -342,6 +350,7 @@ export const PostViewModal: React.FC<PostViewModalProps> = ({
         sourceId={post.id}
         sourceType="post"
         currentUserId={currentUser.id}
+        authorId={post.authorId}
         context="POST"
         friendsIds={friendIds}
       />

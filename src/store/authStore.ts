@@ -1,11 +1,11 @@
 import { create } from "zustand";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "../firebase/config";
-import { User, UserStatus } from "../types";
+import { User, BlockOptions } from "../types";
 import { userService } from "../services/userService";
 import { authService } from "../services/authService";
 import { useUserCache } from "./userCacheStore";
-import { useChatStore } from "./chatStore";
+import { useRtdbChatStore } from "./rtdbChatStore";
 import { usePostStore } from "./postStore";
 import { useContactStore } from "./contactStore";
 import { useNotificationStore } from "./notificationStore";
@@ -13,10 +13,11 @@ import { useCommentStore } from "./commentStore";
 import { useReportStore } from "./reportStore";
 import { useLoadingStore } from "./loadingStore";
 import { usePresenceStore } from "./presenceStore";
+import { presenceService } from "../services/presenceService";
 
 interface AuthState {
   user: User | null;
-  blockedUserIds: string[];
+  blockedUsers: Record<string, BlockOptions>;
   isPendingVerification: boolean;
   isInitialized: boolean;
   login: (email: string, pass: string) => Promise<void>;
@@ -28,13 +29,13 @@ interface AuthState {
   setUser: (user: User | null) => void;
   initialize: () => () => void;
   updateUserProfile: (updates: Partial<User>) => void;
-  updateAvatar: (avatarUrl: string) => void;
-  updateBlockList: (action: "add" | "remove", targetUserId: string) => void;
+  updateAvatar: (avatar: any) => void;
+  updateBlockEntry: (action: "add" | "remove", targetUserId: string, options?: BlockOptions) => void;
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
-  blockedUserIds: [],
+  blockedUsers: {},
   isPendingVerification: false,
   isInitialized: false,
 
@@ -52,19 +53,20 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
       const userData = await userService.getUserById(firebaseUser.uid);
       if (userData) {
-        if (userData.status === UserStatus.BANNED) {
+        if (userData.status === 'banned') {
           await authService.logout();
           throw new Error("Tài khoản của bạn đã bị khóa do vi phạm quy định cộng đồng. Vui lòng liên hệ admin để biết thêm chi tiết.");
         }
 
-        await userService.updateUserStatus(firebaseUser.uid, UserStatus.ONLINE);
-        const userWithStatus = { ...userData, status: UserStatus.ONLINE };
+        // Set presence online
+        await presenceService.setOnline(firebaseUser.uid);
+
         set({
-          user: userWithStatus,
+          user: userData,
           isPendingVerification: false,
           isInitialized: true,
         });
-        useUserCache.getState().setUser(userWithStatus);
+        useUserCache.getState().setUser(userData);
       } else {
         set({ isPendingVerification: false });
       }
@@ -80,10 +82,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     useLoadingStore.getState().setLoading("auth.register", true);
     try {
       const firebaseUser = await authService.register(email, pass);
-      await userService.updateProfile(firebaseUser.uid, {
+      await userService.createUserDocument(firebaseUser.uid, {
         id: firebaseUser.uid,
-        name: name,
-        avatar: "",
+        fullName: name,
+        avatar: { url: '', fileName: '', mimeType: '', size: 0, isSensitive: false },
+        cover: { url: '', fileName: '', mimeType: '', size: 0, isSensitive: false },
         email: email.trim(),
       });
 
@@ -99,17 +102,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     const { user } = get();
 
     try {
+      // Set presence offline trước khi logout
       if (user) {
-        await userService.updateUserStatus(user.id, UserStatus.OFFLINE);
+        await presenceService.setOffline(user.id);
       }
-    } catch (error) {
-      console.error("Lỗi cập nhật trạng thái offline:", error);
-    }
 
-    try {
       // Giữ userCache — tránh flash data khi login lại
       usePresenceStore.getState().reset();
-      useChatStore.getState().reset();
+      useRtdbChatStore.getState().reset();
       usePostStore.getState().reset();
       useContactStore.getState().reset();
       useNotificationStore.getState().reset();
@@ -158,18 +158,16 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         set({ isPendingVerification: false });
 
         try {
-          const [userData, blockedUserIds] = await Promise.all([
+          const [userData, blockedUsers] = await Promise.all([
             userService.getUserById(firebaseUser.uid),
-            userService.getBlockedUserIds(firebaseUser.uid),
+            userService.getBlockedUsers(firebaseUser.uid),
           ]);
           if (userData) {
-            await userService.updateUserStatus(
-              firebaseUser.uid,
-              UserStatus.ONLINE,
-            );
-            const userWithStatus = { ...userData, status: UserStatus.ONLINE };
-            set({ user: userWithStatus, blockedUserIds });
-            useUserCache.getState().setUser(userWithStatus);
+            // Set presence online
+            await presenceService.setOnline(firebaseUser.uid);
+
+            set({ user: userData, blockedUsers });
+            useUserCache.getState().setUser(userData);
           }
         } catch (error) {
           console.error("Lỗi đồng bộ sau xác thực:", error);
@@ -186,20 +184,23 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     useUserCache.getState().setUser(updatedUser);
   },
 
-  updateAvatar: (avatarUrl) => {
+  updateAvatar: (avatar) => {
     const { user } = get();
     if (!user) return;
-    const updatedUser = { ...user, avatar: avatarUrl };
+    const updatedUser = { ...user, avatar };
     set({ user: updatedUser });
     useUserCache.getState().setUser(updatedUser);
   },
 
-  updateBlockList: (action, targetUserId) => {
-    const currentBlocked = get().blockedUserIds;
-    if (action === "add") {
-      set({ blockedUserIds: [...currentBlocked, targetUserId] });
-    } else {
-      set({ blockedUserIds: currentBlocked.filter((id) => id !== targetUserId) });
+  // Thêm/xóa/cập nhật entry trong blockedUsers map
+  updateBlockEntry: (action, targetUserId, options?) => {
+    const current = get().blockedUsers;
+    if (action === "add" && options) {
+      set({ blockedUsers: { ...current, [targetUserId]: options } });
+    } else if (action === "remove") {
+      const updated = { ...current };
+      delete updated[targetUserId];
+      set({ blockedUsers: updated });
     }
   },
 
@@ -220,46 +221,42 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         }
 
         try {
-          const [userData, blockedUserIds] = await Promise.all([
+          const [userData, blockedUsers] = await Promise.all([
             userService.getUserById(firebaseUser.uid),
-            userService.getBlockedUserIds(firebaseUser.uid),
+            userService.getBlockedUsers(firebaseUser.uid),
           ]);
 
           if (userData) {
-            if (userData.status === UserStatus.BANNED) {
+            if (userData.status === 'banned') {
               set({ user: userData, isInitialized: true });
               useLoadingStore.getState().setLoading("auth", false);
               get().logout();
               return;
             }
 
-            await userService.updateUserStatus(
-              firebaseUser.uid,
-              UserStatus.ONLINE,
-            );
-            const initialUser = { ...userData, status: UserStatus.ONLINE };
+            // Set presence online
+            await presenceService.setOnline(firebaseUser.uid);
+
             set({
-              user: initialUser,
-              blockedUserIds,
+              user: userData,
+              blockedUsers,
               isPendingVerification: false,
               isInitialized: true,
             });
             useLoadingStore.getState().setLoading("auth", false);
-            useUserCache.getState().setUser(initialUser);
+            useUserCache.getState().setUser(userData);
             userUnsubscribe = userService.subscribeToUser(
               firebaseUser.uid,
               async (updatedUser) => {
-                if (updatedUser.status === UserStatus.BANNED) {
+                if (updatedUser.status === 'banned') {
                   set({ user: updatedUser });
                   get().logout();
                   return;
                 }
 
-                const currentBlocked = get().blockedUserIds;
-                const currentStatus = get().user?.status || UserStatus.ONLINE;
-                const newUser = { ...updatedUser, status: currentStatus };
-                set({ user: newUser, blockedUserIds: currentBlocked });
-                useUserCache.getState().setUser(newUser);
+                const currentBlocked = get().blockedUsers;
+                set({ user: updatedUser, blockedUsers: currentBlocked });
+                useUserCache.getState().setUser(updatedUser);
               },
             );
           } else {

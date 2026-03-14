@@ -1,7 +1,7 @@
 import React, { useRef, useState } from 'react';
-import { Users, FileText, MessageCircle, UserPlus, UserCheck, Edit, Trash2, Pencil, Settings, MoreHorizontal, Flag, Ban } from 'lucide-react';
+import { Users, MessageCircle, UserPlus, UserCheck, Edit, Trash2, Pencil, Settings, MoreHorizontal, Flag, Ban } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { User, UserStatus, ReportType } from '../../types';
+import { User, ReportType } from '../../types';
 import { FriendStatus } from '../../types';
 import { UserAvatar, Button, Dropdown, DropdownItem, ImageCropper, LazyImage, CircularProgress } from '../ui';
 import { toast } from '../../store/toastStore';
@@ -11,7 +11,6 @@ import { validateFileSize } from '../../utils/uploadUtils';
 
 interface ProfileHeaderProps {
   user: User;
-  stats: { friendCount: number; postCount: number };
   isOwnProfile: boolean;
   friendStatus?: FriendStatus;
   onEditClick?: () => void;
@@ -30,7 +29,6 @@ interface ProfileHeaderProps {
 
 export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   user,
-  stats,
   isOwnProfile,
   friendStatus = FriendStatus.NOT_FRIEND,
   onEditClick,
@@ -104,7 +102,7 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
     } else if (cropState?.type === 'cover' && onCoverChange) {
       onCoverChange(croppedFile, shouldShare);
     }
-    // Cleanup blob URL
+
     if (cropState?.image) {
       URL.revokeObjectURL(cropState.image);
     }
@@ -145,7 +143,7 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
           {/* Background Image Layer */}
           <div className="absolute inset-0 bg-gradient-to-br from-primary to-primary-active md:rounded-b-2xl overflow-hidden">
             <LazyImage
-              src={user.coverImage || '/cover-image.jpg'}
+              src={user.cover?.url || '/cover-image.jpg'}
               className="w-full h-full object-cover transition-all duration-base"
               alt="Cover"
             />
@@ -171,7 +169,7 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                   label="Tải ảnh lên"
                   onClick={handleCoverClick}
                 />
-                {user.coverImage && (
+                {user.cover?.url && (
                   <DropdownItem
                     icon={<Trash2 size={16} />}
                     label="Xóa ảnh bìa"
@@ -203,8 +201,8 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                   <div className="p-1 bg-bg-primary rounded-full transition-theme">
                     <UserAvatar
                       userId={user.id}
-                      src={user.avatar}
-                      name={user.name}
+                      src={user.avatar.url}
+                      name={user.fullName}
                       size="2xl"
                       className="border-4 border-bg-primary shadow-lg"
                       initialStatus={user.status}
@@ -239,7 +237,7 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                           label="Tải ảnh lên"
                           onClick={handleAvatarClick}
                         />
-                        {user.avatar && (
+                        {user.avatar?.url && (
                           <DropdownItem
                             icon={<Trash2 size={16} />}
                             label="Xóa ảnh đại diện"
@@ -264,21 +262,7 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
               {/* Info */}
               <div className="flex-1 pb-1">
                 <div className="flex items-center justify-center md:justify-start gap-2 flex-wrap">
-                  <h1 className="text-3xl font-bold text-text-primary">{user.name}</h1>
-                </div>
-
-                {/* Stats */}
-                <div className="flex items-center justify-center md:justify-start flex-wrap gap-2 md:gap-4 mt-3 text-sm text-text-secondary">
-                  <div className="flex items-center gap-1.5 bg-bg-secondary/50 px-3 py-2 rounded-lg border border-border-light">
-                    <FileText size={16} className="text-primary" />
-                    <span><strong className="text-text-primary">{stats.postCount}</strong> bài viết</span>
-                  </div>
-                  {isOwnProfile && (
-                    <div className="flex items-center gap-1.5 bg-bg-secondary/50 px-3 py-2 rounded-lg border border-border-light">
-                      <Users size={16} className="text-primary" />
-                      <span><strong className="text-text-primary">{stats.friendCount}</strong> bạn bè</span>
-                    </div>
-                  )}
+                  <h1 className="text-3xl font-bold text-text-primary">{user.fullName}</h1>
                 </div>
               </div>
 
@@ -302,7 +286,7 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                       Cài đặt
                     </Button>
                   </>
-                ) : user.status === UserStatus.BANNED ? (
+                ) : user.status === 'banned' ? (
                   <div className="flex items-center gap-2">
                     <div className="px-4 py-2 rounded-lg bg-error/10 text-error text-sm font-medium">
                       Tài khoản đã bị khóa
@@ -325,6 +309,29 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                       />
                     </Dropdown>
                   </div>
+                ) : isBlockedByMe ? (
+                  <Dropdown
+                    trigger={
+                      <Button
+                        variant="secondary"
+                        icon={<MoreHorizontal size={18} />}
+                        className="border-border-medium text-text-primary hover:bg-bg-hover"
+                      />
+                    }
+                    align="right"
+                  >
+                    <DropdownItem
+                      icon={<UserCheck size={16} />}
+                      label="Bỏ chặn"
+                      onClick={onUnblockClick || (() => { })}
+                    />
+                    <DropdownItem
+                      icon={<Flag size={16} />}
+                      label="Báo cáo"
+                      variant="danger"
+                      onClick={() => openReportModal(ReportType.USER, user.id, user.id)}
+                    />
+                  </Dropdown>
                 ) : (
                   <>
                     <Button
@@ -383,20 +390,12 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                       }
                       align="right"
                     >
-                      {isBlockedByMe ? (
-                        <DropdownItem
-                          icon={<UserCheck size={16} />}
-                          label="Bỏ chặn"
-                          onClick={onUnblockClick || (() => { })}
-                        />
-                      ) : (
-                        <DropdownItem
-                          icon={<Ban size={16} />}
-                          label="Chặn"
-                          variant="danger"
-                          onClick={onBlockClick || (() => { })}
-                        />
-                      )}
+                      <DropdownItem
+                        icon={<Ban size={16} />}
+                        label="Chặn"
+                        variant="danger"
+                        onClick={onBlockClick || (() => { })}
+                      />
                       <DropdownItem
                         icon={<Flag size={16} />}
                         label="Báo cáo"

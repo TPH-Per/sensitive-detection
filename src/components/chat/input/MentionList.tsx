@@ -23,19 +23,19 @@ export const MentionList: React.FC<MentionListProps> = ({
             key={user.id}
             onClick={() => onSelect(user)}
             className={`w-full flex items-center gap-3 px-3 py-2 text-left transition-all duration-base ${index === selectedIndex
-                ? 'bg-bg-hover active:bg-bg-active'
-                : 'hover:bg-bg-hover active:bg-bg-active'
+              ? 'bg-bg-hover active:bg-bg-active'
+              : 'hover:bg-bg-hover active:bg-bg-active'
               }`}
           >
             <UserAvatar
               userId={user.id}
-              src={user.avatar}
+              src={user.avatar.url}
               initialStatus={user.status}
               size="xs"
             />
             <div className="flex-1 min-w-0">
               <div className="text-sm font-medium text-text-primary truncate">
-                {user.name}
+                {user.fullName}
               </div>
             </div>
           </button>

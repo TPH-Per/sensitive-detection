@@ -3,7 +3,7 @@ import { User, FriendRequest } from '../types';
 import { useAuthStore } from '../store/authStore';
 import { useContactStore } from '../store/contactStore';
 import { useUserCache } from '../store/userCacheStore';
-import { useChatStore } from '../store/chatStore';
+import { useRtdbChatStore } from '../store';
 import { useLoadingStore } from '../store/loadingStore';
 
 type TabType = 'all' | 'requests' | 'sent';
@@ -34,7 +34,6 @@ interface UseContactsReturn {
   handleRejectRequest: (requestId: string) => Promise<void>;
   handleCancelRequest: (requestId: string) => Promise<void>;
   handleUnfriend: (friendId: string) => Promise<void>;
-  handleBlockUser: (userId: string) => Promise<void>;
   handleMessage: (friendId: string) => Promise<string | null>;
 }
 
@@ -44,17 +43,14 @@ export const useContacts = (): UseContactsReturn => {
     friends,
     receivedRequests,
     sentRequests,
-    subscribeToFriends,
-    subscribeToRequests,
     acceptFriendRequest,
     rejectFriendRequest,
     cancelFriendRequest,
-    unfriend,
-    blockUser
+    unfriend
   } = useContactStore();
 
   const { users: userCache, fetchUsers } = useUserCache();
-  const { getOrCreateConversation } = useChatStore();
+  const { getOrCreateConversation } = useRtdbChatStore();
   const contactsLoading = useLoadingStore(state => state.loadingStates['contacts.friends'] ?? false);
 
   const [activeTab, setActiveTab] = useState<TabType>('all');
@@ -62,17 +58,6 @@ export const useContacts = (): UseContactsReturn => {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
 
 
-  useEffect(() => {
-    if (!currentUser) return;
-    const unsubscribe = subscribeToFriends(currentUser.id);
-    return () => unsubscribe();
-  }, [currentUser?.id, subscribeToFriends]);
-
-  useEffect(() => {
-    if (!currentUser) return;
-    const unsubscribe = subscribeToRequests(currentUser.id);
-    return () => unsubscribe();
-  }, [currentUser?.id, subscribeToRequests]);
 
   // Tải info user cho friend request
   useEffect(() => {
@@ -87,14 +72,14 @@ export const useContacts = (): UseContactsReturn => {
   }, [receivedRequests, sentRequests, fetchUsers]);
 
   const filteredFriends = useMemo(() => friends.filter(friend =>
-    friend.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    friend.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
     friend.email?.toLowerCase().includes(searchTerm.toLowerCase())
   ), [friends, searchTerm]);
 
   const groupedFriends = useMemo(() => {
     const groups: Record<string, User[]> = {};
     filteredFriends.forEach(friend => {
-      const firstLetter = friend.name.charAt(0).toUpperCase();
+      const firstLetter = friend.fullName.charAt(0).toUpperCase();
       if (!groups[firstLetter]) groups[firstLetter] = [];
       groups[firstLetter].push(friend);
     });
@@ -106,8 +91,8 @@ export const useContacts = (): UseContactsReturn => {
       letter,
       friends: groups[letter].sort((a, b) => {
         return sortOrder === 'asc'
-          ? a.name.localeCompare(b.name)
-          : b.name.localeCompare(a.name);
+          ? a.fullName.localeCompare(b.fullName)
+          : b.fullName.localeCompare(a.fullName);
       })
     }));
   }, [filteredFriends, sortOrder]);
@@ -117,8 +102,10 @@ export const useContacts = (): UseContactsReturn => {
   }, []);
   const handleAcceptRequest = useCallback(async (requestId: string, friendId: string) => {
     if (!currentUser) return;
-    await acceptFriendRequest(requestId);
-  }, [currentUser?.id, acceptFriendRequest]);
+    const request = receivedRequests.find(r => r.id === requestId);
+    if (!request) return;
+    await acceptFriendRequest(requestId, request.senderId, currentUser.id);
+  }, [currentUser, receivedRequests, acceptFriendRequest]);
 
   const handleRejectRequest = useCallback(async (requestId: string) => {
     await rejectFriendRequest(requestId);
@@ -132,11 +119,6 @@ export const useContacts = (): UseContactsReturn => {
     if (!currentUser) return;
     await unfriend(currentUser.id, friendId);
   }, [currentUser, unfriend]);
-
-  const handleBlockUser = useCallback(async (userId: string) => {
-    if (!currentUser) return;
-    await blockUser(currentUser.id, userId);
-  }, [currentUser, blockUser]);
 
   const handleMessage = useCallback(async (friendId: string): Promise<string | null> => {
     if (!currentUser) return null;
@@ -163,7 +145,6 @@ export const useContacts = (): UseContactsReturn => {
     handleRejectRequest,
     handleCancelRequest,
     handleUnfriend,
-    handleBlockUser,
     handleMessage,
   };
 };

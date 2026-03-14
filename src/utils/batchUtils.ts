@@ -29,8 +29,7 @@ export const batchGetUsers = async (userIds: string[]): Promise<Record<string, U
           ...doc.data(),
           id: doc.id,
           createdAt: doc.data().createdAt as Timestamp,
-          lastSeen: doc.data().lastSeen as Timestamp | undefined,
-          birthDate: doc.data().birthDate as Timestamp | undefined,
+          dob: doc.data().dob as Timestamp | undefined,
         })) as User[];
       })
     );

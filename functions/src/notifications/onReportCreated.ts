@@ -21,8 +21,9 @@ export const onReportCreated = onDocumentCreated(
     const { reporterId, targetType, reason } = report;
 
     try {
-      const configDoc = await db.collection('config').doc('admins').get();
-      const adminIds: string[] = configDoc.data()?.adminIds || [];
+      const usersSnapshot = await db.collection('users').where('role', '==', 'admin').get();
+      const adminIds = usersSnapshot.docs.map(doc => doc.id);
+
       if (adminIds.length === 0) return;
 
       const typeLabel = REPORT_TYPE_LABELS[targetType] || targetType;
@@ -31,8 +32,8 @@ export const onReportCreated = onDocumentCreated(
       const notifications = adminIds.map((adminId) =>
         createNotification({
           receiverId: adminId,
-          senderId: reporterId,
-          type: NotificationType.REPORT_NEW,
+          actorId: reporterId,
+          type: NotificationType.SYSTEM,
           data: { reportId, contentSnippet },
         })
       );
@@ -40,7 +41,7 @@ export const onReportCreated = onDocumentCreated(
       const pushNotifications = adminIds.map((adminId) =>
         sendPushNotification({
           receiverId: adminId,
-          type: NotificationType.REPORT_NEW,
+          type: NotificationType.SYSTEM,
           body: `Có báo cáo mới: ${contentSnippet}`,
           data: { reportId },
         })

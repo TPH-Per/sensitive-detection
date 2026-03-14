@@ -41,22 +41,22 @@ export const onPostReactionWrite = onDocumentWritten(
     try {
       const postSnap = await postRef.get();
       if (!postSnap.exists) return;
-      const postOwnerId: string = postSnap.data()!.userId;
+      const postOwnerId: string = postSnap.data()!.authorId;
       if (userId === postOwnerId) return;
 
       const senderName = await getSenderName(userId);
-      const body = buildPushBody(NotificationType.LIKE_POST, senderName);
+      const body = buildPushBody(NotificationType.REACTION, senderName);
 
       await createNotification({
         receiverId: postOwnerId,
-        senderId: userId,
-        type: NotificationType.LIKE_POST,
+        actorId: userId,
+        type: NotificationType.REACTION,
         data: { postId },
       });
 
       await sendPushNotification({
         receiverId: postOwnerId,
-        type: NotificationType.LIKE_POST,
+        type: NotificationType.REACTION,
         body,
         data: { postId },
       });

@@ -25,13 +25,11 @@ const ContactsPage: React.FC = () => {
     handleRejectRequest,
     handleCancelRequest,
     handleUnfriend,
-    handleBlockUser,
     handleMessage,
   } = useContacts();
 
   const [showAddModal, setShowAddModal] = useState(false);
   const [unfriendId, setUnfriendId] = useState<string | null>(null);
-  const [blockUserId, setBlockUserId] = useState<string | null>(null);
 
   const onUnfriendConfirm = async () => {
     if (!unfriendId) return;
@@ -39,11 +37,6 @@ const ContactsPage: React.FC = () => {
     setUnfriendId(null);
   };
 
-  const onBlockConfirm = async () => {
-    if (!blockUserId) return;
-    await handleBlockUser(blockUserId);
-    setBlockUserId(null);
-  };
 
   const onMessageClick = async (friendId: string) => {
     const convId = await handleMessage(friendId);
@@ -286,18 +279,8 @@ const ContactsPage: React.FC = () => {
         onClose={() => setUnfriendId(null)}
         onConfirm={onUnfriendConfirm}
         title={CONFIRM_MESSAGES.FRIEND.UNFRIEND.TITLE}
-        message={CONFIRM_MESSAGES.FRIEND.UNFRIEND.MESSAGE(userCache[unfriendId || '']?.name || 'người này')}
+        message={CONFIRM_MESSAGES.FRIEND.UNFRIEND.MESSAGE(userCache[unfriendId || '']?.fullName || 'người này')}
         confirmLabel={CONFIRM_MESSAGES.FRIEND.UNFRIEND.CONFIRM}
-        variant="danger"
-      />
-
-      <ConfirmDialog
-        isOpen={!!blockUserId}
-        onClose={() => setBlockUserId(null)}
-        onConfirm={onBlockConfirm}
-        title={CONFIRM_MESSAGES.FRIEND.BLOCK.TITLE}
-        message={CONFIRM_MESSAGES.FRIEND.BLOCK.MESSAGE(userCache[blockUserId || '']?.name || 'người dùng này')}
-        confirmLabel={CONFIRM_MESSAGES.FRIEND.BLOCK.CONFIRM}
         variant="danger"
       />
     </div>

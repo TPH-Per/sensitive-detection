@@ -30,11 +30,18 @@ async function deleteCommentById(commentId: string, adminId: string): Promise<vo
 }
 
 export const resolveReport = onCall(
-  { region: 'us-central1' },
+  {
+    region: 'us-central1',
+    cors: true
+  },
   async (request) => {
     if (!request.auth) throw new HttpsError('unauthenticated', 'Chưa đăng nhập');
-    if (!request.auth.token.admin) throw new HttpsError('permission-denied', 'Không có quyền Admin');
 
+    const callerDoc = await db.collection('users').doc(request.auth.uid).get();
+    const callerRole = callerDoc.data()?.role;
+    if (callerRole !== 'admin') {
+      throw new HttpsError('permission-denied', 'Không có quyền Admin');
+    }
 
     const { reportId, resolution = 'Đã xử lý', action = 'delete_content' } = request.data as {
       reportId: string;
@@ -64,20 +71,18 @@ export const resolveReport = onCall(
       await deleteCommentById(reportData.targetId, adminId);
     } else if (reportData.targetType === ReportType.USER && action === 'ban_user') {
       await db.collection('users').doc(reportData.targetId).update({ status: UserStatus.BANNED });
-      // Custom Claim ban: token mới sau revoke sẽ mang claim này
-      await auth.setCustomUserClaims(reportData.targetId, { banned: true });
       await auth.revokeRefreshTokens(reportData.targetId);
     }
 
     await createNotification({
       receiverId: reportData.reporterId,
-      senderId: adminId,
-      type: NotificationType.REPORT_RESOLVED,
+      actorId: adminId,
+      type: NotificationType.SYSTEM,
       data: { reportId },
     });
     await sendPushNotification({
       receiverId: reportData.reporterId,
-      type: NotificationType.REPORT_RESOLVED,
+      type: NotificationType.SYSTEM,
       body: 'Báo cáo của bạn đã được xử lý. Cảm ơn bạn!',
       data: { reportId },
     });
@@ -85,13 +90,13 @@ export const resolveReport = onCall(
     if (reportData.targetOwnerId) {
       await createNotification({
         receiverId: reportData.targetOwnerId,
-        senderId: adminId,
-        type: NotificationType.CONTENT_VIOLATION,
+        actorId: adminId,
+        type: NotificationType.SYSTEM,
         data: { contentSnippet: reportData.reason },
       });
       await sendPushNotification({
         receiverId: reportData.targetOwnerId,
-        type: NotificationType.CONTENT_VIOLATION,
+        type: NotificationType.SYSTEM,
         body: 'Nội dung của bạn đã bị xem xét và xử lý do vi phạm quy tắc cộng đồng.',
       });
     }
@@ -99,8 +104,8 @@ export const resolveReport = onCall(
     if (reportData.targetType === ReportType.USER && action === 'warn_user' && reportData.targetId) {
       await createNotification({
         receiverId: reportData.targetId,
-        senderId: adminId,
-        type: NotificationType.CONTENT_VIOLATION,
+        actorId: adminId,
+        type: NotificationType.SYSTEM,
         data: { contentSnippet: `Cảnh báo: Tài khoản bị báo cáo vì: ${reportData.reason}. Vui lòng tuân thủ quy tắc cộng đồng.` },
       });
     }

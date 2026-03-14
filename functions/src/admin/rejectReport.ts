@@ -7,10 +7,18 @@ import { sendPushNotification } from '../helpers/fcmHelper';
 
 // Admin từ chối báo cáo — không vi phạm
 export const rejectReport = onCall(
-  { region: 'us-central1' },
+  {
+    region: 'us-central1',
+    cors: true
+  },
   async (request) => {
     if (!request.auth) throw new HttpsError('unauthenticated', 'Chưa đăng nhập');
-    if (!request.auth.token.admin) throw new HttpsError('permission-denied', 'Không có quyền Admin');
+
+    const callerDoc = await db.collection('users').doc(request.auth.uid).get();
+    const callerRole = callerDoc.data()?.role;
+    if (callerRole !== 'admin') {
+      throw new HttpsError('permission-denied', 'Không có quyền Admin');
+    }
 
     const { reportId } = request.data as { reportId: string };
     if (!reportId) throw new HttpsError('invalid-argument', 'Thiếu reportId');
@@ -32,13 +40,13 @@ export const rejectReport = onCall(
     // Thông báo người báo cáo
     await createNotification({
       receiverId: reportData.reporterId,
-      senderId: adminId,
-      type: NotificationType.REPORT_RESOLVED,
+      actorId: adminId,
+      type: NotificationType.SYSTEM,
       data: { reportId, contentSnippet: 'Không phát hiện vi phạm' },
     });
     await sendPushNotification({
       receiverId: reportData.reporterId,
-      type: NotificationType.REPORT_RESOLVED,
+      type: NotificationType.SYSTEM,
       body: 'Báo cáo của bạn đã được xem xét và không phát hiện vi phạm.',
       data: { reportId },
     });

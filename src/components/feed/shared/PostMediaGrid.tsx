@@ -1,27 +1,30 @@
 import React, { useMemo } from 'react';
 import { ChevronRight, Loader2 } from 'lucide-react';
 import { IconButton, LazyImage, CircularProgressOverlay } from '../../ui';
+import { MediaObject } from '../../../types';
 
 interface MediaItem {
   url: string;
   type: string;
+  thumbnailUrl?: string;
 }
 
 interface PostMediaGridProps {
-  images?: string[];
-  videos?: string[];
-  videoThumbnails?: Record<string, string>;
+  media: MediaObject[];
   onClick?: () => void;
   uploadProgress?: number;
 }
 
 const PostMediaGridInner: React.FC<PostMediaGridProps> = ({
-  images, videos, videoThumbnails, onClick, uploadProgress
+  media, onClick, uploadProgress
 }) => {
-  const allMedia = useMemo<MediaItem[]>(() => [
-    ...(images || []).map(url => ({ url, type: 'image' })),
-    ...(videos || []).map(url => ({ url, type: 'video' }))
-  ], [images, videos]);
+  const allMedia = useMemo<MediaItem[]>(() =>
+    media.map(m => ({
+      url: m.url,
+      type: m.mimeType.startsWith('video') ? 'video' : 'image',
+      thumbnailUrl: m.thumbnailUrl
+    }))
+    , [media]);
 
   if (allMedia.length === 0) return null;
 
@@ -29,23 +32,25 @@ const PostMediaGridInner: React.FC<PostMediaGridProps> = ({
 
   const renderMediaItem = (item: MediaItem, className: string = '') => {
     const isBlob = item.url.startsWith('blob:');
-    
+
     return (
       <div className={`relative group overflow-hidden bg-bg-tertiary ${className}`}>
         {item.type === 'video' ? (
           <video
             src={item.url}
-            poster={videoThumbnails?.[item.url]}
+            poster={item.thumbnailUrl}
             className={`w-full h-full object-cover ${isBlob ? 'blur-[2px] opacity-70' : ''}`}
             controls={!isBlob}
             playsInline
             muted={isBlob}
+            preload="none"
           />
         ) : (
-          <LazyImage 
-            src={item.url} 
-            alt="" 
-            className={`w-full h-full object-cover transition-all duration-base ${isBlob ? 'blur-[2px] opacity-70' : ''}`} 
+          <LazyImage
+            src={item.url}
+            placeholder={item.thumbnailUrl}
+            alt=""
+            className={`w-full h-full object-cover transition-all duration-base ${isBlob ? 'blur-[2px] opacity-70' : ''}`}
           />
         )}
 
@@ -70,7 +75,7 @@ const PostMediaGridInner: React.FC<PostMediaGridProps> = ({
   if (count === 1) {
     const item = allMedia[0];
     const isBlob = item.url.startsWith('blob:');
-    
+
     return (
       <div className="bg-bg-secondary relative select-none overflow-hidden">
         <div
@@ -81,21 +86,23 @@ const PostMediaGridInner: React.FC<PostMediaGridProps> = ({
             className={`absolute inset-0 blur-2xl grayscale pointer-events-none ${isBlob ? 'opacity-20' : 'opacity-30'}`}
             style={{ backgroundImage: `url(${item.url})`, backgroundSize: 'cover', backgroundPosition: 'center' }}
           />
-          
+
           {item.type === 'video' ? (
             <video
               src={item.url}
-              poster={videoThumbnails?.[item.url]}
+              poster={item.thumbnailUrl}
               className={`relative z-10 w-full h-auto max-h-[600px] object-contain ${isBlob ? 'blur-[2px] opacity-70' : ''}`}
               controls={!isBlob}
               playsInline
               muted={isBlob}
+              preload="none"
             />
           ) : (
-            <LazyImage 
-              src={item.url} 
-              alt="" 
-              className={`relative z-10 w-full h-auto max-h-[600px] object-contain transition-all duration-base ${isBlob ? 'blur-[2px] opacity-70' : ''}`} 
+            <LazyImage
+              src={item.url}
+              placeholder={item.thumbnailUrl}
+              alt=""
+              className={`relative z-10 w-full h-auto max-h-[600px] object-contain transition-all duration-base ${isBlob ? 'blur-[2px] opacity-70' : ''}`}
             />
           )}
 
