@@ -2,7 +2,6 @@ import React, { useMemo } from 'react';
 import { RtdbMessage, User, RtdbConversation, RtdbUserChat } from '../../types';
 import { UserAvatar } from '../ui';
 import { MessageBubble } from './message/MessageBubble';
-import { ImageGroupBubble } from './message/ImageGroupBubble';
 
 interface MessageListProps {
   messages: Array<{ id: string; data: RtdbMessage }>;
@@ -109,114 +108,47 @@ const MessageListInner: React.FC<MessageListProps> = ({
           </div>
 
           <div className="space-y-1">
-            {(() => {
-              const renderedMessages: React.ReactNode[] = [];
-              let i = 0;
-              const dayMessages = group.messages;
+            {group.messages.map((msg, index) => {
+              const isMe = msg.data.senderId === currentUserId;
+              const sender = usersMap[msg.data.senderId];
+              const showAvatar = shouldShowAvatar(msg, index, group.messages);
+              const showName = shouldShowName(msg, index, group.messages);
+              const isLastMessage = msg.id === messages[messages.length - 1]?.id;
 
-              while (i < dayMessages.length) {
-                const msg = dayMessages[i];
-                const isMe = msg.data.senderId === currentUserId;
-                if (msg.data.type === 'image' && !msg.data.isRecalled && !msg.data.replyToId) {
-                  const imageGroup = [msg];
-                  let j = i + 1;
-
-                  while (j < dayMessages.length) {
-                    const nextMsg = dayMessages[j];
-                    const prevMsgInGroup = imageGroup[imageGroup.length - 1];
-                    const nextMsgTime = new Date(nextMsg.data.createdAt).getTime();
-                    const prevMsgTime = new Date(prevMsgInGroup.data.createdAt).getTime();
-                    const timeDiff = nextMsgTime - prevMsgTime;
-                    const MAX_GROUP_TIME = 60 * 1000;
-
-                    if (
-                      nextMsg.data.type === 'image' &&
-                      nextMsg.data.senderId === msg.data.senderId &&
-                      !nextMsg.data.isRecalled &&
-                      !nextMsg.data.replyToId &&
-                      !(nextMsg.data.deletedBy && nextMsg.data.deletedBy[currentUserId]) &&
-                      timeDiff < MAX_GROUP_TIME
-                    ) {
-                      imageGroup.push(nextMsg);
-                      j++;
-                    } else {
-                      break;
+              return (
+                <MessageBubble
+                  key={msg.id}
+                  message={msg}
+                  isMe={isMe}
+                  sender={sender}
+                  showAvatar={showAvatar}
+                  showName={showName}
+                  isLastMessage={isLastMessage}
+                  lastReadByUsers={lastReadByMap[msg.id]}
+                  onRecall={onRecall}
+                  onDeleteForMe={onDeleteForMe}
+                  onForward={onForward}
+                  onReply={onReply}
+                  onEdit={onEdit}
+                  onCall={() => {
+                    if (onCall) {
+                      let isVideo = false;
+                      try {
+                        const parsed = JSON.parse(msg.data.content);
+                        isVideo = parsed.callType === 'video';
+                      } catch { }
+                      onCall(isVideo);
                     }
-                  }
-
-                  if (imageGroup.length > 1) {
-                    const lastMsgInGroup = imageGroup[imageGroup.length - 1];
-                    const showAvatar = shouldShowAvatar(lastMsgInGroup, j - 1, dayMessages);
-                    const showName = shouldShowName(imageGroup[0], i, dayMessages);
-                    const isLastMessage = lastMsgInGroup.id === messages[messages.length - 1]?.id;
-
-                    renderedMessages.push(
-                      <ImageGroupBubble
-                        key={`group-${msg.id}`}
-                        messages={imageGroup}
-                        sender={usersMap[msg.data.senderId]}
-                        currentUserId={currentUserId}
-                        showAvatar={showAvatar}
-                        showName={showName}
-                        onRecall={onRecall}
-                        onDeleteForMe={onDeleteForMe}
-                        onForward={onForward}
-                        onReply={onReply}
-                        usersMap={usersMap}
-                        isGroup={conversation.data.isGroup}
-                        isLastMessage={isLastMessage}
-                        lastReadByUsers={lastReadByMap[lastMsgInGroup.id]}
-                        isBlocked={isBlocked}
-                        conversationId={conversation.id}
-                      />
-                    );
-                    i = j;
-                    continue;
-                  }
-                }
-
-                const sender = usersMap[msg.data.senderId];
-                const showAvatar = shouldShowAvatar(msg, i, dayMessages);
-                const showName = shouldShowName(msg, i, dayMessages);
-                const isLastMessage = msg.id === messages[messages.length - 1]?.id;
-
-                renderedMessages.push(
-                  <MessageBubble
-                    key={msg.id}
-                    message={msg}
-                    isMe={isMe}
-                    sender={sender}
-                    showAvatar={showAvatar}
-                    showName={showName}
-                    isLastMessage={isLastMessage}
-                    lastReadByUsers={lastReadByMap[msg.id]}
-                    onRecall={onRecall}
-                    onDeleteForMe={onDeleteForMe}
-                    onForward={onForward}
-                    onReply={onReply}
-                    onEdit={onEdit}
-                    onCall={() => {
-                      if (onCall) {
-                        let isVideo = false;
-                        try {
-                          const parsed = JSON.parse(msg.data.content);
-                          isVideo = parsed.callType === 'video';
-                        } catch { }
-                        onCall(isVideo);
-                      }
-                    }}
-                    currentUserId={currentUserId}
-                    usersMap={usersMap}
-                    isGroup={conversation.data.isGroup}
-                    allMessages={messages}
-                    isBlocked={isBlocked}
-                    conversationId={conversation.id}
-                  />
-                );
-                i++;
-              }
-              return renderedMessages;
-            })()}
+                  }}
+                  currentUserId={currentUserId}
+                  usersMap={usersMap}
+                  isGroup={conversation.data.isGroup}
+                  allMessages={messages}
+                  isBlocked={isBlocked}
+                  conversationId={conversation.id}
+                />
+              );
+            })}
           </div>
         </div>
       ))}

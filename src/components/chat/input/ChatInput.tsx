@@ -14,7 +14,7 @@ import { RtdbMessage, User } from '../../../types';
 
 interface ChatInputProps {
   onSendText: (text: string, mentions?: string[], replyToId?: string) => void;
-  onSendImage: (file: File, replyToId?: string) => void;
+  onSendImages: (files: File[], replyToId?: string) => Promise<void>;
   onSendFile: (file: File, replyToId?: string) => void;
   onSendVideo?: (file: File, replyToId?: string) => void;
   onSendVoice?: (file: File, replyToId?: string) => void;
@@ -35,7 +35,7 @@ interface ChatInputProps {
 
 export const ChatInput: React.FC<ChatInputProps> = ({
   onSendText,
-  onSendImage,
+  onSendImages,
   onSendFile,
   onSendVideo,
   onSendVoice,
@@ -189,12 +189,27 @@ export const ChatInput: React.FC<ChatInputProps> = ({
     onTyping(false);
 
     try {
-      selectedFiles.forEach(item => {
-        if (item.type === 'image') onSendImage(item.file, replyingTo?.id);
-        else if (item.type === 'video') onSendVideo?.(item.file, replyingTo?.id);
-        else if (item.type === 'voice') onSendVoice?.(item.file, replyingTo?.id);
-        else onSendFile(item.file, replyingTo?.id);
-      });
+      const flushImageBatch = async (batch: File[]) => {
+        if (batch.length === 0) return;
+        await onSendImages(batch, replyingTo?.id);
+      };
+
+      let imageBatch: File[] = [];
+      for (const item of selectedFiles) {
+        if (item.type === 'image') {
+          imageBatch.push(item.file);
+          continue;
+        }
+
+        await flushImageBatch(imageBatch);
+        imageBatch = [];
+
+        if (item.type === 'video') await onSendVideo?.(item.file, replyingTo?.id);
+        else if (item.type === 'voice') await onSendVoice?.(item.file, replyingTo?.id);
+        else await onSendFile(item.file, replyingTo?.id);
+      }
+
+      await flushImageBatch(imageBatch);
       clearAllFiles();
 
       if (inputText.trim()) {

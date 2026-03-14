@@ -14,7 +14,7 @@ export interface RtdbMessageSlice {
     subscribeToMessages: (conversationId: string) => () => void;
     loadMoreMessages: (conversationId: string) => Promise<void>;
     sendTextMessage: (conversationId: string, senderId: string, content: string, mentions?: string[], replyToId?: string) => Promise<void>;
-    sendImageMessage: (conversationId: string, senderId: string, file: File, replyToId?: string) => Promise<void>;
+    sendImageMessage: (conversationId: string, senderId: string, files: File[], replyToId?: string) => Promise<void>;
     sendFileMessage: (conversationId: string, senderId: string, file: File, replyToId?: string) => Promise<void>;
     sendVideoMessage: (conversationId: string, senderId: string, file: File, replyToId?: string) => Promise<void>;
     sendVoiceMessage: (conversationId: string, senderId: string, file: File, replyToId?: string) => Promise<void>;
@@ -113,9 +113,9 @@ export const createRtdbMessageSlice: StateCreator<RtdbChatState, [], [], RtdbMes
         }
     },
 
-    sendImageMessage: async (conversationId: string, senderId: string, file: File, replyToId?: string) => {
+    sendImageMessage: async (conversationId: string, senderId: string, files: File[], replyToId?: string) => {
         try {
-            await rtdbMessageService.sendImageMessage(conversationId, senderId, file, {
+            await rtdbMessageService.sendImageMessage(conversationId, senderId, files, {
                 replyToId,
                 onProgress: (progress) => {
                     get().setUploadProgress(`temp_${Date.now()}`, progress.progress);

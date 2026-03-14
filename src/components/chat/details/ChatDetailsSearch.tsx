@@ -26,7 +26,7 @@ export const ChatDetailsSearch: React.FC<ChatDetailsSearchProps> = ({
     return messages
       .filter((msg) => {
         const contentMatch = msg.data.content?.toLowerCase().includes(term);
-        const fileNameMatch = msg.data.type === 'file' && msg.data.media?.[0]?.fileName?.toLowerCase().includes(term);
+        const fileNameMatch = msg.data.type === 'file' && (msg.data.media || []).some(m => m.fileName?.toLowerCase().includes(term));
         return contentMatch || fileNameMatch;
       })
       .sort((a, b) => b.data.createdAt - a.data.createdAt)
@@ -103,7 +103,7 @@ export const ChatDetailsSearch: React.FC<ChatDetailsSearchProps> = ({
                       {msg.data.type === 'file' ? (
                         <span className="flex items-center gap-1">
                           <span className="text-primary font-medium shrink-0">[File]</span>
-                          {highlightText(msg.data.media?.[0]?.fileName || msg.data.content, searchTerm)}
+                          {highlightText(msg.data.media?.find(m => m.fileName)?.fileName || msg.data.content, searchTerm)}
                         </span>
                       ) : (
                         highlightText(msg.data.content, searchTerm)

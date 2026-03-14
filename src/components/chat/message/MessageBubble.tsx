@@ -67,7 +67,7 @@ const MessageBubbleInner: React.FC<MessageBubbleProps> = ({
 }) => {
   const navigate = useNavigate();
   const [showMenu, setShowMenu] = useState(false);
-  const [showFullImage, setShowFullImage] = useState(false);
+  const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
   const [showRecallConfirm, setShowRecallConfirm] = useState(false);
   const [showReaders, setShowReaders] = useState(false);
   const [showReactionSelector, setShowReactionSelector] = useState(false);
@@ -240,7 +240,7 @@ const MessageBubbleInner: React.FC<MessageBubbleProps> = ({
                     <div className="truncate">
                       {replyToMsg.data.type === 'text'
                         ? replyToMsg.data.content.replace(/@\[([^\]]+)\]/g, '@$1')
-                        : replyToMsg.data.type === 'image' ? '[Hình ảnh]'
+                        : replyToMsg.data.type === 'image' ? ((replyToMsg.data.media?.length || 0) > 1 ? '[Album ảnh]' : '[Hình ảnh]')
                           : replyToMsg.data.type === 'video' ? '[Video]'
                             : replyToMsg.data.type === 'file' ? `[${replyToMsg.data.media?.[0]?.fileName || 'File'}]`
                               : replyToMsg.data.type === 'voice' ? '[Tin nhắn thoại]'
@@ -253,16 +253,16 @@ const MessageBubbleInner: React.FC<MessageBubbleProps> = ({
 
               {!message.data.isRecalled && message.data.replyToId && (message.data.type === 'image' || message.data.type === 'video' || message.data.type === 'file') && (
                 <div className="px-3 pt-1.5">
-                  <MessageContent
-                    message={message}
-                    isMe={isMe}
-                    uploadProgress={uploadProgress}
-                    isPlaying={isPlaying}
-                    onToggleVoice={handleToggleVoice}
-                    setShowFullImage={setShowFullImage}
-                  />
-                </div>
-              )}
+                    <MessageContent
+                      message={message}
+                      isMe={isMe}
+                      uploadProgress={uploadProgress}
+                      isPlaying={isPlaying}
+                      onToggleVoice={handleToggleVoice}
+                      onOpenImage={setSelectedImageIndex}
+                    />
+                  </div>
+                )}
 
               {!message.data.isRecalled && (!message.data.replyToId || (message.data.type !== 'image' && message.data.type !== 'video' && message.data.type !== 'file')) && (
                 <MessageContent
@@ -271,7 +271,7 @@ const MessageBubbleInner: React.FC<MessageBubbleProps> = ({
                   uploadProgress={uploadProgress}
                   isPlaying={isPlaying}
                   onToggleVoice={handleToggleVoice}
-                  setShowFullImage={setShowFullImage}
+                  onOpenImage={setSelectedImageIndex}
                 />
               )}
 
@@ -282,7 +282,7 @@ const MessageBubbleInner: React.FC<MessageBubbleProps> = ({
                   uploadProgress={uploadProgress}
                   isPlaying={isPlaying}
                   onToggleVoice={handleToggleVoice}
-                  setShowFullImage={setShowFullImage}
+                  onOpenImage={setSelectedImageIndex}
                 />
               )}
 
@@ -427,10 +427,12 @@ const MessageBubbleInner: React.FC<MessageBubbleProps> = ({
       </div >
 
       <MediaViewer
-        media={[{ type: 'image', url: message.data.media?.[0]?.url || message.data.content }]}
-        initialIndex={0}
-        isOpen={showFullImage}
-        onClose={() => setShowFullImage(false)}
+        media={(message.data.media && message.data.media.length > 0)
+          ? message.data.media.map(m => ({ type: 'image' as const, url: m.url }))
+          : [{ type: 'image' as const, url: message.data.content }]}
+        initialIndex={selectedImageIndex ?? 0}
+        isOpen={selectedImageIndex !== null}
+        onClose={() => setSelectedImageIndex(null)}
       />
 
 

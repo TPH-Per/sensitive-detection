@@ -343,7 +343,7 @@ const ChatPage: React.FC = () => {
             <ChatInput
               key={selectedConversationId}
               onSendText={handleSendText}
-              onSendImage={handleSendImage}
+              onSendImages={handleSendImage}
               onSendFile={handleSendFile}
               onSendVideo={handleSendVideo}
               onSendVoice={handleSendVoice}

@@ -11,7 +11,7 @@ interface MessageContentProps {
   uploadProgress: Record<string, { progress: number; error?: boolean }>;
   isPlaying: boolean;
   onToggleVoice: (e: React.MouseEvent) => void;
-  setShowFullImage: (show: boolean) => void;
+  onOpenImage: (index: number) => void;
   onCall?: () => void;
 }
 
@@ -21,7 +21,7 @@ const MessageContentInner: React.FC<MessageContentProps> = ({
   uploadProgress,
   isPlaying,
   onToggleVoice,
-  setShowFullImage,
+  onOpenImage,
   onCall,
 }) => {
   if (message.data.isRecalled) {
@@ -34,11 +34,63 @@ const MessageContentInner: React.FC<MessageContentProps> = ({
 
   switch (message.data.type) {
     case 'image':
-      const imageUrl = message.data.media?.[0]?.url || message.data.content;
+      const imageMedia = message.data.media && message.data.media.length > 0
+        ? message.data.media
+        : message.data.content
+          ? [{ url: message.data.content, fileName: '', mimeType: '', size: 0, isSensitive: false }]
+          : [];
+      const imageUrls = imageMedia.map(m => m.url);
+      const isAlbum = imageUrls.length > 1;
+
+      if (imageUrls.length === 0) return null;
+
+      if (isAlbum) {
+        const count = imageUrls.length;
+        return (
+          <div className="relative rounded-xl overflow-hidden grid gap-0.5 grid-cols-2 border border-border-light shadow-sm bg-bg-secondary w-full max-w-[320px]">
+            {imageUrls.slice(0, 4).map((url, index) => {
+              const isOverlay = index === 3 && count > 4;
+              return (
+                <div
+                  key={`${message.id}-img-${index}`}
+                  className={`relative overflow-hidden cursor-pointer ${count === 3 && index === 0 ? 'col-span-2 row-span-2 aspect-video' : 'aspect-square'}`}
+                  onClick={() => onOpenImage(index)}
+                >
+                  <LazyImage
+                    src={url}
+                    alt="sent"
+                    className="w-full h-full object-cover transition-all duration-base"
+                  />
+                  {isOverlay && (
+                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center text-white text-xl font-bold">
+                      +{count - 3}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+            {isMe && uploadProgress[message.id] && (
+              <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center p-4">
+                <div className="w-full bg-white/20 h-1.5 rounded-full overflow-hidden mb-2">
+                  <div
+                    className="bg-primary h-full transition-all duration-slow"
+                    style={{ width: `${uploadProgress[message.id].progress}%` }}
+                  />
+                </div>
+                <span className="text-[10px] text-white font-medium">
+                  {uploadProgress[message.id].error ? 'Lỗi tải lên' : `Đang tải ${Math.round(uploadProgress[message.id].progress)}%`}
+                </span>
+              </div>
+            )}
+          </div>
+        );
+      }
+
+      const imageUrl = imageUrls[0] || '';
       return (
         <div
           className="rounded-lg overflow-hidden max-w-[280px] cursor-pointer group relative"
-          onClick={() => setShowFullImage(true)}
+          onClick={() => onOpenImage(0)}
         >
           <LazyImage
             src={imageUrl}

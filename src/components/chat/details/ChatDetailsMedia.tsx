@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { RtdbMessage } from '../../../types';
+import { RtdbMessage, MediaObject } from '../../../types';
 import { Image, Film, FileText, Download, ExternalLink } from 'lucide-react';
 import { LazyImage } from '../../ui';
 
@@ -20,17 +20,25 @@ const ChatDetailsMediaInner: React.FC<ChatDetailsMediaProps> = ({ messages }) =>
   const [activeTab, setActiveTab] = useState<MediaTab>('images');
 
   const mediaItems = useMemo(() => {
-    const images: Array<{ id: string; data: RtdbMessage }> = [];
-    const videos: Array<{ id: string; data: RtdbMessage }> = [];
-    const files: Array<{ id: string; data: RtdbMessage }> = [];
+    const images: Array<{ key: string; media: MediaObject }> = [];
+    const videos: Array<{ key: string; media: MediaObject }> = [];
+    const files: Array<{ key: string; media: MediaObject }> = [];
 
     messages.forEach((msg) => {
-      if (msg.data.type === 'image' && msg.data.media && msg.data.media.length > 0) {
-        images.push(msg);
-      } else if (msg.data.type === 'video' && msg.data.media && msg.data.media.length > 0) {
-        videos.push(msg);
-      } else if (msg.data.type === 'file' && msg.data.media && msg.data.media.length > 0) {
-        files.push(msg);
+      if (!msg.data.media || msg.data.media.length === 0) return;
+
+      if (msg.data.type === 'image') {
+        msg.data.media.forEach((media, index) => {
+          images.push({ key: `${msg.id}_${index}`, media });
+        });
+      } else if (msg.data.type === 'video') {
+        msg.data.media.forEach((media, index) => {
+          videos.push({ key: `${msg.id}_${index}`, media });
+        });
+      } else if (msg.data.type === 'file') {
+        msg.data.media.forEach((media, index) => {
+          files.push({ key: `${msg.id}_${index}`, media });
+        });
       }
     });
 
@@ -51,16 +59,16 @@ const ChatDetailsMediaInner: React.FC<ChatDetailsMediaProps> = ({ messages }) =>
         }
         return (
           <div className="grid grid-cols-3 gap-1 p-2">
-            {mediaItems.images.map((msg) => (
+            {mediaItems.images.map((item) => (
               <a
-                key={msg.id}
-                href={msg.data.media?.[0]?.url}
+                key={item.key}
+                href={item.media.url}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="aspect-square rounded-lg overflow-hidden hover:opacity-80 active:opacity-70 transition-all duration-base"
               >
                 <LazyImage
-                  src={msg.data.media?.[0]?.url || ''}
+                  src={item.media.url || ''}
                   alt=""
                   className="w-full h-full object-cover"
                 />
@@ -75,15 +83,15 @@ const ChatDetailsMediaInner: React.FC<ChatDetailsMediaProps> = ({ messages }) =>
         }
         return (
           <div className="grid grid-cols-2 gap-2 p-2">
-            {mediaItems.videos.map((msg) => (
+            {mediaItems.videos.map((item) => (
               <a
-                key={msg.id}
-                href={msg.data.media?.[0]?.url}
+                key={item.key}
+                href={item.media.url}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="aspect-video rounded-lg overflow-hidden bg-bg-tertiary hover:opacity-80 active:opacity-70 transition-all duration-base relative group"
               >
-                <video src={msg.data.media?.[0]?.url} poster={msg.data.media?.[0]?.thumbnailUrl} className="w-full h-full object-cover" playsInline muted />
+                <video src={item.media.url} poster={item.media.thumbnailUrl} className="w-full h-full object-cover" playsInline muted />
                 <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 group-hover:opacity-100 transition-all duration-base">
                   <ExternalLink size={24} className="text-white" />
                 </div>
@@ -98,10 +106,10 @@ const ChatDetailsMediaInner: React.FC<ChatDetailsMediaProps> = ({ messages }) =>
         }
         return (
           <div className="space-y-1 p-2">
-            {mediaItems.files.map((msg) => (
+            {mediaItems.files.map((item) => (
               <a
-                key={msg.id}
-                href={msg.data.media?.[0]?.url}
+                key={item.key}
+                href={item.media.url}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-3 p-3 rounded-xl hover:bg-bg-hover active:bg-bg-active transition-all duration-base"
@@ -111,10 +119,10 @@ const ChatDetailsMediaInner: React.FC<ChatDetailsMediaProps> = ({ messages }) =>
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-text-primary truncate">
-                    {msg.data.media?.[0]?.fileName || 'File'}
+                    {item.media.fileName || 'File'}
                   </p>
                   <p className="text-xs text-text-tertiary">
-                    {formatFileSize(msg.data.media?.[0]?.size)}
+                    {formatFileSize(item.media.size)}
                   </p>
                 </div>
                 <Download size={18} className="text-text-tertiary flex-shrink-0" />

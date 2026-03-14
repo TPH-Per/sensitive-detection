@@ -1,4 +1,4 @@
-import { ref, set, get, update, push, query, orderByChild, limitToLast, endBefore, onChildAdded, onChildChanged, off, increment } from 'firebase/database';
+﻿import { ref, set, get, update, push, query, orderByChild, limitToLast, endBefore, onChildAdded, onChildChanged, off, increment } from 'firebase/database';
 import { rtdb } from '../../firebase/config';
 import { RtdbMessage, RtdbConversation, MessageType, MediaObject } from '../../types';
 import { TIME_LIMITS, IMAGE_COMPRESSION } from '../../constants';
@@ -112,6 +112,87 @@ async function createAndSendMediaMessage(
     return msgId;
 }
 
+async function createAndSendImageAlbumMessage(
+    convId: string,
+    senderId: string,
+    files: File[],
+    options: {
+        replyToId?: string;
+        onProgress?: ProgressCallback;
+        displayContent: string;
+        mentions?: string[];
+    }
+): Promise<string> {
+    if (files.length === 0) {
+        throw new Error('Không có ảnh để gửi');
+    }
+    const createdAt = Date.now();
+    const bytesByIndex = new Array(files.length).fill(0);
+    const totalBytesByIndex = new Array(files.length).fill(0);
+
+    const reportProgress = (state: "running" | "paused" | "success" | "error" | "canceled") => {
+        const bytesTransferred = bytesByIndex.reduce((sum, val) => sum + val, 0);
+        const totalBytes = totalBytesByIndex.reduce((sum, val) => sum + val, 0);
+        if (totalBytes > 0) {
+            options.onProgress?.({
+                progress: (bytesTransferred / totalBytes) * 100,
+                bytesTransferred,
+                totalBytes,
+                state
+            });
+        }
+    };
+
+    const mediaUploads = files.map(async (file, index) => {
+        const uploadFile = await compressImage(file, IMAGE_COMPRESSION.CHAT);
+        const path = `chats/${convId}/${createdAt}_${index}_${file.name}`;
+
+        const fileUrl = await withRetry(() =>
+            uploadWithProgress(path, uploadFile, (progress) => {
+                bytesByIndex[index] = progress.bytesTransferred;
+                totalBytesByIndex[index] = progress.totalBytes;
+                reportProgress(progress.state);
+            })
+        );
+
+        return {
+            url: fileUrl,
+            fileName: file.name,
+            mimeType: file.type,
+            size: file.size,
+            isSensitive: false
+        } as MediaObject;
+    });
+
+    const media = await Promise.all(mediaUploads);
+
+    const newMsgRef = push(ref(rtdb, `messages/${convId}`));
+    const msgId = newMsgRef.key!;
+
+    const messageData: RtdbMessage = {
+        senderId,
+        type: MessageType.IMAGE,
+        content: '',
+        media,
+        mentions: options.mentions || [],
+        isForwarded: false,
+        replyToId: options.replyToId || null,
+        isEdited: false,
+        isRecalled: false,
+        deletedBy: {},
+        readBy: {},
+        deliveredTo: {},
+        reactions: {},
+        createdAt,
+        updatedAt: createdAt
+    };
+
+    await set(newMsgRef, messageData);
+    await updateConversationAfterMessage(convId, senderId, messageData, options.displayContent, msgId);
+
+    return msgId;
+}
+
 export const rtdbMessageService = {
     /**
      * Gửi tin nhắn văn bản
@@ -164,7 +245,7 @@ export const rtdbMessageService = {
     sendImageMessage: async (
         convId: string,
         senderId: string,
-        file: File,
+        file: File | File[],
         options?: {
             replyToId?: string;
             onProgress?: ProgressCallback;
@@ -172,10 +253,18 @@ export const rtdbMessageService = {
         }
     ): Promise<string> => {
         try {
-            return await createAndSendMediaMessage(convId, senderId, file, MessageType.IMAGE, {
+            const files = Array.isArray(file) ? file : [file];
+            if (files.length <= 1) {
+                return await createAndSendMediaMessage(convId, senderId, files[0], MessageType.IMAGE, {
+                    ...options,
+                    compress: true,
+                    displayContent: '[Hình ảnh]'
+                });
+            }
+
+            return await createAndSendImageAlbumMessage(convId, senderId, files, {
                 ...options,
-                compress: true,
-                displayContent: 'Hình ảnh'
+                displayContent: '[Hình ảnh]'
             });
         } catch (error) {
             console.error('[rtdbMessageService] Lỗi sendImageMessage:', error);
@@ -343,7 +432,7 @@ export const rtdbMessageService = {
 
             return messages.sort((a, b) => a.data.createdAt - b.data.createdAt);
         } catch (error) {
-            console.error('[rtdbMessageService] Lỗi loadMoreMessages:', error);
+            console.error('[rtdbMessageService] Lá»—i loadMoreMessages:', error);
             throw error;
         }
     },
@@ -375,7 +464,6 @@ export const rtdbMessageService = {
                     lastMessageId = msgId;
                 }
 
-                // Chỉ đánh dấu đã đọc nếu người dùng bật showReadReceipts hoặc đó là tin nhắn của chính mình
                 if (msgData.senderId !== uid && !msgData.readBy?.[uid]) {
                     if (settings.showReadReceipts) {
                         updates[`messages/${convId}/${msgId}/readBy/${uid}`] = Date.now();
@@ -419,7 +507,7 @@ export const rtdbMessageService = {
     },
 
     /**
-     * Đánh dấu tin nhắn đã nhận
+     * ÄÃ¡nh dáº¥u tin nháº¯n Ä‘Ã£ nháº­n
      */
     markAsDelivered: async (convId: string, uid: string): Promise<void> => {
         try {
@@ -512,7 +600,7 @@ export const rtdbMessageService = {
     },
 
     /**
-     * Xóa tin nhắn phía tôi
+     * XÃ³a tin nháº¯n phÃ­a tÃ´i
      */
     deleteForMe: async (convId: string, msgId: string, uid: string): Promise<void> => {
         try {
@@ -595,7 +683,7 @@ export const rtdbMessageService = {
             await set(newMsgRef, messageData);
 
             let displayContent = srcMsg.content;
-            if (srcMsg.type === MessageType.IMAGE) displayContent = 'Hình ảnh';
+            if (srcMsg.type === MessageType.IMAGE) displayContent = '[Hình ảnh]';
             else if (srcMsg.type === MessageType.VIDEO) displayContent = 'Video';
             else if (srcMsg.type === MessageType.FILE) displayContent = srcMsg.media?.[0]?.fileName || 'Tài liệu';
             else if (srcMsg.type === MessageType.VOICE) displayContent = 'Tin nhắn thoại';

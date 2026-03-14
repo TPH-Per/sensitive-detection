@@ -1,5 +1,4 @@
 export { MessageBubble } from './message/MessageBubble';
-export { ImageGroupBubble } from './message/ImageGroupBubble';
 export { MessageRequestBanner } from './message/MessageRequestBanner';
 
 export { ConversationItem } from './conversation/ConversationItem';
