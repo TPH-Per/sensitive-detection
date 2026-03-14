@@ -9,7 +9,17 @@
     "conversations": {
       "$convId": {
         ".read": "auth != null && (!data.exists() || data.child('members').child(auth.uid).exists())",
-        ".write": "auth != null && ((!data.exists() && newData.child('members').child(auth.uid).val() === 'admin') || (data.exists() && data.child('members').child(auth.uid).exists() && (newData.child('lastMessage').exists() || newData.child('updatedAt').exists() || newData.child('name').exists() || newData.child('avatar').exists() || newData.child('typing').child(auth.uid).exists() || !newData.child('typing').child(auth.uid).exists() || data.child('members').child(auth.uid).val() === 'admin')) || (data.exists() && data.child('creatorId').val() === auth.uid && !newData.exists()))"
+        ".write": "auth != null && ((!data.exists() && newData.child('members').child(auth.uid).val() === 'admin') || (data.exists() && data.child('members').child(auth.uid).exists() && (newData.child('lastMessage').exists() || newData.child('updatedAt').exists() || newData.child('name').exists() || newData.child('avatar').exists() || newData.child('typing').child(auth.uid).exists() || !newData.child('typing').child(auth.uid).exists() || data.child('members').child(auth.uid).val() === 'admin') && (data.child('members').child(auth.uid).val() === 'admin' || (data.child('members').val() == newData.child('members').val() && data.child('creatorId').val() == newData.child('creatorId').val() && data.child('isDisbanded').val() == newData.child('isDisbanded').val()))) || (data.exists() && data.child('creatorId').val() === auth.uid && !newData.exists()))"
+        ,
+        "members": {
+          ".write": "auth != null && data.parent().child('members').child(auth.uid).val() === 'admin'"
+        },
+        "creatorId": {
+          ".write": "auth != null && data.parent().child('members').child(auth.uid).val() === 'admin'"
+        },
+        "isDisbanded": {
+          ".write": "auth != null && data.parent().child('creatorId').val() === auth.uid"
+        }
       }
     },
     "messages": {

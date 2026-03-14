@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { RtdbConversation, RtdbUserChat } from '../../../types';
 import { Bell, BellOff, Pin, PinOff, Trash2, ChevronRight, Ban, UserCheck, LogOut, Edit3, User as UserIcon, Flag } from 'lucide-react';
 import { ConfirmDialog, Button } from '../../ui';
 import { useReportStore } from '../../../store/reportStore';
-import { ReportType, NotificationType, User } from '../../../types';
+import { ReportType, User } from '../../../types';
 import { CONFIRM_MESSAGES } from '../../../constants/confirmMessages';
-import { Mail, MailCheck, Archive as ArchiveIcon } from 'lucide-react';
+import { Archive as ArchiveIcon } from 'lucide-react';
 import { useConversationMemberSettings } from '../../../hooks/chat/useConversationMemberSettings';
 
 interface ChatDetailsActionsProps {
@@ -39,7 +39,7 @@ export const ChatDetailsActions: React.FC<ChatDetailsActionsProps> = ({
   onDelete,
   onLeaveGroup,
   onEditGroup,
-  onViewProfile
+  onViewProfile,
 }) => {
   const { openReportModal } = useReportStore();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -48,9 +48,8 @@ export const ChatDetailsActions: React.FC<ChatDetailsActionsProps> = ({
   const memberSettings = useConversationMemberSettings(conversation.id, currentUserId);
 
   const isGroup = conversation.data.isGroup;
-  const memberRole = conversation.data.members[currentUserId];
-  const isAdmin = isGroup && memberRole === 'admin';
   const isCreator = isGroup && conversation.data.creatorId === currentUserId;
+  const isDisbandAction = isGroup && isCreator;
 
   // Xác định các actions dựa trên loại conversation
   const actions = [];
@@ -137,7 +136,7 @@ export const ChatDetailsActions: React.FC<ChatDetailsActionsProps> = ({
   if (onDelete) {
     actions.push({
       icon: <Trash2 size={20} />,
-      label: isGroup && isCreator ? 'Giải tán nhóm' : 'Xóa cuộc trò chuyện',
+      label: isDisbandAction ? 'Giải tán nhóm' : 'Xóa cuộc trò chuyện',
       onClick: () => setShowDeleteConfirm(true),
       variant: 'danger' as const,
     });
@@ -173,14 +172,13 @@ export const ChatDetailsActions: React.FC<ChatDetailsActionsProps> = ({
         ))}
       </div>
 
-
       <ConfirmDialog
         isOpen={showDeleteConfirm}
         onClose={() => setShowDeleteConfirm(false)}
         onConfirm={() => onDelete?.()}
-        title={isGroup ? CONFIRM_MESSAGES.CHAT.DISBAND_GROUP.TITLE : CONFIRM_MESSAGES.CHAT.DELETE_CONVERSATION.TITLE}
-        message={isGroup ? CONFIRM_MESSAGES.CHAT.DISBAND_GROUP.MESSAGE : CONFIRM_MESSAGES.CHAT.DELETE_CONVERSATION.MESSAGE}
-        confirmLabel={isGroup ? CONFIRM_MESSAGES.CHAT.DISBAND_GROUP.CONFIRM : CONFIRM_MESSAGES.CHAT.DELETE_CONVERSATION.CONFIRM}
+        title={isDisbandAction ? CONFIRM_MESSAGES.CHAT.DISBAND_GROUP.TITLE : CONFIRM_MESSAGES.CHAT.DELETE_CONVERSATION.TITLE}
+        message={isDisbandAction ? CONFIRM_MESSAGES.CHAT.DISBAND_GROUP.MESSAGE : CONFIRM_MESSAGES.CHAT.DELETE_CONVERSATION.MESSAGE}
+        confirmLabel={isDisbandAction ? CONFIRM_MESSAGES.CHAT.DISBAND_GROUP.CONFIRM : CONFIRM_MESSAGES.CHAT.DELETE_CONVERSATION.CONFIRM}
         variant="danger"
       />
 

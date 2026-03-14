@@ -1,4 +1,4 @@
-import { StateCreator } from 'zustand';
+﻿import { StateCreator } from 'zustand';
 import { MediaObject } from '../../types';
 import { rtdbGroupService } from '../../services/chat/rtdbGroupService';
 import { useAuthStore } from '../authStore';
@@ -12,6 +12,7 @@ export interface RtdbGroupSlice {
     leaveGroup: (conversationId: string, userId: string) => Promise<void>;
     updateMemberRole: (conversationId: string, userId: string, role: 'admin' | 'member') => Promise<void>;
     disbandGroup: (conversationId: string) => Promise<void>;
+    sendGroupSystemMessage: (conversationId: string, actorId: string, content: string) => Promise<void>;
 }
 
 type RtdbGroupSliceWithConversation = RtdbGroupSlice & RtdbConversationSlice;
@@ -96,6 +97,15 @@ export const createRtdbGroupSlice: StateCreator<RtdbGroupSliceWithConversation, 
             await rtdbGroupService.disbandGroup(conversationId);
         } catch (error) {
             console.error('[rtdbGroupSlice] Lỗi giải tán nhóm:', error);
+            throw error;
+        }
+    },
+
+    sendGroupSystemMessage: async (conversationId: string, actorId: string, content: string) => {
+        try {
+            await rtdbGroupService.sendGroupSystemMessage(conversationId, actorId, content);
+        } catch (error) {
+            console.error('[rtdbGroupSlice] Lỗi sendGroupSystemMessage:', error);
             throw error;
         }
     }

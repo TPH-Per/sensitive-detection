@@ -165,6 +165,12 @@ export const ChatBox: React.FC<ChatBoxProps> = ({
       >
         {isLoading ? (
           <ChatBoxSkeleton />
+        ) : conversation.data.isDisbanded ? (
+          <div className="flex flex-col items-center justify-center h-full text-center px-6">
+            <p className="text-text-secondary text-sm mb-2">
+              Nhóm đã giải tán. Bạn có thể xóa hội thoại này.
+            </p>
+          </div>
         ) : (
           <div className="space-y-4 px-4 py-4 min-h-full">
             {isLoadingMore && (
@@ -204,11 +210,13 @@ export const ChatBox: React.FC<ChatBoxProps> = ({
         />
       )}
 
-      <TypingIndicator
-        typingUsers={typingUsers}
-        currentUserId={currentUserId}
-        usersMap={usersMap}
-      />
+      {!conversation.data.isDisbanded && (
+        <TypingIndicator
+          typingUsers={typingUsers}
+          currentUserId={currentUserId}
+          usersMap={usersMap}
+        />
+      )}
     </div>
   );
 };

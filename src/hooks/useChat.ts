@@ -148,6 +148,8 @@ export const useChat = () => {
     selectedConversationId,
     currentUserId: currentUser?.id ?? null,
     conversations,
+    usersMap,
+    currentUserName: currentUser?.fullName,
   });
 
   // Subscribe to messages and typing

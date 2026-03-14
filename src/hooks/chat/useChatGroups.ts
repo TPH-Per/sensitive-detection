@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+﻿import { useCallback } from 'react';
 import { MediaObject } from '../../types';
 import { useRtdbChatStore } from '../../store';
 
@@ -6,13 +6,16 @@ interface UseChatGroupsProps {
   selectedConversationId: string | null;
   currentUserId: string | null;
   conversations: Array<{ id: string; data: any }>;
+  usersMap: Record<string, any>;
+  currentUserName?: string;
 }
 
 // Quản lý nhóm chat
 export const useChatGroups = ({
   selectedConversationId,
   currentUserId,
-  conversations
+  conversations,
+  usersMap,
 }: UseChatGroupsProps) => {
   const {
     createGroup,
@@ -22,30 +25,42 @@ export const useChatGroups = ({
     leaveGroup,
     updateMemberRole,
     disbandGroup,
+    sendGroupSystemMessage,
   } = useRtdbChatStore();
+
+  const getName = (uid: string) => usersMap[uid]?.fullName || 'Người dùng';
+  const getActorName = () => (currentUserId ? getName(currentUserId) : 'Người dùng');
 
   const handleCreateGroup = useCallback(async (
     memberIds: string[],
     groupName: string,
-    groupAvatar?: File | MediaObject
+    groupAvatar?: File | MediaObject,
   ) => {
     if (!currentUserId) return;
-    await createGroup(currentUserId, memberIds, groupName, groupAvatar);
-  }, [currentUserId, createGroup]);
+    const conversationId = await createGroup(currentUserId, memberIds, groupName, groupAvatar);
+    await sendGroupSystemMessage(conversationId, currentUserId, `${getActorName()} đã tạo nhóm`);
+  }, [currentUserId, createGroup, sendGroupSystemMessage, getActorName]);
 
   const handleAddMembers = useCallback(async (userIds: string[]) => {
     if (!selectedConversationId) return;
     try {
       await addMember(selectedConversationId, userIds);
+      if (currentUserId) {
+        const names = userIds.map((id) => getName(id)).join(', ');
+        await sendGroupSystemMessage(selectedConversationId, currentUserId, `${getActorName()} đã thêm ${names} vào nhóm`);
+      }
     } catch (error) {
-       console.error(error);
+      console.error(error);
     }
-  }, [selectedConversationId, addMember]);
+  }, [selectedConversationId, addMember, sendGroupSystemMessage, currentUserId, getActorName, getName]);
 
   const handleRemoveMember = useCallback(async (userId: string) => {
     if (!selectedConversationId) return;
     await removeMember(selectedConversationId, userId);
-  }, [selectedConversationId, removeMember]);
+    if (currentUserId) {
+      await sendGroupSystemMessage(selectedConversationId, currentUserId, `${getActorName()} đã xóa ${getName(userId)} khỏi nhóm`);
+    }
+  }, [selectedConversationId, removeMember, sendGroupSystemMessage, currentUserId, getActorName, getName]);
 
   const handleLeaveGroup = useCallback(async (): Promise<{ needAssignAdmin: boolean }> => {
     if (!selectedConversationId || !currentUserId) return { needAssignAdmin: false };
@@ -59,30 +74,55 @@ export const useChatGroups = ({
       }
     }
 
+    await sendGroupSystemMessage(selectedConversationId, currentUserId, `${getActorName()} đã rời nhóm`);
     await leaveGroup(selectedConversationId, currentUserId);
     return { needAssignAdmin: false };
-  }, [selectedConversationId, currentUserId, conversations, leaveGroup]);
+  }, [selectedConversationId, currentUserId, conversations, leaveGroup, sendGroupSystemMessage, getActorName]);
 
   const handleAssignAdminAndLeave = useCallback(async (newAdminId: string) => {
     if (!selectedConversationId || !currentUserId) return;
     await updateMemberRole(selectedConversationId, newAdminId, 'admin');
+    await sendGroupSystemMessage(selectedConversationId, currentUserId, `${getActorName()} đã chuyển quyền quản trị cho ${getName(newAdminId)}`);
+    await sendGroupSystemMessage(selectedConversationId, currentUserId, `${getActorName()} đã rời nhóm`);
     await leaveGroup(selectedConversationId, currentUserId);
-  }, [selectedConversationId, currentUserId, updateMemberRole, leaveGroup]);
+  }, [selectedConversationId, currentUserId, updateMemberRole, leaveGroup, sendGroupSystemMessage, getActorName, getName]);
 
   const handlePromoteToAdmin = useCallback(async (userId: string) => {
     if (!selectedConversationId) return;
     await updateMemberRole(selectedConversationId, userId, 'admin');
-  }, [selectedConversationId, updateMemberRole]);
+    if (currentUserId) {
+      await sendGroupSystemMessage(selectedConversationId, currentUserId, `${getActorName()} đã thăng ${getName(userId)} làm quản trị viên`);
+    }
+  }, [selectedConversationId, updateMemberRole, sendGroupSystemMessage, currentUserId, getActorName, getName]);
 
   const handleDemoteFromAdmin = useCallback(async (userId: string) => {
     if (!selectedConversationId) return;
     await updateMemberRole(selectedConversationId, userId, 'member');
-  }, [selectedConversationId, updateMemberRole]);
+    if (currentUserId) {
+      await sendGroupSystemMessage(selectedConversationId, currentUserId, `${getActorName()} đã hạ quyền quản trị viên của ${getName(userId)}`);
+    }
+  }, [selectedConversationId, updateMemberRole, sendGroupSystemMessage, currentUserId, getActorName, getName]);
 
   const handleEditGroup = useCallback(async (updates: { name?: string; avatar?: MediaObject }) => {
     if (!selectedConversationId) return;
     await updateGroupInfo(selectedConversationId, updates);
-  }, [selectedConversationId, updateGroupInfo]);
+    if (currentUserId) {
+      const conv = conversations.find(c => c.id === selectedConversationId);
+      const nameChanged = updates.name && updates.name !== conv?.data?.name;
+      const avatarChanged = !!updates.avatar;
+      let content = '';
+      if (nameChanged && avatarChanged) {
+        content = `${getActorName()} đã cập nhật ảnh nhóm và đổi tên nhóm thành "${updates.name}"`;
+      } else if (nameChanged) {
+        content = `${getActorName()} đã đổi tên nhóm thành "${updates.name}"`;
+      } else if (avatarChanged) {
+        content = `${getActorName()} đã cập nhật ảnh nhóm`;
+      }
+      if (content) {
+        await sendGroupSystemMessage(selectedConversationId, currentUserId, content);
+      }
+    }
+  }, [selectedConversationId, updateGroupInfo, currentUserId, conversations, sendGroupSystemMessage, getActorName]);
 
   const handleDisbandGroup = useCallback(async () => {
     if (!selectedConversationId) return;
