@@ -4,6 +4,8 @@ import { httpsCallable } from "firebase/functions";
 import { functions } from "../../../firebase/config";
 import { useUserCache } from "../../../store/userCacheStore";
 import { useCallSounds } from "../../../hooks/chat/useCallSounds";
+import { rtdbCallService } from "../../../services/chat/rtdbCallService";
+import { useRtdbChatStore } from "../../../store";
 
 const ZEGO_APP_ID = Number(import.meta.env.VITE_ZEGO_APP_ID);
 
@@ -77,6 +79,22 @@ export const CallWindow: React.FC<CallWindowProps> = ({
           });
         },
         onLeaveRoom: () => {
+          rtdbCallService.updateCallParticipant(roomId, userId, false).then(async () => {
+             const activeCall = await rtdbCallService.getActiveCall(roomId);
+             if (!activeCall || !activeCall.participants || Object.keys(activeCall.participants).length === 0) {
+               if (activeCall && activeCall.messageId) {
+                 const duration = Math.max(0, Math.floor((Date.now() - activeCall.startedAt) / 1000));
+                 const { updateCallMessage } = useRtdbChatStore.getState();
+                 await updateCallMessage(roomId, activeCall.messageId, { 
+                   callType, 
+                   status: 'ended', 
+                   duration 
+                 });
+                 await rtdbCallService.endActiveCall(roomId);
+               }
+             }
+          });
+
           zegoRef.current = null;
           onCloseRef.current();
         },
@@ -88,8 +106,7 @@ export const CallWindow: React.FC<CallWindowProps> = ({
           users.forEach((u) => activeUsers.delete(u.userID));
           if (isGroupCall) playSound('action');
 
-          if (isGroupCall) {
-            if (activeUsers.size === 0) {
+          if (!isGroupCall && activeUsers.size === 0) {
               setTimeout(() => {
                 if (zegoRef.current) {
                   try { zegoRef.current.destroy(); } catch (e) { console.error(e); }
@@ -97,19 +114,11 @@ export const CallWindow: React.FC<CallWindowProps> = ({
                 }
                 onCloseRef.current();
               }, 500);
-            }
-            return;
           }
-
-          setTimeout(() => {
-            if (zegoRef.current) {
-              try { zegoRef.current.destroy(); } catch (e) { console.error(e); }
-              zegoRef.current = null;
-            }
-            onCloseRef.current();
-          }, 500);
         },
       });
+
+      await rtdbCallService.updateCallParticipant(roomId, userId, true);
     };
 
     init().catch(console.error);

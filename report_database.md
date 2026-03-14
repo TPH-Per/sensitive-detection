@@ -223,6 +223,18 @@ _Mô tả: Lưu trữ mọi thông báo (Tương tác, Hệ thống) đẩy tớ
           // Optional
           "uid_2": 1678900050000
         }
+      },
+      "activeCall": {
+        // Optional - Tồn tại khi cuộc gọi đang diễn ra
+        "callerId": "uid_1", // Required
+        "callType": "video", // Enum: "voice", "video"
+        "messageId": "msg_id_1", // ID của tin nhắn bong bóng đang active
+        "startedAt": 1678900000000, // Required (timestamp)
+        "participants": {
+          // Record<userId, true> - Danh sách người thực tế đang trong phòng
+          "uid_1": true,
+          "uid_2": true
+        }
       }
     }
   },

@@ -21,11 +21,12 @@ import { useCallSounds } from '../../hooks/chat/useCallSounds';
 import { IncomingCallDialog } from '../chat/call/IncomingCallDialog';
 import { CallWindow } from '../chat/call/CallWindow';
 import { CONFIRM_MESSAGES } from '../../constants';
+import { rtdbCallService } from '../../services/chat/rtdbCallService';
 
 export const AppLayout: React.FC = () => {
   const { user } = useAuthStore();
   const { mode, toggleTheme } = useThemeStore();
-  const { subscribeToConversations, selectedConversationId, sendCallMessage } = useRtdbChatStore();
+  const { subscribeToConversations, selectedConversationId, sendCallMessage, updateCallMessage } = useRtdbChatStore();
   const { receivedRequests, subscribeToRequests, subscribeToFriends } = useContactStore();
   const { initialize: initNotifications, unreadCount: unreadNotifications } = useNotificationStore();
 
@@ -79,15 +80,23 @@ export const AppLayout: React.FC = () => {
       },
       onCallRejected: async () => {
         if (isCaller && callConversationId && user?.id) {
-          await sendCallMessage(callConversationId, user.id, { callType, status: 'rejected' });
+            const activeCall = await rtdbCallService.getActiveCall(callConversationId);
+            if (activeCall && activeCall.messageId) {
+                await updateCallMessage(callConversationId, activeCall.messageId, { callType, status: 'rejected' });
+                await rtdbCallService.endActiveCall(callConversationId);
+            }
         }
         playSound('busy');
         resetCall();
       },
       onCallEnded: async () => {
         if (isCaller && callConversationId && user?.id && callPhase === 'in-call') {
-          const duration = callStartTime ? Math.max(0, Math.floor((Date.now() - callStartTime) / 1000)) : undefined;
-          await sendCallMessage(callConversationId, user.id, { callType, status: 'ended', duration });
+            const activeCall = await rtdbCallService.getActiveCall(callConversationId);
+            if (activeCall && activeCall.messageId && !isGroupCall) {
+                const duration = callStartTime ? Math.max(0, Math.floor((Date.now() - callStartTime) / 1000)) : 0;
+                await updateCallMessage(callConversationId, activeCall.messageId, { callType, status: 'ended', duration });
+                await rtdbCallService.endActiveCall(callConversationId);
+            }
         }
         if (callPhase === 'in-call') {
           playSound('ended');
@@ -378,3 +387,5 @@ export const AppLayout: React.FC = () => {
     </div>
   );
 };
+
+export default AppLayout;

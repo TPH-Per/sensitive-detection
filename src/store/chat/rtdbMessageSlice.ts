@@ -1,4 +1,4 @@
-﻿import { StateCreator } from 'zustand';
+import { StateCreator } from 'zustand';
 import { RtdbMessage } from '../../types';
 import { rtdbMessageService } from '../../services/chat/rtdbMessageService';
 import { useAuthStore } from '../authStore';
@@ -18,7 +18,8 @@ export interface RtdbMessageSlice {
     sendFileMessage: (conversationId: string, senderId: string, file: File, replyToId?: string) => Promise<void>;
     sendVideoMessage: (conversationId: string, senderId: string, file: File, replyToId?: string) => Promise<void>;
     sendVoiceMessage: (conversationId: string, senderId: string, file: File, replyToId?: string) => Promise<void>;
-    sendCallMessage: (conversationId: string, senderId: string, payload: { callType: 'voice' | 'video'; status: 'ended' | 'missed' | 'rejected'; duration?: number }) => Promise<void>;
+    sendCallMessage: (conversationId: string, senderId: string, payload: { callType: 'voice' | 'video'; status: 'ended' | 'missed' | 'rejected' | 'started'; duration?: number }) => Promise<string>;
+    updateCallMessage: (conversationId: string, messageId: string, payload: { callType: 'voice' | 'video'; status: 'ended' | 'missed' | 'rejected' | 'started'; duration?: number }) => Promise<void>;
     markAsRead: (conversationId: string, userId: string) => Promise<void>;
     markAsDelivered: (conversationId: string, userId: string) => Promise<void>;
     recallMessage: (conversationId: string, messageId: string) => Promise<void>;
@@ -181,11 +182,22 @@ export const createRtdbMessageSlice: StateCreator<RtdbChatState, [], [], RtdbMes
             throw error;
         }
     },
-    sendCallMessage: async (conversationId: string, senderId: string, payload: { callType: 'voice' | 'video'; status: 'ended' | 'missed' | 'rejected'; duration?: number }) => {
+
+    sendCallMessage: async (conversationId: string, senderId: string, payload: { callType: 'voice' | 'video'; status: 'ended' | 'missed' | 'rejected' | 'started'; duration?: number }) => {
         try {
-            await rtdbMessageService.sendCallMessage(conversationId, senderId, payload);
+            return await rtdbMessageService.sendCallMessage(conversationId, senderId, payload);
         } catch (error) {
             console.error('[rtdbMessageSlice] Lỗi sendCallMessage:', error);
+            throw error;
+        }
+    },
+
+    updateCallMessage: async (conversationId: string, messageId: string, payload: { callType: 'voice' | 'video'; status: 'ended' | 'missed' | 'rejected' | 'started'; duration?: number }) => {
+        try {
+            const content = JSON.stringify(payload);
+            await rtdbMessageService.updateMessageContent(conversationId, messageId, content, payload);
+        } catch (error) {
+            console.error('[rtdbMessageSlice] Lỗi updateCallMessage:', error);
             throw error;
         }
     },

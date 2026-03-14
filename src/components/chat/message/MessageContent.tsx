@@ -261,7 +261,7 @@ const MessageContentInner: React.FC<MessageContentProps> = ({
       );
 
     case MessageType.CALL: {
-      let parsed: { callType: 'voice' | 'video'; status: 'ended' | 'missed' | 'rejected'; duration?: number };
+      let parsed: { callType: 'voice' | 'video'; status: 'ended' | 'missed' | 'rejected' | 'started'; duration?: number };
       try { parsed = JSON.parse(message.data.content); }
       catch { parsed = { callType: 'voice', status: 'missed' }; }
 
@@ -270,9 +270,17 @@ const MessageContentInner: React.FC<MessageContentProps> = ({
 
       // Nhãn tiêu đề
       let title = '';
-      if (status === 'ended') title = isVideo ? 'Cuộc gọi video' : 'Cuộc gọi thoại';
-      else if (status === 'missed') title = isVideo ? 'Cuộc gọi video nhỡ' : 'Cuộc gọi thoại nhỡ';
-      else title = isVideo ? 'Cuộc gọi video bị từ chối' : 'Cuộc gọi thoại bị từ chối';
+      if (status === 'started') {
+        title = isVideo ? 'Cuộc gọi video đang diễn ra' : 'Cuộc gọi thoại đang diễn ra';
+      } else if (status === 'ended') {
+        const typeStr = isVideo ? 'video' : 'thoại';
+        title = isMe ? `Cuộc gọi ${typeStr} đi` : `Cuộc gọi ${typeStr} đến`;
+      } else if (status === 'missed') {
+        title = isVideo ? 'Cuộc gọi video nhỡ' : 'Cuộc gọi thoại nhỡ';
+      } else {
+        title = isVideo ? 'Cuộc gọi video bị từ chối' : 'Cuộc gọi thoại bị từ chối';
+      }
+
 
       // Thời lượng
       let durationStr = '';
@@ -303,7 +311,27 @@ const MessageContentInner: React.FC<MessageContentProps> = ({
               <span>{durationStr}</span>
             </div>
           )}
+          {status === 'started' && (
+            <button
+              onClick={() => {
+                const event = new CustomEvent('join-active-call', {
+                  detail: {
+                    senderId: message.data.senderId,
+                    msgId: message.id
+                  }
+                });
+                window.dispatchEvent(event);
+              }}
+              className={`mt-2 px-3 py-1 rounded-full text-xs font-bold transition-all ${isMe
+                ? 'bg-white text-primary hover:bg-white/90'
+                : 'bg-primary text-white hover:bg-primary-dark'
+                }`}
+            >
+              Tham gia
+            </button>
+          )}
         </div>
+
       );
     }
 

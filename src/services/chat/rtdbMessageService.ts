@@ -850,7 +850,7 @@ export const rtdbMessageService = {
     sendCallMessage: async (
         convId: string,
         senderId: string,
-        payload: { callType: 'voice' | 'video'; status: 'ended' | 'missed' | 'rejected'; duration?: number }
+        payload: { callType: 'voice' | 'video'; status: 'ended' | 'missed' | 'rejected' | 'started'; duration?: number }
     ): Promise<string> => {
         try {
             const newMsgRef = push(ref(rtdb, `messages/${convId}`));
@@ -884,6 +884,40 @@ export const rtdbMessageService = {
             return msgId;
         } catch (error) {
             console.error('[rtdbMessageService] Lỗi sendCallMessage:', error);
+            throw error;
+        }
+    },
+
+    /**
+     * Cập nhật nội dung tin nhắn hiện có
+     */
+    updateMessageContent: async (convId: string, msgId: string, newContent: string, payload?: any): Promise<void> => {
+        try {
+            const msgRef = ref(rtdb, `messages/${convId}/${msgId}`);
+            const updates: any = {
+                content: newContent,
+                updatedAt: Date.now()
+            };
+            await update(msgRef, updates);
+
+            // Cập nhật lastMessage nếu cần
+            const convRef = ref(rtdb, `conversations/${convId}`);
+            const convSnap = await get(convRef);
+            if (convSnap.exists()) {
+                const conv = convSnap.val() as RtdbConversation;
+                if (conv.lastMessage && conv.lastMessage.messageId === msgId) {
+                    let displayContent = newContent;
+                    if (payload && payload.callType) {
+                        displayContent = payload.callType === 'video' ? '[Cuộc gọi video]' : '[Cuộc gọi thoại]';
+                    }
+                    await update(convRef, {
+                        'lastMessage/content': displayContent,
+                        updatedAt: Date.now()
+                    });
+                }
+            }
+        } catch (error) {
+            console.error('[rtdbMessageService] Lỗi updateMessageContent:', error);
             throw error;
         }
     }

@@ -8,6 +8,7 @@ import { useContactStore } from '../store/contactStore';
 import { useFriendIds } from '../hooks';
 import { useBlockedUsers } from '../hooks';
 import { friendService } from '../services/friendService';
+import { rtdbCallService } from '../services/chat/rtdbCallService';
 import { useRtdbChatStore } from '../store';
 import { useConversationMemberSettings } from '../hooks/chat/useConversationMemberSettings';
 import {
@@ -105,10 +106,32 @@ const ChatPage: React.FC = () => {
     currentUser?.id || ''
   );
 
-  React.useEffect(() => {
+  useEffect(() => {
     setIsChatVisible(true);
     return () => setIsChatVisible(false);
   }, [setIsChatVisible]);
+
+  useEffect(() => {
+    const handleJoinActiveCallEvent = async (e: any) => {
+        const { senderId, msgId } = e.detail;
+        if (!selectedConversationId) return;
+
+        const activeCall = await rtdbCallService.getActiveCall(selectedConversationId);
+        if (activeCall) {
+            setCallType(activeCall.callType);
+            setActiveRoomId(selectedConversationId);
+            setCallConversationId(selectedConversationId);
+            setIsGroupCall(selectedConversation?.data.isGroup || false);
+            setIsCaller(false);
+            setCallPhase('in-call');
+            setCallStartTime(activeCall.startedAt);
+            // participant node will be updated in CallWindow.tsx
+        }
+    };
+
+    window.addEventListener('join-active-call', handleJoinActiveCallEvent);
+    return () => window.removeEventListener('join-active-call', handleJoinActiveCallEvent);
+  }, [selectedConversationId, selectedConversation]);
 
   const [showDetails, setShowDetails] = useState(false);
   const [showCreateGroup, setShowCreateGroup] = useState(false);
@@ -143,15 +166,16 @@ const ChatPage: React.FC = () => {
   } = useCallStore();
 
   const sendCallMessage = useRtdbChatStore(state => state.sendCallMessage);
+  const updateCallMessage = useRtdbChatStore(state => state.updateCallMessage);
 
   const partner = selectedConversation?.data.isGroup
     ? null
-    : participants.find(p => p.id !== currentUser.id);
+    : participants.find(p => p.id !== currentUser?.id);
 
   const { playSound } = useCallSounds();
 
   const handleInitiateCall = async (type: 'voice' | 'video') => {
-    if (!selectedConversationId) return;
+    if (!selectedConversationId || !currentUser) return;
 
     setCallType(type);
     setActiveRoomId(selectedConversationId);
@@ -168,6 +192,10 @@ const ChatPage: React.FC = () => {
         setOtherUserIds(groupMembersIds);
         setCallPhase('in-call');
         setCallStartTime(Date.now());
+        
+        const msgId = await sendCallMessage(selectedConversationId, currentUser.id, { callType: type, status: 'started' });
+        await rtdbCallService.startActiveCall(selectedConversationId, currentUser.id, type, msgId);
+
         await startCall(
           groupMembersIds,
           currentUser.id,
@@ -193,6 +221,10 @@ const ChatPage: React.FC = () => {
       setIsCaller(true);
       setOtherUserIds([partner.id]);
       setCallPhase('outgoing');
+      
+      const msgId = await sendCallMessage(selectedConversationId, currentUser.id, { callType: type, status: 'started' });
+      await rtdbCallService.startActiveCall(selectedConversationId, currentUser.id, type, msgId);
+
       const result = await startCall(
         [partner.id],
         currentUser.id,
@@ -206,6 +238,9 @@ const ChatPage: React.FC = () => {
       if (result && !result.success) {
         if (result.reason === 'busy') {
           playSound('busy');
+          // Update message to missed immediately if busy
+          await updateCallMessage(selectedConversationId, msgId, { callType: type, status: 'missed' });
+          await rtdbCallService.endActiveCall(selectedConversationId);
           resetCall();
         }
       }
@@ -215,7 +250,11 @@ const ChatPage: React.FC = () => {
   const handleCancelOutgoingCall = async () => {
     if (endCall) await endCall(otherUserIds);
     if (isCaller && callConversationId) {
-      await sendCallMessage(callConversationId, currentUser.id, { callType, status: 'missed' });
+      const activeCall = await rtdbCallService.getActiveCall(callConversationId);
+      if (activeCall && activeCall.messageId) {
+        await updateCallMessage(callConversationId, activeCall.messageId, { callType, status: 'missed' });
+        await rtdbCallService.endActiveCall(callConversationId);
+      }
     }
     resetCall();
   };
@@ -224,7 +263,11 @@ const ChatPage: React.FC = () => {
     if (endCall) await endCall(otherUserIds);
     playSound('busy');
     if (isCaller && callConversationId) {
-      await sendCallMessage(callConversationId, currentUser.id, { callType, status: 'missed' });
+      const activeCall = await rtdbCallService.getActiveCall(callConversationId);
+      if (activeCall && activeCall.messageId) {
+        await updateCallMessage(callConversationId, activeCall.messageId, { callType, status: 'missed' });
+        await rtdbCallService.endActiveCall(callConversationId);
+      }
     }
     resetCall();
   };
@@ -237,9 +280,13 @@ const ChatPage: React.FC = () => {
         await endCall([]);
       }
     }
-    if (isCaller && callConversationId) {
-      const duration = callStartTime ? Math.max(0, Math.floor((Date.now() - callStartTime) / 1000)) : undefined;
-      await sendCallMessage(callConversationId, currentUser.id, { callType, status: 'ended', duration });
+    if (!isGroupCall && isCaller && callConversationId) {
+        const activeCall = await rtdbCallService.getActiveCall(callConversationId);
+        if (activeCall && activeCall.messageId) {
+            const duration = callStartTime ? Math.max(0, Math.floor((Date.now() - callStartTime) / 1000)) : 0;
+            await updateCallMessage(callConversationId, activeCall.messageId, { callType, status: 'ended', duration });
+            await rtdbCallService.endActiveCall(callConversationId);
+        }
     }
     resetCall();
   };
@@ -489,7 +536,7 @@ const ChatPage: React.FC = () => {
           onTimeout={handleMissedCallTimeout}
         />
       )}
-      {/* Block options modal */}
+
       {partner && (
         <BlockOptionsModal
           isOpen={isBlockModalOpen}

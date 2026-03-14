@@ -100,5 +100,56 @@ export const rtdbCallService = {
             console.error('[rtdbCallService] Lỗi getCallSignaling:', error);
             throw error;
         }
+    },
+
+    /**
+     * Manage active call session in a conversation
+     */
+    startActiveCall: async (convId: string, callerId: string, callType: 'voice' | 'video', messageId: string): Promise<void> => {
+        try {
+            const activeCallRef = ref(rtdb, `conversations/${convId}/activeCall`);
+            await set(activeCallRef, {
+                callerId,
+                callType,
+                messageId,
+                startedAt: Date.now(),
+                participants: { [callerId]: true }
+            });
+        } catch (error) {
+            console.error('[rtdbCallService] Lỗi startActiveCall:', error);
+        }
+    },
+
+    updateCallParticipant: async (convId: string, userId: string, isJoining: boolean): Promise<void> => {
+        try {
+            const participantRef = ref(rtdb, `conversations/${convId}/activeCall/participants/${userId}`);
+            if (isJoining) {
+                await set(participantRef, true);
+            } else {
+                await remove(participantRef);
+            }
+        } catch (error) {
+            console.error('[rtdbCallService] Lỗi updateCallParticipant:', error);
+        }
+    },
+
+    getActiveCall: async (convId: string): Promise<any> => {
+        try {
+            const activeCallRef = ref(rtdb, `conversations/${convId}/activeCall`);
+            const snap = await get(activeCallRef);
+            return snap.val();
+        } catch (error) {
+            console.error('[rtdbCallService] Lỗi getActiveCall:', error);
+            return null;
+        }
+    },
+
+    endActiveCall: async (convId: string): Promise<void> => {
+        try {
+            const activeCallRef = ref(rtdb, `conversations/${convId}/activeCall`);
+            await remove(activeCallRef);
+        } catch (error) {
+            console.error('[rtdbCallService] Lỗi endActiveCall:', error);
+        }
     }
 };
