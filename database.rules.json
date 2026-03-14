@@ -27,7 +27,7 @@
         ".read": "auth != null && root.child('conversations').child($convId).child('members').child(auth.uid).exists()",
         ".indexOn": ["createdAt"],
         "$msgId": {
-          ".write": "auth != null && root.child('conversations').child($convId).child('members').child(auth.uid).exists() && (!data.exists() || data.child('senderId').val() === auth.uid || newData.child('reactions').child(auth.uid).exists() || !newData.child('reactions').child(auth.uid).exists())",
+          ".write": "auth != null && root.child('conversations').child($convId).child('members').child(auth.uid).exists() && (!data.exists() || (data.child('senderId').val() === auth.uid && !data.child('isRecalled').exists() && (newData.child('isRecalled').exists() || (now - data.child('createdAt').val() < 300000))) || newData.child('reactions').child(auth.uid).exists() || !newData.child('reactions').child(auth.uid).exists())",
           "readBy": {
             "$uid": {
               ".write": "auth != null && auth.uid === $uid"

@@ -1,4 +1,4 @@
-﻿import { StateCreator } from 'zustand';
+import { StateCreator } from 'zustand';
 import { MediaObject } from '../../types';
 import { rtdbGroupService } from '../../services/chat/rtdbGroupService';
 import { useAuthStore } from '../authStore';
@@ -52,8 +52,10 @@ export const createRtdbGroupSlice: StateCreator<RtdbGroupSliceWithConversation, 
 
     addMember: async (conversationId: string, userId: string | string[]) => {
         try {
+            const uid = useAuthStore.getState().user?.id;
+            if (!uid) throw new Error('Chưa đăng nhập');
             const userIds = Array.isArray(userId) ? userId : [userId];
-            await rtdbGroupService.addMembers(conversationId, userIds);
+            await rtdbGroupService.addMembers(conversationId, userIds, uid);
         } catch (error) {
             console.error('[rtdbGroupSlice] Lỗi thêm thành viên:', error);
             throw error;
@@ -62,7 +64,9 @@ export const createRtdbGroupSlice: StateCreator<RtdbGroupSliceWithConversation, 
 
     removeMember: async (conversationId: string, userId: string) => {
         try {
-            await rtdbGroupService.removeMember(conversationId, userId);
+            const uid = useAuthStore.getState().user?.id;
+            if (!uid) throw new Error('Chưa đăng nhập');
+            await rtdbGroupService.removeMember(conversationId, userId, uid);
         } catch (error) {
             console.error('[rtdbGroupSlice] Lỗi xóa thành viên:', error);
             throw error;
@@ -85,7 +89,9 @@ export const createRtdbGroupSlice: StateCreator<RtdbGroupSliceWithConversation, 
 
     updateMemberRole: async (conversationId: string, userId: string, role: 'admin' | 'member') => {
         try {
-            await rtdbGroupService.updateMemberRole(conversationId, userId, role);
+            const uid = useAuthStore.getState().user?.id;
+            if (!uid) throw new Error('Chưa đăng nhập');
+            await rtdbGroupService.updateMemberRole(conversationId, userId, role, uid);
         } catch (error) {
             console.error('[rtdbGroupSlice] Lỗi cập nhật role:', error);
             throw error;
@@ -94,7 +100,9 @@ export const createRtdbGroupSlice: StateCreator<RtdbGroupSliceWithConversation, 
 
     disbandGroup: async (conversationId: string) => {
         try {
-            await rtdbGroupService.disbandGroup(conversationId);
+            const uid = useAuthStore.getState().user?.id;
+            if (!uid) throw new Error('Chưa đăng nhập');
+            await rtdbGroupService.disbandGroup(conversationId, uid);
         } catch (error) {
             console.error('[rtdbGroupSlice] Lỗi giải tán nhóm:', error);
             throw error;

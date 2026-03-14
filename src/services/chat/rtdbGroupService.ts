@@ -1,4 +1,4 @@
-﻿import { ref, set, get, update, push, increment } from 'firebase/database';
+import { ref, set, get, update, push, increment } from 'firebase/database';
 import { rtdb } from '../../firebase/config';
 import { RtdbConversation, RtdbUserChat, MediaObject, MemberRole } from '../../types';
 import { uploadWithProgress, UploadProgress, deleteStorageFile } from '../../utils/uploadUtils';
@@ -123,7 +123,7 @@ export const rtdbGroupService = {
     /**
      * Thêm thành viên vào nhóm
      */
-    addMembers: async (convId: string, memberIds: string[]): Promise<void> => {
+    addMembers: async (convId: string, memberIds: string[], actorId: string): Promise<void> => {
         try {
             const convRef = ref(rtdb, `conversations/${convId}`);
             const convSnap = await get(convRef);
@@ -133,6 +133,11 @@ export const rtdbGroupService = {
             }
 
             const conversation = convSnap.val() as RtdbConversation;
+
+            if (conversation.members[actorId] !== 'admin') {
+                throw new Error('Chỉ Quản trị viên mới có quyền thêm thành viên');
+            }
+
             const currentMemberIds = Object.keys(conversation.members || {});
             
             if (currentMemberIds.length + memberIds.length > GROUP_LIMITS.MAX_MEMBERS) {
@@ -167,8 +172,18 @@ export const rtdbGroupService = {
     /**
      * Xóa thành viên khỏi nhóm
      */
-    removeMember: async (convId: string, uid: string): Promise<void> => {
+    removeMember: async (convId: string, uid: string, actorId: string): Promise<void> => {
         try {
+            const convRef = ref(rtdb, `conversations/${convId}`);
+            const convSnap = await get(convRef);
+            if (!convSnap.exists()) throw new Error('Nhóm không tồn tại');
+
+            const conversation = convSnap.val() as RtdbConversation;
+
+            if (conversation.members[actorId] !== 'admin') {
+                throw new Error('Chỉ Quản trị viên mới có quyền xóa thành viên');
+            }
+
             const updates: Record<string, any> = {};
             updates[`conversations/${convId}/members/${uid}`] = null;
             updates[`conversations/${convId}/updatedAt`] = Date.now();
@@ -184,11 +199,17 @@ export const rtdbGroupService = {
     /**
      * Giải tán nhóm (Chỉ Creator)
      */
-    disbandGroup: async (convId: string): Promise<void> => {
+    disbandGroup: async (convId: string, actorId: string): Promise<void> => {
         try {
             const convRef = ref(rtdb, `conversations/${convId}`);
             const convSnap = await get(convRef);
             if (!convSnap.exists()) return;
+
+            const conversation = convSnap.val() as RtdbConversation;
+
+            if (conversation.creatorId !== actorId) {
+                throw new Error('Chỉ người tạo nhóm mới được quyền giải tán nhóm');
+            }
 
             const now = Date.now();
             const updates: Record<string, any> = {};
@@ -209,11 +230,10 @@ export const rtdbGroupService = {
                 messageId: null
             };
 
-            const conversation = convSnap.val() as RtdbConversation;
             const memberIds = Object.keys(conversation.members || {});
             
             memberIds.forEach(uid => {
-                if (uid === conversation.creatorId) {
+                if (uid === actorId) {
                     updates[`user_chats/${uid}/${convId}`] = null;
                 } else {
                     updates[`user_chats/${uid}/${convId}/lastMsgTimestamp`] = now;
@@ -248,13 +268,23 @@ export const rtdbGroupService = {
     /**
      * Cập nhật role của thành viên
      */
-    updateMemberRole: async (convId: string, uid: string, role: MemberRole): Promise<void> => {
+    updateMemberRole: async (convId: string, uid: string, role: MemberRole, actorId: string): Promise<void> => {
         try {
-            const memberRef = ref(rtdb, `conversations/${convId}/members/${uid}`);
-            await set(memberRef, role);
-
             const convRef = ref(rtdb, `conversations/${convId}`);
-            await update(convRef, { updatedAt: Date.now() });
+            const convSnap = await get(convRef);
+            if (!convSnap.exists()) throw new Error('Nhóm không tồn tại');
+
+            const conversation = convSnap.val() as RtdbConversation;
+
+            if (conversation.creatorId !== actorId) {
+                throw new Error('Chỉ người tạo nhóm mới có quyền thay đổi vai trò thảnh viên');
+            }
+
+            const updates: Record<string, any> = {};
+            updates[`conversations/${convId}/members/${uid}`] = role;
+            updates[`conversations/${convId}/updatedAt`] = Date.now();
+
+            await update(ref(rtdb), updates);
         } catch (error) {
             console.error('[rtdbGroupService] Lá»—i updateMemberRole:', error);
             throw error;

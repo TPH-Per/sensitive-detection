@@ -1,4 +1,4 @@
-﻿import { ref, set, get, update, push, query, orderByChild, limitToLast, endBefore, onChildAdded, onChildChanged, off, increment } from 'firebase/database';
+import { ref, set, get, update, push, query, orderByChild, limitToLast, endBefore, onChildAdded, onChildChanged, off, increment } from 'firebase/database';
 import { rtdb } from '../../firebase/config';
 import { RtdbMessage, RtdbConversation, MessageType, MediaObject } from '../../types';
 import { TIME_LIMITS, IMAGE_COMPRESSION } from '../../constants';
@@ -645,6 +645,8 @@ export const rtdbMessageService = {
             }
 
             await update(msgRef, {
+                content: '',
+                media: [],
                 isRecalled: true,
                 updatedAt: Date.now()
             });
