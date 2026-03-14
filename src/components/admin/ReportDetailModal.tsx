@@ -11,7 +11,7 @@ import {
   ChevronLeft,
   ChevronRight
 } from 'lucide-react';
-import { Report, ReportStatus, ReportType, User, Post, Comment } from '../../types';
+import { Report, ReportStatus, ReportType, User, Post, Comment, PostStatus, CommentStatus } from '../../types';
 import { reportService } from '../../services/reportService';
 import { userService } from '../../services/userService';
 import { postService } from '../../services/postService';
@@ -35,6 +35,7 @@ export const ReportDetailModal: React.FC<ReportDetailModalProps> = ({ reportId, 
   const [targetOwner, setTargetOwner] = useState<User | null>(null);
   const [content, setContent] = useState<Post | Comment | null>(null);
   const [resolver, setResolver] = useState<User | null>(null);
+  const [deleter, setDeleter] = useState<User | null>(null);
 
   // Viewer State replacing previewImage
   const [viewerState, setViewerState] = useState({
@@ -77,9 +78,15 @@ export const ReportDetailModal: React.FC<ReportDetailModalProps> = ({ reportId, 
         if (reportData.targetType === ReportType.POST) {
           const postData = await postService.getPostByIdForAdmin(reportData.targetId);
           setContent(postData);
+          if (postData?.status === PostStatus.DELETED && postData.deletedBy) {
+            userService.getUserById(postData.deletedBy).then(setDeleter);
+          }
         } else if (reportData.targetType === ReportType.COMMENT) {
           const commentData = await commentService.getCommentById(reportData.targetId);
           setContent(commentData);
+          if (commentData?.status === CommentStatus.DELETED && commentData.deletedBy) {
+            userService.getUserById(commentData.deletedBy).then(setDeleter);
+          }
         }
       } catch (error) {
         toast.error(TOAST_MESSAGES.REPORT.LOAD_DETAIL_FAILED);
@@ -284,9 +291,38 @@ export const ReportDetailModal: React.FC<ReportDetailModalProps> = ({ reportId, 
               {/* Violated Content - Only show for POST/COMMENT reports */}
               {report?.targetType !== ReportType.USER && (
                 <div className="space-y-4">
-                  <h4 className="text-xs font-black text-text-tertiary uppercase tracking-widest">Nội dung vi phạm</h4>
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-xs font-black text-text-tertiary uppercase tracking-widest">Nội dung vi phạm</h4>
+                    {content?.status === 'deleted' && (
+                      <div className="flex items-center gap-1.5 px-2 py-0.5 bg-error/10 text-error rounded-full border border-error/20">
+                        <Trash2 size={10} />
+                        <span className="text-[10px] font-bold uppercase">Nội dung đã bị xóa</span>
+                      </div>
+                    )}
+                  </div>
+                  
                   {content ? (
-                    <div className="bg-bg-primary p-5 rounded-2xl border border-border-light shadow-sm">
+                    <div className={`bg-bg-primary p-5 rounded-2xl border ${content.status === 'deleted' ? 'border-error/20 bg-error/[0.02]' : 'border-border-light shadow-sm'}`}>
+                      {content.status === 'deleted' && (
+                        <div className="mb-4 pb-4 border-b border-border-light/50 flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <span className="text-[10px] text-text-tertiary font-bold uppercase tracking-wider">Người xóa:</span>
+                            {deleter ? (
+                              <div className="flex items-center gap-1.5">
+                                <UserAvatar userId={deleter.id} src={deleter.avatar?.url} name={deleter.fullName} size="xs" />
+                                <span className="text-xs font-bold text-text-primary">{deleter.fullName}</span>
+                              </div>
+                            ) : (
+                              <span className="text-xs font-medium text-text-secondary">Người dùng hoặc Hệ thống</span>
+                            )}
+                          </div>
+                          {content.deletedAt && (
+                            <span className="text-[10px] text-text-tertiary font-medium">
+                              {formatRelativeTime(content.deletedAt)}
+                            </span>
+                          )}
+                        </div>
+                      )}
                       <p className="text-sm text-text-primary leading-relaxed whitespace-pre-wrap">{content.content}</p>
 
                       {/* Media if any */}
@@ -365,11 +401,11 @@ export const ReportDetailModal: React.FC<ReportDetailModalProps> = ({ reportId, 
                 </>
               ) : (
                 <Button
-                  variant="primary"
-                  className="flex-[2] rounded-xl font-bold text-white shadow-lg shadow-primary/20"
+                  variant={content.status === 'deleted' ? 'secondary' : 'primary'}
+                  className="flex-[2] rounded-xl font-bold shadow-lg shadow-primary/20"
                   onClick={() => { setActionType('resolve'); setShowConfirm(true); }}
                 >
-                  Xử lý & Xóa nội dung
+                  {content.status === 'deleted' ? 'Xác nhận & Đóng báo cáo' : 'Xử lý & Xóa nội dung'}
                 </Button>
               )}
             </>

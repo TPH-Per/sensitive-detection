@@ -7,26 +7,36 @@ import { sendPushNotification } from '../helpers/fcmHelper';
 
 // Soft delete post — set status to DELETED
 async function deletePostById(postId: string, adminId: string): Promise<void> {
-  const postSnap = await db.collection('posts').doc(postId).get();
+  const postRef = db.collection('posts').doc(postId);
+  const postSnap = await postRef.get();
   if (!postSnap.exists) return;
 
-  await db.collection('posts').doc(postId).update({
-    status: PostStatus.DELETED,
-    deletedAt: FieldValue.serverTimestamp(),
-    deletedBy: adminId,
-  });
+  const data = postSnap.data();
+  // Chỉ xóa nếu chưa bị xóa
+  if (data?.status !== PostStatus.DELETED) {
+    await postRef.update({
+      status: PostStatus.DELETED,
+      deletedAt: FieldValue.serverTimestamp(),
+      deletedBy: adminId,
+    });
+  }
 }
 
 // Soft delete comment — set status to DELETED
 async function deleteCommentById(commentId: string, adminId: string): Promise<void> {
-  const commentSnap = await db.collection('comments').doc(commentId).get();
+  const commentRef = db.collection('comments').doc(commentId);
+  const commentSnap = await commentRef.get();
   if (!commentSnap.exists) return;
 
-  await db.collection('comments').doc(commentId).update({
-    status: CommentStatus.DELETED,
-    deletedAt: FieldValue.serverTimestamp(),
-    deletedBy: adminId,
-  });
+  const data = commentSnap.data();
+  // Chỉ xóa nếu chưa bị xóa
+  if (data?.status !== CommentStatus.DELETED) {
+    await commentRef.update({
+      status: CommentStatus.DELETED,
+      deletedAt: FieldValue.serverTimestamp(),
+      deletedBy: adminId,
+    });
+  }
 }
 
 export const resolveReport = onCall(
