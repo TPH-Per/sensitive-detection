@@ -355,6 +355,8 @@ const ChatPage: React.FC = () => {
               usersMap={usersMap}
               participants={participants}
               isGroup={selectedConversation.data.isGroup}
+              isDisbanded={selectedConversation.data.isDisbanded}
+              onDeleteConversation={() => handleDelete(selectedConversation.id)}
               onCancelAction={() => {
                 setReplyingTo(null);
                 setEditingMessage(null);

@@ -1,4 +1,4 @@
-import { ref, set, get, update, push, remove } from 'firebase/database';
+import { ref, set, get, update, push, increment } from 'firebase/database';
 import { rtdb } from '../../firebase/config';
 import { RtdbConversation, RtdbUserChat, MediaObject, MemberRole } from '../../types';
 import { uploadWithProgress, UploadProgress, deleteStorageFile } from '../../utils/uploadUtils';
@@ -141,15 +141,48 @@ export const rtdbGroupService = {
             const convSnap = await get(convRef);
             if (!convSnap.exists()) return;
 
+            const now = Date.now();
+            const updates: Record<string, any> = {};
+
+            // Đánh dấu nhóm đã giải tán
+            updates[`conversations/${convId}/isDisbanded`] = true;
+            updates[`conversations/${convId}/updatedAt`] = now;
+            
+            // Xóa toàn bộ tin nhắn cũ
+            updates[`messages/${convId}`] = null;
+
+            // Gửi tin nhắn hệ thống thông báo giải tán
+            const systemMsgRef = push(ref(rtdb, `messages/${convId}`));
+            const systemMsgId = systemMsgRef.key!;
+            const systemContent = 'Nhóm đã giải tán';
+
+            updates[`messages/${convId}/${systemMsgId}`] = {
+                senderId: 'system',
+                type: 'system',
+                content: systemContent,
+                media: [],
+                createdAt: now,
+                updatedAt: now
+            };
+
+            // Cập nhật lastMessage cho conversation
+            updates[`conversations/${convId}/lastMessage`] = {
+                senderId: 'system',
+                content: systemContent,
+                type: 'system',
+                timestamp: now,
+                messageId: systemMsgId
+            };
+
+            // Cập nhật cho tất cả thành viên
             const conversation = convSnap.val() as RtdbConversation;
             const memberIds = Object.keys(conversation.members || {});
             
-            const updates: Record<string, any> = {};
-            updates[`conversations/${convId}`] = null;
-            updates[`messages/${convId}`] = null;
-            
             memberIds.forEach(uid => {
-                updates[`user_chats/${uid}/${convId}`] = null;
+                updates[`user_chats/${uid}/${convId}/lastMsgTimestamp`] = now;
+                if (uid !== conversation.creatorId) {
+                    updates[`user_chats/${uid}/${convId}/unreadCount`] = increment(1);
+                }
             });
 
             await update(ref(rtdb), updates);

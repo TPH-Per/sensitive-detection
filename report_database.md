@@ -203,6 +203,7 @@ _Mô tả: Lưu trữ mọi thông báo (Tương tác, Hệ thống) đẩy tớ
       },
       "name": "Nhóm Đồ Án", // Optional
       "avatar": { "url": "...", "isSensitive": false }, // Optional
+      "isDisbanded": false, // Optional (Mặc định false, true khi giải tán)
       "typing": {
         // Optional (Record<string, number>)
         "uid_2": 1678900050000

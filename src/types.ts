@@ -163,6 +163,7 @@ export interface RtdbConversation {
   };
   createdAt: number;
   updatedAt: number;
+  isDisbanded?: boolean;
 }
 
 export interface RtdbUserChat {

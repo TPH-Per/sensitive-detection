@@ -109,9 +109,17 @@ export const rtdbConversationService = {
             // Store conversations data
             const conversationsMap = new Map<string, { id: string; data: RtdbConversation; userChat: RtdbUserChat }>();
 
-            // Function to update callback with sorted conversations
+            // Function to update callback with sorted and filtered conversations
             const updateCallback = () => {
-                const conversations = Array.from(conversationsMap.values());
+                const conversations = Array.from(conversationsMap.values())
+                    .filter(c => {
+                        // Chỉ hiển thị hội thoại nếu có tin nhắn mới hơn thời điểm xóa (clearedAt)
+                        // Hoặc hội thoại mới tinh chưa có tin nhắn nào (lastMsgTimestamp >= clearedAt)
+                        const lastTs = c.userChat.lastMsgTimestamp || 0;
+                        const clearedTs = c.userChat.clearedAt || 0;
+                        return lastTs > clearedTs;
+                    });
+
                 conversations.sort((a, b) => (b.userChat.lastMsgTimestamp || 0) - (a.userChat.lastMsgTimestamp || 0));
                 callback(conversations);
             };

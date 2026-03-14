@@ -94,10 +94,6 @@ export const createRtdbGroupSlice: StateCreator<RtdbGroupSliceWithConversation, 
     disbandGroup: async (conversationId: string) => {
         try {
             await rtdbGroupService.disbandGroup(conversationId);
-            set((state) => ({
-                conversations: state.conversations.filter(c => c.id !== conversationId),
-                selectedConversationId: state.selectedConversationId === conversationId ? null : state.selectedConversationId
-            }));
         } catch (error) {
             console.error('[rtdbGroupSlice] Lỗi giải tán nhóm:', error);
             throw error;

@@ -29,6 +29,8 @@ interface ChatInputProps {
   usersMap: Record<string, User>;
   participants?: User[];
   isGroup?: boolean;
+  isDisbanded?: boolean;
+  onDeleteConversation?: () => void;
 }
 
 export const ChatInput: React.FC<ChatInputProps> = ({
@@ -47,7 +49,9 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   currentUserId,
   usersMap,
   participants = [],
-  isGroup = false
+  isGroup = false,
+  isDisbanded = false,
+  onDeleteConversation
 }) => {
   const [inputText, setInputText] = useState('');
   const [selectedFiles, setSelectedFiles] = useState<{ file: File; preview?: string; type: 'image' | 'video' | 'file' | 'voice' }[]>([]);
@@ -263,11 +267,23 @@ export const ChatInput: React.FC<ChatInputProps> = ({
     }
   };
 
-  if (blockedMessage) {
+  if (blockedMessage || isDisbanded) {
     return (
       <div className="flex-shrink-0 border-t border-border-light bg-bg-primary pb-safe z-30">
-        <div className="flex items-center justify-center px-4 py-4 text-text-tertiary text-sm">
-          <span>{blockedMessage}</span>
+        <div className="flex flex-col items-center justify-center px-4 py-4 gap-3">
+          <span className="text-text-tertiary text-sm">
+            {isDisbanded ? 'Nhóm này đã giải tán.' : blockedMessage}
+          </span>
+          {isDisbanded && onDeleteConversation && (
+            <Button 
+              onClick={onDeleteConversation} 
+              variant="danger" 
+              size="sm"
+              className="rounded-full px-6"
+            >
+              Xóa hội thoại
+            </Button>
+          )}
         </div>
       </div>
     );
