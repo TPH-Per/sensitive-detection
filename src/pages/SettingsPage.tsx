@@ -187,6 +187,25 @@ const SettingsPage: React.FC = () => {
 
   const handleUpdateBlockOptions = async (options: BlockOptions) => {
     if (!manageBlockTarget || !currentUser) return;
+    
+    const hasAnyOption = options.blockMessages || 
+                        options.blockCalls || 
+                        options.blockViewMyActivity || 
+                        options.hideTheirActivity;
+    
+    if (!hasAnyOption) {
+      const targetId = manageBlockTarget.user.id;
+      try {
+        await userService.unblockUser(currentUser.id, targetId);
+        useAuthStore.getState().updateBlockEntry('remove', targetId);
+        setBlockedList(prev => prev.filter(item => item.user.id !== targetId));
+        return;
+      } catch (error) {
+        console.error("Lỗi bỏ chặn khi update options", error);
+        return;
+      }
+    }
+
     await userService.blockUser(currentUser.id, manageBlockTarget.user.id, options);
     useAuthStore.getState().updateBlockEntry('add', manageBlockTarget.user.id, options);
     setBlockedList(prev => prev.map(item =>

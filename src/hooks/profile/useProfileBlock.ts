@@ -59,19 +59,6 @@ export const useProfileBlock = ({
     return () => unsub();
   }, [currentUser, profileUserId, isOwnProfile]);
 
-  // Thực hiện chặn với options đã chọn
-  const handleApplyBlock = useCallback(async (options: BlockOptions) => {
-    if (!currentUser || !profile || isOwnProfile) return;
-    try {
-      await userService.blockUser(currentUser.id, profile.id, options);
-      useAuthStore.getState().updateBlockEntry('add', profile.id, options);
-      toast.success(TOAST_MESSAGES.BLOCK.BLOCK_SUCCESS);
-    } catch {
-      toast.error(TOAST_MESSAGES.BLOCK.BLOCK_FAILED);
-      throw new Error('block failed');
-    }
-  }, [currentUser, profile, isOwnProfile]);
-
   const handleUnblockUser = useCallback(async () => {
     if (!currentUser || !profile || isOwnProfile) return;
     try {
@@ -82,6 +69,28 @@ export const useProfileBlock = ({
       toast.error(TOAST_MESSAGES.BLOCK.UNBLOCK_FAILED);
     }
   }, [currentUser, profile, isOwnProfile]);
+
+  const handleApplyBlock = useCallback(async (options: BlockOptions) => {
+    if (!currentUser || !profile || isOwnProfile) return;
+
+    const hasAnyOption = options.blockMessages || 
+                        options.blockCalls || 
+                        options.blockViewMyActivity || 
+                        options.hideTheirActivity;
+    
+    if (!hasAnyOption) {
+      return handleUnblockUser();
+    }
+
+    try {
+      await userService.blockUser(currentUser.id, profile.id, options);
+      useAuthStore.getState().updateBlockEntry('add', profile.id, options);
+      toast.success(TOAST_MESSAGES.BLOCK.BLOCK_SUCCESS);
+    } catch {
+      toast.error(TOAST_MESSAGES.BLOCK.BLOCK_FAILED);
+      throw new Error('block failed');
+    }
+  }, [currentUser, profile, isOwnProfile, handleUnblockUser]);
 
   return {
     isBlockedByMe,
