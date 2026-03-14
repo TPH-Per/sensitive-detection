@@ -7,12 +7,17 @@ import {
   updatePassword,
   EmailAuthProvider,
   reauthenticateWithCredential,
-  User as FirebaseUser
+  User as FirebaseUser,
+  setPersistence,
+  browserLocalPersistence,
+  browserSessionPersistence
 } from 'firebase/auth';
 import { auth } from '../firebase/config';
 
 export const authService = {
-  login: async (email: string, pass: string): Promise<FirebaseUser> => {
+  login: async (email: string, pass: string, remember: boolean = false): Promise<FirebaseUser> => {
+    const persistence = remember ? browserLocalPersistence : browserSessionPersistence;
+    await setPersistence(auth, persistence);
     const { user } = await signInWithEmailAndPassword(auth, email.trim(), pass);
     return user;
   },

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useAuthStore } from '../store/authStore';
@@ -23,11 +23,14 @@ const LoginPage: React.FC = () => {
     state.loadingStates['auth.login'] || state.loadingStates['auth.register'] || state.loadingStates['auth']
   );
   const navigate = useNavigate();
+  const location = useLocation();
   const [activeTab, setActiveTab] = useState<'login' | 'register' | 'forgot'>('login');
   const [rememberMe, setRememberMe] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
+  const [infoMessage, setInfoMessage] = useState<string | null>(null);
+  const [showResend, setShowResend] = useState(false);
   const [verificationSent, setVerificationSent] = useState(false);
 
   // Form Login
@@ -57,10 +60,34 @@ const LoginPage: React.FC = () => {
     }
   }, [loginForm]);
 
+  useEffect(() => {
+    const state = location.state as { reason?: string; source?: string } | null;
+    if (!state) return;
+
+    if (state.source === 'register') {
+      setInfoMessage('Tài khoản đã tạo. Vui lòng xác thực email để tiếp tục.');
+      setShowResend(true);
+    }
+
+    if (state.reason === 'verify_requires_login') {
+      setInfoMessage('Vui lòng đăng nhập để xác thực email.');
+      setShowResend(false);
+    }
+
+    navigate(location.pathname, { replace: true, state: null });
+  }, [location.pathname, location.state, navigate]);
+
   const handleAuthError = (error: unknown) => {
     const err = error as { code?: string; message?: string };
     const errorCode = err.code;
     let message = "Đã có lỗi xảy ra. Vui lòng thử lại.";
+    if (errorCode === 'auth/email-not-verified') {
+      setAuthError(null);
+      setInfoMessage('Email chưa được xác thực. Vui lòng kiểm tra hộp thư hoặc gửi lại email xác thực.');
+      setShowResend(true);
+      toast.info('Email chưa được xác thực. Vui lòng xác thực email.');
+      return;
+    }
 
     switch (errorCode) {
       case 'auth/invalid-email': message = "Email không hợp lệ."; break;
@@ -70,7 +97,6 @@ const LoginPage: React.FC = () => {
       case 'auth/invalid-credential': message = "Email hoặc mật khẩu không chính xác."; break;
       case 'auth/email-already-in-use': message = "Email này đã được sử dụng."; break;
       case 'auth/weak-password': message = "Mật khẩu quá yếu."; break;
-      case 'auth/email-not-verified': message = "Vui lòng xác thực email trước khi đăng nhập."; break;
       default: message = err.message || "Thao tác thất bại.";
     }
 
@@ -81,7 +107,9 @@ const LoginPage: React.FC = () => {
   const onLoginSubmit = async (data: LoginFormValues) => {
     try {
       setAuthError(null);
-      await login(data.email, data.password);
+      setInfoMessage(null);
+      setShowResend(false);
+      await login(data.email, data.password, rememberMe);
 
       if (rememberMe) {
         localStorage.setItem('remembered_email', data.email);
@@ -98,10 +126,12 @@ const LoginPage: React.FC = () => {
   const onRegisterSubmit = async (data: RegisterFormValues) => {
     try {
       setAuthError(null);
+      setInfoMessage(null);
+      setShowResend(false);
       await register(data.email, data.password, data.name);
       setVerificationSent(true);
       toast.success(TOAST_MESSAGES.AUTH.REGISTER_SUCCESS);
-      navigate('/');
+      navigate('/verify-email', { state: { source: 'register' } });
     } catch (error) {
       handleAuthError(error);
     }
@@ -110,12 +140,21 @@ const LoginPage: React.FC = () => {
   const onForgotSubmit = async (data: ForgotPasswordFormValues) => {
     try {
       setAuthError(null);
+      setInfoMessage(null);
+      setShowResend(false);
       await resetPassword(data.email);
       toast.success(TOAST_MESSAGES.AUTH.RESET_PASSWORD_SUCCESS);
       setVerificationSent(true);
     } catch (error: unknown) {
       const err = error as { code?: string };
       let message = "Có lỗi xảy ra khi gửi email.";
+    if (err.code === 'auth/email-not-verified') { // Changed errorCode to err.code
+      setAuthError(null);
+      setInfoMessage('Email chưa được xác thực. Vui lòng kiểm tra hộp thư hoặc gửi lại email xác thực.');
+      setShowResend(true);
+      toast.info('Email chưa được xác thực. Vui lòng xác thực email.');
+      return;
+    }
       if (err.code === 'auth/user-not-found') message = "Email này chưa được đăng ký.";
       toast.error(message);
     }
@@ -125,6 +164,8 @@ const LoginPage: React.FC = () => {
     try {
       await sendVerificationEmail();
       setAuthError(null);
+      setInfoMessage(null);
+      setShowResend(false);
       setVerificationSent(true);
       toast.success(TOAST_MESSAGES.AUTH.RESEND_VERIFY_SUCCESS);
     } catch (error) {
@@ -135,6 +176,8 @@ const LoginPage: React.FC = () => {
   const handleTabChange = (tab: 'login' | 'register' | 'forgot') => {
     setActiveTab(tab);
     setAuthError(null);
+    setInfoMessage(null);
+    setShowResend(false);
     setVerificationSent(false);
   };
 
@@ -219,16 +262,24 @@ const LoginPage: React.FC = () => {
                 onSubmit={activeTab === 'login' ? loginForm.handleSubmit(onLoginSubmit) : registerForm.handleSubmit(onRegisterSubmit)}
                 className="space-y-4"
               >
+                {infoMessage && (
+                  <div className="p-3.5 bg-primary/5 border border-primary/20 rounded-xl flex items-start gap-3">
+                    <AlertCircle size={18} className="text-primary shrink-0 mt-0.5" />
+                    <div className="space-y-1.5 text-xs text-primary font-medium leading-[1.4]">
+                      <p>{infoMessage}</p>
+                      {showResend && (
+                        <button type="button" onClick={handleResendEmail} className="text-primary hover:underline font-bold block">
+                          Gửi lại email xác thực
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
                 {authError && (
                   <div className="p-3.5 bg-error/5 border border-error/20 rounded-xl flex items-start gap-3">
                     <AlertCircle size={18} className="text-error shrink-0 mt-0.5" />
                     <div className="space-y-1.5 text-xs text-error font-medium leading-[1.4]">
                       <p>{authError}</p>
-                      {authError.includes('xác thực email') && (
-                        <button type="button" onClick={handleResendEmail} className="text-primary hover:underline font-bold block">
-                          Gửi lại email xác thực
-                        </button>
-                      )}
                     </div>
                   </div>
                 )}

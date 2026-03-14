@@ -1,17 +1,36 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuthStore } from '../store/authStore';
 import { useLoadingStore } from '../store/loadingStore';
 import { Button } from '../components/ui';
 import { Mail, RefreshCw, LogOut, CheckCircle, ArrowLeft } from 'lucide-react';
 import { toast } from '../store/toastStore';
 import { TOAST_MESSAGES } from '../constants';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { auth } from '../firebase/config';
 
 const EmailVerificationPage: React.FC = () => {
   const { checkVerificationStatus, sendVerificationEmail, logout } = useAuthStore();
+  const isInitialized = useAuthStore(state => state.isInitialized);
   const isLoading = useLoadingStore(state => state.loadingStates['auth.verification']);
   const [isChecking, setIsChecking] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+  const [infoMessage, setInfoMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!isInitialized) return;
+    if (!auth.currentUser) {
+      navigate('/login', { replace: true, state: { reason: 'verify_requires_login' } });
+    }
+  }, [isInitialized, navigate]);
+
+  useEffect(() => {
+    const state = location.state as { source?: string } | null;
+    if (state?.source === 'register') {
+      setInfoMessage('Tài khoản đã tạo. Vui lòng xác thực email để tiếp tục.');
+      navigate(location.pathname, { replace: true, state: null });
+    }
+  }, [location.pathname, location.state, navigate]);
 
   const handleCheckStatus = async () => {
     setIsChecking(true);
@@ -87,7 +106,14 @@ const EmailVerificationPage: React.FC = () => {
               Chúng tôi đã gửi link xác thực đến email của bạn. Vui lòng kiểm tra hộp thư (và cả mục Spam).
             </p>
           </div>
-
+          {infoMessage && (
+            <div className="p-3.5 bg-primary/5 border border-primary/20 rounded-xl flex items-start gap-3 mb-4">
+              <CheckCircle size={18} className="text-primary shrink-0 mt-0.5" />
+              <div className="text-xs text-primary font-medium leading-[1.4]">
+                {infoMessage}
+              </div>
+            </div>
+          )}
           <div className="space-y-4">
             <Button
               className="w-full h-12 text-sm font-bold rounded-xl shadow-md"

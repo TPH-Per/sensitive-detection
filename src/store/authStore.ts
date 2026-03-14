@@ -20,7 +20,7 @@ interface AuthState {
   blockedUsers: Record<string, BlockOptions>;
   isPendingVerification: boolean;
   isInitialized: boolean;
-  login: (email: string, pass: string) => Promise<void>;
+  login: (email: string, pass: string, remember?: boolean) => Promise<void>;
   register: (email: string, pass: string, name: string) => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
   sendVerificationEmail: () => Promise<void>;
@@ -41,14 +41,16 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   setUser: (user) => set({ user }),
 
-  login: async (email, pass) => {
+  login: async (email, pass, remember = false) => {
     useLoadingStore.getState().setLoading("auth.login", true);
     try {
-      const firebaseUser = await authService.login(email, pass);
+      const firebaseUser = await authService.login(email, pass, remember);
 
       if (!firebaseUser.emailVerified) {
         set({ isPendingVerification: true });
-        return;
+        const err = new Error("Email not verified") as Error & { code?: string };
+        err.code = 'auth/email-not-verified';
+        throw err;
       }
 
       const userData = await userService.getUserById(firebaseUser.uid);
