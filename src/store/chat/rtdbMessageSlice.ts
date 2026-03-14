@@ -1,4 +1,4 @@
-import { StateCreator } from 'zustand';
+﻿import { StateCreator } from 'zustand';
 import { RtdbMessage } from '../../types';
 import { rtdbMessageService } from '../../services/chat/rtdbMessageService';
 import { useAuthStore } from '../authStore';
@@ -18,6 +18,7 @@ export interface RtdbMessageSlice {
     sendFileMessage: (conversationId: string, senderId: string, file: File, replyToId?: string) => Promise<void>;
     sendVideoMessage: (conversationId: string, senderId: string, file: File, replyToId?: string) => Promise<void>;
     sendVoiceMessage: (conversationId: string, senderId: string, file: File, replyToId?: string) => Promise<void>;
+    sendCallMessage: (conversationId: string, senderId: string, payload: { callType: 'voice' | 'video'; status: 'ended' | 'missed' | 'rejected'; duration?: number }) => Promise<void>;
     markAsRead: (conversationId: string, userId: string) => Promise<void>;
     markAsDelivered: (conversationId: string, userId: string) => Promise<void>;
     recallMessage: (conversationId: string, messageId: string) => Promise<void>;
@@ -117,8 +118,8 @@ export const createRtdbMessageSlice: StateCreator<RtdbChatState, [], [], RtdbMes
         try {
             await rtdbMessageService.sendImageMessage(conversationId, senderId, files, {
                 replyToId,
-                onProgress: (progress) => {
-                    get().setUploadProgress(`temp_${Date.now()}`, progress.progress);
+                onProgressWithId: (messageId, progress) => {
+                    get().setUploadProgress(messageId, progress.progress);
                 }
             });
         } catch (error) {
@@ -131,8 +132,8 @@ export const createRtdbMessageSlice: StateCreator<RtdbChatState, [], [], RtdbMes
         try {
             await rtdbMessageService.sendFileMessage(conversationId, senderId, file, {
                 replyToId,
-                onProgress: (progress) => {
-                    get().setUploadProgress(`temp_${Date.now()}`, progress.progress);
+                onProgressWithId: (messageId, progress) => {
+                    get().setUploadProgress(messageId, progress.progress);
                 }
             });
         } catch (error) {
@@ -145,8 +146,8 @@ export const createRtdbMessageSlice: StateCreator<RtdbChatState, [], [], RtdbMes
         try {
             await rtdbMessageService.sendVideoMessage(conversationId, senderId, file, {
                 replyToId,
-                onProgress: (progress) => {
-                    get().setUploadProgress(`temp_${Date.now()}`, progress.progress);
+                onProgressWithId: (messageId, progress) => {
+                    get().setUploadProgress(messageId, progress.progress);
                 }
             });
         } catch (error) {
@@ -159,12 +160,20 @@ export const createRtdbMessageSlice: StateCreator<RtdbChatState, [], [], RtdbMes
         try {
             await rtdbMessageService.sendVoiceMessage(conversationId, senderId, file, {
                 replyToId,
-                onProgress: (progress) => {
-                    get().setUploadProgress(`temp_${Date.now()}`, progress.progress);
+                onProgressWithId: (messageId, progress) => {
+                    get().setUploadProgress(messageId, progress.progress);
                 }
             });
         } catch (error) {
             console.error('[rtdbMessageSlice] Lỗi sendVoiceMessage:', error);
+            throw error;
+        }
+    },
+    sendCallMessage: async (conversationId: string, senderId: string, payload: { callType: 'voice' | 'video'; status: 'ended' | 'missed' | 'rejected'; duration?: number }) => {
+        try {
+            await rtdbMessageService.sendCallMessage(conversationId, senderId, payload);
+        } catch (error) {
+            console.error('[rtdbMessageSlice] Lỗi sendCallMessage:', error);
             throw error;
         }
     },
@@ -245,12 +254,15 @@ export const createRtdbMessageSlice: StateCreator<RtdbChatState, [], [], RtdbMes
     },
 
     setUploadProgress: (messageId: string, progress: number) => {
-        set((state) => ({
-            uploadProgress: {
-                ...state.uploadProgress,
-                [messageId]: { ...state.uploadProgress[messageId], progress }
+        set((state) => {
+            const next = { ...state.uploadProgress };
+            if (progress >= 100) {
+                delete next[messageId];
+            } else {
+                next[messageId] = { ...state.uploadProgress[messageId], progress };
             }
-        }));
+            return { uploadProgress: next };
+        });
     },
 
     setUploadError: (messageId: string, isError: boolean) => {

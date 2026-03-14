@@ -95,7 +95,7 @@ const MessageBubbleInner: React.FC<MessageBubbleProps> = ({
 
   const isDelivered = message.data.deliveredTo && Object.keys(message.data.deliveredTo).length > 0;
 
-  const canEdit = isMe && !message.data.isRecalled && message.data.type !== MessageType.CALL && (
+  const canEdit = isMe && !message.data.isRecalled && message.data.type === MessageType.TEXT && (
     (Date.now() - message.data.createdAt) <= TIME_LIMITS.MESSAGE_EDIT_WINDOW
   );
 
@@ -241,9 +241,17 @@ const MessageBubbleInner: React.FC<MessageBubbleProps> = ({
                       {replyToMsg.data.type === 'text'
                         ? replyToMsg.data.content.replace(/@\[([^\]]+)\]/g, '@$1')
                         : replyToMsg.data.type === 'image' ? ((replyToMsg.data.media?.length || 0) > 1 ? '[Album ảnh]' : '[Hình ảnh]')
-                          : replyToMsg.data.type === 'video' ? '[Video]'
-                            : replyToMsg.data.type === 'file' ? `[${replyToMsg.data.media?.[0]?.fileName || 'File'}]`
-                              : replyToMsg.data.type === 'voice' ? '[Tin nhắn thoại]'
+                        : replyToMsg.data.type === 'video' ? '[Video]'
+                          : replyToMsg.data.type === 'file' ? `[File] ${replyToMsg.data.media?.[0]?.fileName || 'File'}`
+                            : replyToMsg.data.type === 'voice' ? '[Tin nhắn thoại]'
+                              : replyToMsg.data.type === 'call' ? (() => {
+                                try {
+                                  const parsed = JSON.parse(replyToMsg.data.content) as { callType?: 'voice' | 'video' };
+                                  return parsed.callType === 'video' ? '[Cuộc gọi video]' : '[Cuộc gọi thoại]';
+                                } catch {
+                                  return '[Cuộc gọi]';
+                                }
+                              })()
                                 : `[${replyToMsg.data.type}]`
                       }
                     </div>

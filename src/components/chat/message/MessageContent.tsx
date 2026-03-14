@@ -39,13 +39,58 @@ const MessageContentInner: React.FC<MessageContentProps> = ({
         : message.data.content
           ? [{ url: message.data.content, fileName: '', mimeType: '', size: 0, isSensitive: false }]
           : [];
-      const imageUrls = imageMedia.map(m => m.url);
-      const isAlbum = imageUrls.length > 1;
+      const mediaCount = imageMedia.length;
+      const imageUrls = imageMedia.map(m => m.url).filter(Boolean);
+      const isAlbum = mediaCount > 1;
+      const isUploading = isMe && uploadProgress[message.id] && imageUrls.length === 0 && mediaCount > 0;
 
-      if (imageUrls.length === 0) return null;
+      if (mediaCount === 0 && imageUrls.length === 0) return null;
+
+      if (isUploading) {
+        if (isAlbum) {
+          const placeholderCount = Math.min(4, mediaCount);
+          return (
+            <div className="relative rounded-xl overflow-hidden grid gap-0.5 grid-cols-2 border border-border-light shadow-sm bg-bg-secondary w-full max-w-[320px]">
+              {Array.from({ length: placeholderCount }).map((_, index) => (
+                <div
+                  key={`${message.id}-ph-${index}`}
+                  className={`bg-bg-tertiary/60 ${mediaCount === 3 && index === 0 ? 'col-span-2 row-span-2 aspect-video' : 'aspect-square'}`}
+                />
+              ))}
+              <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center p-4">
+                <div className="w-full bg-white/20 h-1.5 rounded-full overflow-hidden mb-2">
+                  <div
+                    className="bg-primary h-full transition-all duration-slow"
+                    style={{ width: `${uploadProgress[message.id].progress}%` }}
+                  />
+                </div>
+                <span className="text-[10px] text-white font-medium">
+                  {uploadProgress[message.id].error ? 'Lỗi tải lên' : `Đang tải ${Math.round(uploadProgress[message.id].progress)}%`}
+                </span>
+              </div>
+            </div>
+          );
+        }
+
+        return (
+          <div className="relative rounded-lg overflow-hidden max-w-[280px] bg-bg-tertiary/60 aspect-square">
+            <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center p-4">
+              <div className="w-full bg-white/20 h-1.5 rounded-full overflow-hidden mb-2">
+                <div
+                  className="bg-primary h-full transition-all duration-slow"
+                  style={{ width: `${uploadProgress[message.id].progress}%` }}
+                />
+              </div>
+              <span className="text-[10px] text-white font-medium">
+                {uploadProgress[message.id].error ? 'Lỗi tải lên' : `Đang tải ${Math.round(uploadProgress[message.id].progress)}%`}
+              </span>
+            </div>
+          </div>
+        );
+      }
 
       if (isAlbum) {
-        const count = imageUrls.length;
+        const count = mediaCount;
         return (
           <div className="relative rounded-xl overflow-hidden grid gap-0.5 grid-cols-2 border border-border-light shadow-sm bg-bg-secondary w-full max-w-[320px]">
             {imageUrls.slice(0, 4).map((url, index) => {

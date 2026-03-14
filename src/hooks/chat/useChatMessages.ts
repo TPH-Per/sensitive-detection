@@ -17,6 +17,7 @@ export const useChatMessages = ({
     sendFileMessage,
     sendVideoMessage,
     sendVoiceMessage,
+    sendCallMessage,
     recallMessage,
     deleteMessageForMe,
     editMessage,
@@ -82,8 +83,9 @@ export const useChatMessages = ({
     status: 'ended' | 'missed' | 'rejected',
     duration?: number
   ) => {
-    console.log('Send call message not yet implemented', callType, status, duration);
-  }, []);
+    if (!selectedConversationId || !currentUserId) return;
+    await sendCallMessage(selectedConversationId, currentUserId, { callType, status, duration });
+  }, [selectedConversationId, currentUserId, sendCallMessage]);
 
   return {
     handleSendText,

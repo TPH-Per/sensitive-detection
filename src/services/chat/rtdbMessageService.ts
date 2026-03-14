@@ -4,7 +4,9 @@ import { RtdbMessage, RtdbConversation, MessageType, MediaObject } from '../../t
 import { TIME_LIMITS, IMAGE_COMPRESSION } from '../../constants';
 import { compressImage } from '../../utils/imageUtils';
 import { withRetry } from '../../utils/retryUtils';
-import { uploadWithProgress, ProgressCallback } from '../../utils/uploadUtils';
+import { uploadWithProgress, UploadProgress } from '../../utils/uploadUtils';
+
+type ProgressWithId = (messageId: string, progress: UploadProgress) => void;
 
 async function updateConversationAfterMessage(
     convId: string,
@@ -58,7 +60,7 @@ async function createAndSendMediaMessage(
     type: MessageType,
     options: {
         replyToId?: string;
-        onProgress?: ProgressCallback;
+        onProgressWithId?: ProgressWithId;
         compress?: boolean;
         displayContent: string;
         mentions?: string[];
@@ -71,28 +73,22 @@ async function createAndSendMediaMessage(
     }
 
     const createdAt = Date.now();
-    const path = `chats/${convId}/${createdAt}_${file.name}`;
+    const newMsgRef = push(ref(rtdb, `messages/${convId}`));
+    const msgId = newMsgRef.key!;
 
-    const fileUrl = await withRetry(() =>
-        uploadWithProgress(path, uploadFile, options.onProgress)
-    );
-
-    const mediaObject: MediaObject = {
-        url: fileUrl,
+    const mediaPlaceholder: MediaObject = {
+        url: '',
         fileName: file.name,
         mimeType: file.type,
         size: file.size,
         isSensitive: false
     };
 
-    const newMsgRef = push(ref(rtdb, `messages/${convId}`));
-    const msgId = newMsgRef.key!;
-
     const messageData: RtdbMessage = {
         senderId,
         type,
         content: type === MessageType.FILE ? file.name : '',
-        media: [mediaObject],
+        media: [mediaPlaceholder],
         mentions: options.mentions || [],
         isForwarded: false,
         replyToId: options.replyToId || null,
@@ -109,6 +105,23 @@ async function createAndSendMediaMessage(
     await set(newMsgRef, messageData);
     await updateConversationAfterMessage(convId, senderId, messageData, options.displayContent, msgId);
 
+    const path = `chats/${convId}/${createdAt}_${file.name}`;
+    const fileUrl = await withRetry(() =>
+        uploadWithProgress(path, uploadFile, (progress) => {
+            options.onProgressWithId?.(msgId, progress);
+        })
+    );
+
+    const mediaObject: MediaObject = {
+        ...mediaPlaceholder,
+        url: fileUrl
+    };
+
+    await update(newMsgRef, {
+        media: [mediaObject],
+        updatedAt: Date.now()
+    });
+
     return msgId;
 }
 
@@ -118,7 +131,7 @@ async function createAndSendImageAlbumMessage(
     files: File[],
     options: {
         replyToId?: string;
-        onProgress?: ProgressCallback;
+        onProgressWithId?: ProgressWithId;
         displayContent: string;
         mentions?: string[];
     }
@@ -127,6 +140,38 @@ async function createAndSendImageAlbumMessage(
         throw new Error('Không có ảnh để gửi');
     }
     const createdAt = Date.now();
+    const newMsgRef = push(ref(rtdb, `messages/${convId}`));
+    const msgId = newMsgRef.key!;
+
+    const mediaPlaceholders: MediaObject[] = files.map(file => ({
+        url: '',
+        fileName: file.name,
+        mimeType: file.type,
+        size: file.size,
+        isSensitive: false
+    }));
+
+    const messageData: RtdbMessage = {
+        senderId,
+        type: MessageType.IMAGE,
+        content: '',
+        media: mediaPlaceholders,
+        mentions: options.mentions || [],
+        isForwarded: false,
+        replyToId: options.replyToId || null,
+        isEdited: false,
+        isRecalled: false,
+        deletedBy: {},
+        readBy: {},
+        deliveredTo: {},
+        reactions: {},
+        createdAt,
+        updatedAt: createdAt
+    };
+
+    await set(newMsgRef, messageData);
+    await updateConversationAfterMessage(convId, senderId, messageData, options.displayContent, msgId);
+
     const bytesByIndex = new Array(files.length).fill(0);
     const totalBytesByIndex = new Array(files.length).fill(0);
 
@@ -134,7 +179,7 @@ async function createAndSendImageAlbumMessage(
         const bytesTransferred = bytesByIndex.reduce((sum, val) => sum + val, 0);
         const totalBytes = totalBytesByIndex.reduce((sum, val) => sum + val, 0);
         if (totalBytes > 0) {
-            options.onProgress?.({
+            options.onProgressWithId?.(msgId, {
                 progress: (bytesTransferred / totalBytes) * 100,
                 bytesTransferred,
                 totalBytes,
@@ -166,29 +211,10 @@ async function createAndSendImageAlbumMessage(
 
     const media = await Promise.all(mediaUploads);
 
-    const newMsgRef = push(ref(rtdb, `messages/${convId}`));
-    const msgId = newMsgRef.key!;
-
-    const messageData: RtdbMessage = {
-        senderId,
-        type: MessageType.IMAGE,
-        content: '',
+    await update(newMsgRef, {
         media,
-        mentions: options.mentions || [],
-        isForwarded: false,
-        replyToId: options.replyToId || null,
-        isEdited: false,
-        isRecalled: false,
-        deletedBy: {},
-        readBy: {},
-        deliveredTo: {},
-        reactions: {},
-        createdAt,
-        updatedAt: createdAt
-    };
-
-    await set(newMsgRef, messageData);
-    await updateConversationAfterMessage(convId, senderId, messageData, options.displayContent, msgId);
+        updatedAt: Date.now()
+    });
 
     return msgId;
 }
@@ -248,7 +274,7 @@ export const rtdbMessageService = {
         file: File | File[],
         options?: {
             replyToId?: string;
-            onProgress?: ProgressCallback;
+            onProgressWithId?: ProgressWithId;
             mentions?: string[];
         }
     ): Promise<string> => {
@@ -281,7 +307,7 @@ export const rtdbMessageService = {
         file: File,
         options?: {
             replyToId?: string;
-            onProgress?: ProgressCallback;
+            onProgressWithId?: ProgressWithId;
             mentions?: string[];
         }
     ): Promise<string> => {
@@ -289,7 +315,7 @@ export const rtdbMessageService = {
             return await createAndSendMediaMessage(convId, senderId, file, MessageType.VIDEO, {
                 ...options,
                 compress: false,
-                displayContent: 'Video'
+                displayContent: '[Video]'
             });
         } catch (error) {
             console.error('[rtdbMessageService] Lỗi sendVideoMessage:', error);
@@ -306,7 +332,7 @@ export const rtdbMessageService = {
         file: File,
         options?: {
             replyToId?: string;
-            onProgress?: ProgressCallback;
+            onProgressWithId?: ProgressWithId;
             mentions?: string[];
         }
     ): Promise<string> => {
@@ -314,7 +340,7 @@ export const rtdbMessageService = {
             return await createAndSendMediaMessage(convId, senderId, file, MessageType.FILE, {
                 ...options,
                 compress: false,
-                displayContent: file.name
+                displayContent: `[File] ${file.name}`
             });
         } catch (error) {
             console.error('[rtdbMessageService] Lỗi sendFileMessage:', error);
@@ -331,7 +357,7 @@ export const rtdbMessageService = {
         file: File,
         options?: {
             replyToId?: string;
-            onProgress?: ProgressCallback;
+            onProgressWithId?: ProgressWithId;
             mentions?: string[];
         }
     ): Promise<string> => {
@@ -339,7 +365,7 @@ export const rtdbMessageService = {
             return await createAndSendMediaMessage(convId, senderId, file, MessageType.VOICE, {
                 ...options,
                 compress: false,
-                displayContent: 'Tin nhắn thoại'
+                displayContent: '[Tin nhắn thoại]'
             });
         } catch (error) {
             console.error('[rtdbMessageService] Lỗi sendVoiceMessage:', error);
@@ -684,9 +710,17 @@ export const rtdbMessageService = {
 
             let displayContent = srcMsg.content;
             if (srcMsg.type === MessageType.IMAGE) displayContent = '[Hình ảnh]';
-            else if (srcMsg.type === MessageType.VIDEO) displayContent = 'Video';
-            else if (srcMsg.type === MessageType.FILE) displayContent = srcMsg.media?.[0]?.fileName || 'Tài liệu';
-            else if (srcMsg.type === MessageType.VOICE) displayContent = 'Tin nhắn thoại';
+            else if (srcMsg.type === MessageType.VIDEO) displayContent = '[Video]';
+            else if (srcMsg.type === MessageType.FILE) displayContent = `[File] ${srcMsg.media?.[0]?.fileName || 'Tài liệu'}`;
+            else if (srcMsg.type === MessageType.VOICE) displayContent = '[Tin nhắn thoại]';
+            else if (srcMsg.type === MessageType.CALL) {
+                try {
+                    const parsed = JSON.parse(srcMsg.content) as { callType?: 'voice' | 'video' };
+                    displayContent = parsed.callType === 'video' ? '[Cuộc gọi video]' : '[Cuộc gọi thoại]';
+                } catch {
+                    displayContent = '[Cuộc gọi]';
+                }
+            }
 
             await updateConversationAfterMessage(targetConvId, senderId, messageData, displayContent, msgId);
 
@@ -762,6 +796,50 @@ export const rtdbMessageService = {
             return msgId;
         } catch (error) {
             console.error('[rtdbMessageService] Lỗi sendSystemMessage:', error);
+            throw error;
+        }
+    },
+
+    /**
+     * Gửi tin nhắn cuộc gọi
+     */
+    sendCallMessage: async (
+        convId: string,
+        senderId: string,
+        payload: { callType: 'voice' | 'video'; status: 'ended' | 'missed' | 'rejected'; duration?: number }
+    ): Promise<string> => {
+        try {
+            const newMsgRef = push(ref(rtdb, `messages/${convId}`));
+            const msgId = newMsgRef.key!;
+
+            const content = JSON.stringify(payload);
+
+            const messageData: RtdbMessage = {
+                senderId,
+                type: MessageType.CALL,
+                content,
+                media: [],
+                mentions: [],
+                isForwarded: false,
+                replyToId: null,
+                isEdited: false,
+                isRecalled: false,
+                deletedBy: {},
+                readBy: {},
+                deliveredTo: {},
+                reactions: {},
+                createdAt: Date.now(),
+                updatedAt: Date.now()
+            };
+
+            await set(newMsgRef, messageData);
+
+            const displayContent = payload.callType === 'video' ? '[Cuộc gọi video]' : '[Cuộc gọi thoại]';
+            await updateConversationAfterMessage(convId, senderId, messageData, displayContent, msgId);
+
+            return msgId;
+        } catch (error) {
+            console.error('[rtdbMessageService] Lỗi sendCallMessage:', error);
             throw error;
         }
     }
