@@ -1,6 +1,6 @@
-import { Post, Visibility, PostStatus, ReactionType, MediaObject } from '../types';
+import { Post, Visibility, PostStatus, ReactionType, MediaObject, PostType } from '../types';
 import { postService } from '../services/postService';
-import { DocumentSnapshot, Timestamp, onSnapshot, doc } from 'firebase/firestore';
+import { DocumentSnapshot, Timestamp, onSnapshot, doc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import { toast } from './toastStore';
 import { create } from 'zustand';
@@ -40,6 +40,7 @@ interface PostState {
   uploadMedia: (files: File[], userId: string) => Promise<MediaObject[]>;
 
   clearPosts: () => void;
+  filterPostsByAuthor: (authorId: string) => void;
 
   selectedPost: Post | null;
   setSelectedPost: (post: Post | null) => void;
@@ -233,11 +234,13 @@ export const usePostStore = create<PostState>()(
         const newPost: Post = {
           id: postId,
           authorId: userId,
+          type: PostType.REGULAR,
           content,
           media: [...media, ...previewMedia],
           visibility,
           commentCount: 0,
           createdAt: Timestamp.now(),
+          updatedAt: Timestamp.now(),
           status: PostStatus.ACTIVE,
         };
 
@@ -264,9 +267,11 @@ export const usePostStore = create<PostState>()(
 
             await postService.createPost({
               authorId: userId,
+              type: PostType.REGULAR,
               content,
               media: finalMedia,
               visibility,
+              updatedAt: serverTimestamp() as any
             }, postId);
 
             set(state => {
@@ -433,6 +438,13 @@ export const usePostStore = create<PostState>()(
       },
 
       clearPosts: () => set({ posts: [], lastDoc: null, hasMore: true }),
+
+      filterPostsByAuthor: (authorId: string) => {
+        set((state) => ({
+          posts: state.posts.filter(p => p.authorId !== authorId),
+          selectedPost: state.selectedPost?.authorId === authorId ? null : state.selectedPost
+        }));
+      },
 
       setSelectedPost: (post: Post | null) => {
         const { selectedPostUnsubscribe } = get();

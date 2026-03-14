@@ -57,7 +57,6 @@ export const postService = {
     try {
       if (!userId) return { posts: [], lastDoc: null, hasMore: false };
 
-      // Query feeds subcollection
       let feedQuery = query(
         collection(db, 'users', userId, 'feeds'),
         orderBy('createdAt', 'desc'),
@@ -74,12 +73,10 @@ export const postService = {
         return { posts: [], lastDoc: null, hasMore: false };
       }
 
-      // Lấy postIds
       const postIds = feedSnapshot.docs.map(doc => doc.data().postId);
 
-      // Batch fetch posts
       const posts: Post[] = [];
-      const chunkSize = 10; // Firestore limit
+      const chunkSize = 10;
 
       for (let i = 0; i < postIds.length; i += chunkSize) {
         const chunk = postIds.slice(i, i + chunkSize);
@@ -93,13 +90,18 @@ export const postService = {
         posts.push(...postsSnapshot.docs.map(convertDocToPost));
       }
 
-      // Sort by createdAt
       posts.sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis());
 
-      // Filter banned users
+      const blockedUsersMap = await userService.getBlockedUsers(userId);
+      const hiddenAuthorIds = Object.keys(blockedUsersMap).filter(
+        id => blockedUsersMap[id].hideTheirActivity
+      );
       const authorIds = [...new Set(posts.map(p => p.authorId))];
       const usersMap = await batchGetUsers(authorIds);
-      const filteredPosts = posts.filter(p => usersMap[p.authorId]?.status !== 'banned');
+      const filteredPosts = posts.filter(p => 
+        usersMap[p.authorId]?.status !== 'banned' && 
+        !hiddenAuthorIds.includes(p.authorId)
+      );
 
       const hasMore = filteredPosts.length > limitCount;
       const finalPosts = filteredPosts.slice(0, limitCount);
@@ -166,6 +168,12 @@ export const postService = {
           const postDoc = await getDoc(doc(db, 'posts', postId));
           if (postDoc.exists() && postDoc.data().status === PostStatus.ACTIVE) {
             const post = convertDocToPost(postDoc);
+            
+            // Kiểm tra xem tác giả có bị chặn ẩn hoạt động không
+            const blockedUsersMap = await userService.getBlockedUsers(userId);
+            if (blockedUsersMap[post.authorId]?.hideTheirActivity === true) {
+              continue;
+            }
 
             const existingUnsub = postUnsubscribers.get(postId);
             if (existingUnsub) existingUnsub();
@@ -224,6 +232,18 @@ export const postService = {
       const user = await userService.getUserById(userId);
       if (user?.status === 'banned') {
         return { posts: [], lastDoc: null };
+      }
+
+      if (userId !== currentUserId) {
+        const blockSnap = await getDoc(doc(db, 'users', userId, 'blockedUsers', currentUserId));
+        if (blockSnap.exists() && blockSnap.data().blockViewMyActivity === true) {
+          return { posts: [], lastDoc: null };
+        }
+        
+        const myBlockSnap = await getDoc(doc(db, 'users', currentUserId, 'blockedUsers', userId));
+        if (myBlockSnap.exists() && myBlockSnap.data().hideTheirActivity === true) {
+          return { posts: [], lastDoc: null };
+        }
       }
 
       const querySnapshot = await getDocs(q);

@@ -21,6 +21,7 @@ import { useThemeStore } from '../store/themeStore';
 import { useUserCache } from '../store/userCacheStore';
 import { useLoadingStore } from '../store/loadingStore';
 import { User, BlockOptions, UserSettings, Visibility, BlockedUserEntry } from '../types';
+import { usePostStore } from '../store/postStore';
 import { UserAvatar, ConfirmDialog, Button, Skeleton, BlockOptionsModal, Dropdown, DropdownItem } from '../components/ui';
 import { CONFIRM_MESSAGES } from '../constants';
 import ChangePasswordModal from '../components/settings/ChangePasswordModal';
@@ -178,6 +179,8 @@ const SettingsPage: React.FC = () => {
       await userService.unblockUser(currentUser.id, unblockUserId);
       useAuthStore.getState().updateBlockEntry('remove', unblockUserId);
       setBlockedList(prev => prev.filter(item => item.user.id !== unblockUserId));
+      
+      usePostStore.getState().refreshFeed(currentUser.id);
     } catch (error) {
       console.error("Lỗi bỏ chặn", error);
     } finally {
@@ -199,6 +202,9 @@ const SettingsPage: React.FC = () => {
         await userService.unblockUser(currentUser.id, targetId);
         useAuthStore.getState().updateBlockEntry('remove', targetId);
         setBlockedList(prev => prev.filter(item => item.user.id !== targetId));
+        
+        usePostStore.getState().refreshFeed(currentUser.id);
+        
         return;
       } catch (error) {
         console.error("Lỗi bỏ chặn khi update options", error);
@@ -206,10 +212,16 @@ const SettingsPage: React.FC = () => {
       }
     }
 
-    await userService.blockUser(currentUser.id, manageBlockTarget.user.id, options);
-    useAuthStore.getState().updateBlockEntry('add', manageBlockTarget.user.id, options);
+    const targetId = manageBlockTarget.user.id;
+    await userService.blockUser(currentUser.id, targetId, options);
+    useAuthStore.getState().updateBlockEntry('add', targetId, options);
+    
+    if (options.hideTheirActivity) {
+      usePostStore.getState().filterPostsByAuthor(targetId);
+    }
+
     setBlockedList(prev => prev.map(item =>
-      item.user.id === manageBlockTarget.user.id ? { ...item, options: { ...item.options, ...options } } : item
+      item.user.id === targetId ? { ...item, options: { ...item.options, ...options } } : item
     ));
   };
 

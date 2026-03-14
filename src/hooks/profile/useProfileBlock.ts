@@ -5,6 +5,7 @@ import { userService } from '../../services/userService';
 import { toast } from '../../store/toastStore';
 import { BlockOptions } from '../../types';
 import { TOAST_MESSAGES } from '../../constants';
+import { usePostStore } from '../../store/postStore';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 
@@ -64,6 +65,9 @@ export const useProfileBlock = ({
     try {
       await userService.unblockUser(currentUser.id, profile.id);
       useAuthStore.getState().updateBlockEntry('remove', profile.id);
+      
+      usePostStore.getState().refreshFeed(currentUser.id);
+      
       toast.success(TOAST_MESSAGES.BLOCK.UNBLOCK_SUCCESS);
     } catch {
       toast.error(TOAST_MESSAGES.BLOCK.UNBLOCK_FAILED);
@@ -85,6 +89,11 @@ export const useProfileBlock = ({
     try {
       await userService.blockUser(currentUser.id, profile.id, options);
       useAuthStore.getState().updateBlockEntry('add', profile.id, options);
+      
+      if (options.hideTheirActivity) {
+        usePostStore.getState().filterPostsByAuthor(profile.id);
+      }
+      
       toast.success(TOAST_MESSAGES.BLOCK.BLOCK_SUCCESS);
     } catch {
       toast.error(TOAST_MESSAGES.BLOCK.BLOCK_FAILED);

@@ -5,6 +5,7 @@ import { useUserCache } from '../../store/userCacheStore';
 import { useAuthStore } from '../../store/authStore';
 import { toast } from '../../store/toastStore';
 import { TOAST_MESSAGES } from '../../constants';
+import { usePostStore } from '../../store/postStore';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 
@@ -95,6 +96,9 @@ export const useChatBlock = ({
     try {
       await userService.unblockUser(currentUser.id, partnerId);
       useAuthStore.getState().updateBlockEntry('remove', partnerId);
+      
+      usePostStore.getState().refreshFeed(currentUser.id);
+      
       toast.success(TOAST_MESSAGES.BLOCK.UNBLOCK_SUCCESS);
     } catch {
       toast.error(TOAST_MESSAGES.BLOCK.UNBLOCK_FAILED);
@@ -116,6 +120,11 @@ export const useChatBlock = ({
     try {
       await userService.blockUser(currentUser.id, partnerId, options);
       useAuthStore.getState().updateBlockEntry('add', partnerId, options);
+      
+      if (options.hideTheirActivity) {
+        usePostStore.getState().filterPostsByAuthor(partnerId);
+      }
+      
       toast.success(TOAST_MESSAGES.BLOCK.BLOCK_SUCCESS);
     } catch {
       toast.error(TOAST_MESSAGES.BLOCK.BLOCK_FAILED);
