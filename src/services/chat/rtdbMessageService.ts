@@ -8,6 +8,26 @@ import { uploadWithProgress, UploadProgress } from '../../utils/uploadUtils';
 
 type ProgressWithId = (messageId: string, progress: UploadProgress) => void;
 
+async function markMessageUploadFailed(convId: string, msgId: string): Promise<void> {
+    const msgRef = ref(rtdb, `messages/${convId}/${msgId}`);
+    await update(msgRef, {
+        isRecalled: true,
+        updatedAt: Date.now()
+    });
+
+    const convRef = ref(rtdb, `conversations/${convId}`);
+    const convSnap = await get(convRef);
+    if (convSnap.exists()) {
+        const conv = convSnap.val() as RtdbConversation;
+        if (conv.lastMessage && conv.lastMessage.messageId === msgId) {
+            await update(convRef, {
+                'lastMessage/content': 'Tin nhắn đã thu hồi',
+                updatedAt: Date.now()
+            });
+        }
+    }
+}
+
 async function updateConversationAfterMessage(
     convId: string,
     senderId: string,
@@ -106,11 +126,23 @@ async function createAndSendMediaMessage(
     await updateConversationAfterMessage(convId, senderId, messageData, options.displayContent, msgId);
 
     const path = `chats/${convId}/${createdAt}_${file.name}`;
-    const fileUrl = await withRetry(() =>
-        uploadWithProgress(path, uploadFile, (progress) => {
-            options.onProgressWithId?.(msgId, progress);
-        })
-    );
+    let fileUrl = '';
+    try {
+        fileUrl = await withRetry(() =>
+            uploadWithProgress(path, uploadFile, (progress) => {
+                options.onProgressWithId?.(msgId, progress);
+            })
+        );
+    } catch (error) {
+        options.onProgressWithId?.(msgId, {
+            progress: 0,
+            bytesTransferred: 0,
+            totalBytes: uploadFile.size,
+            state: 'error'
+        });
+        await markMessageUploadFailed(convId, msgId);
+        throw error;
+    }
 
     const mediaObject: MediaObject = {
         ...mediaPlaceholder,
@@ -209,12 +241,22 @@ async function createAndSendImageAlbumMessage(
         } as MediaObject;
     });
 
-    const media = await Promise.all(mediaUploads);
-
-    await update(newMsgRef, {
-        media,
-        updatedAt: Date.now()
-    });
+    try {
+        const media = await Promise.all(mediaUploads);
+        await update(newMsgRef, {
+            media,
+            updatedAt: Date.now()
+        });
+    } catch (error) {
+        options.onProgressWithId?.(msgId, {
+            progress: 0,
+            bytesTransferred: 0,
+            totalBytes: totalBytesByIndex.reduce((sum, val) => sum + val, 0),
+            state: 'error'
+        });
+        await markMessageUploadFailed(convId, msgId);
+        throw error;
+    }
 
     return msgId;
 }

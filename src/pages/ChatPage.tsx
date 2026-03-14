@@ -128,6 +128,7 @@ const ChatPage: React.FC = () => {
     isGroupCall,
     isCaller,
     callStartTime,
+    callConversationId,
     setCallPhase,
     setCallType,
     setActiveRoomId,
@@ -140,6 +141,8 @@ const ChatPage: React.FC = () => {
     startCall,
     endCall,
   } = useCallStore();
+
+  const sendCallMessage = useRtdbChatStore(state => state.sendCallMessage);
 
   const partner = selectedConversation?.data.isGroup
     ? null
@@ -211,12 +214,18 @@ const ChatPage: React.FC = () => {
 
   const handleCancelOutgoingCall = async () => {
     if (endCall) await endCall(otherUserIds);
+    if (isCaller && callConversationId) {
+      await sendCallMessage(callConversationId, currentUser.id, { callType, status: 'missed' });
+    }
     resetCall();
   };
 
   const handleMissedCallTimeout = async () => {
     if (endCall) await endCall(otherUserIds);
     playSound('busy');
+    if (isCaller && callConversationId) {
+      await sendCallMessage(callConversationId, currentUser.id, { callType, status: 'missed' });
+    }
     resetCall();
   };
 
@@ -227,6 +236,10 @@ const ChatPage: React.FC = () => {
       } else {
         await endCall([]);
       }
+    }
+    if (isCaller && callConversationId) {
+      const duration = callStartTime ? Math.max(0, Math.floor((Date.now() - callStartTime) / 1000)) : undefined;
+      await sendCallMessage(callConversationId, currentUser.id, { callType, status: 'ended', duration });
     }
     resetCall();
   };

@@ -162,11 +162,38 @@ const MessageContentInner: React.FC<MessageContentProps> = ({
       );
 
     case 'file':
-      const fileUrl = message.data.media?.[0]?.url || message.data.content;
+      const fileUrl = message.data.media?.[0]?.url || '';
       const fileName = message.data.media?.[0]?.fileName || 'Tài liệu';
       const fileSize = message.data.media?.[0]?.size
         ? `${(message.data.media[0].size / 1024).toFixed(1)} KB`
         : 'N/A';
+      const isFileUploading = isMe && uploadProgress[message.id] && !fileUrl;
+
+      if (isFileUploading) {
+        return (
+          <div className={`relative flex items-center gap-3 p-3 rounded-lg border min-w-[220px] ${isMe ? 'bg-primary-light border-primary' : 'bg-bg-primary border-border-light'
+            }`}>
+            <div className={`p-2 rounded ${isMe ? 'bg-primary-light' : 'bg-secondary'}`}>
+              <FileText size={24} className={isMe ? 'text-primary' : 'text-text-secondary'} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="font-medium truncate text-sm">{fileName}</div>
+              <div className="text-xs opacity-70">{fileSize}</div>
+            </div>
+            <div className="absolute inset-0 bg-bg-primary/80 flex flex-col items-center justify-center p-2 rounded-lg">
+              <div className="w-full bg-secondary h-1.5 rounded-full overflow-hidden mb-1">
+                <div
+                  className="bg-primary h-full transition-all duration-slow"
+                  style={{ width: `${uploadProgress[message.id].progress}%` }}
+                />
+              </div>
+              <span className="text-[10px] text-text-secondary">
+                {uploadProgress[message.id].error ? 'Lỗi' : `${Math.round(uploadProgress[message.id].progress)}%`}
+              </span>
+            </div>
+          </div>
+        );
+      }
 
       return (
         <div className={`flex items-center gap-3 p-3 rounded-lg border min-w-[220px] ${isMe ? 'bg-primary-light border-primary' : 'bg-bg-primary border-border-light'
@@ -203,7 +230,27 @@ const MessageContentInner: React.FC<MessageContentProps> = ({
       );
 
     case 'video':
-      const videoUrl = message.data.media?.[0]?.url || message.data.content;
+      const videoUrl = message.data.media?.[0]?.url || '';
+      const isVideoUploading = isMe && uploadProgress[message.id] && !videoUrl;
+
+      if (isVideoUploading) {
+        return (
+          <div className="relative rounded-lg overflow-hidden max-w-[300px] border border-border-light shadow-sm bg-bg-tertiary/60 aspect-video">
+            <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center p-4">
+              <div className="w-full bg-white/20 h-1.5 rounded-full overflow-hidden mb-2">
+                <div
+                  className="bg-primary h-full transition-all duration-slow"
+                  style={{ width: `${uploadProgress[message.id].progress}%` }}
+                />
+              </div>
+              <span className="text-[10px] text-white font-medium">
+                {uploadProgress[message.id].error ? 'Lỗi tải lên' : `Đang tải ${Math.round(uploadProgress[message.id].progress)}%`}
+              </span>
+            </div>
+          </div>
+        );
+      }
+
       return (
         <div className="rounded-lg overflow-hidden max-w-[300px] border border-border-light shadow-sm">
           <LazyVideo
@@ -261,6 +308,31 @@ const MessageContentInner: React.FC<MessageContentProps> = ({
     }
 
     case 'voice':
+      const voiceUrl = message.data.media?.[0]?.url || '';
+      const isVoiceUploading = isMe && uploadProgress[message.id] && !voiceUrl;
+      if (isVoiceUploading) {
+        return (
+          <div
+            className={`flex items-center gap-3 p-3 rounded-2xl min-w-[200px] transition-all duration-base ${isMe
+              ? 'bg-bg-message-sent text-text-on-primary shadow-md'
+              : 'bg-bg-message-received text-text-primary border border-border-light'
+              }`}
+          >
+            <div className={`p-2.5 rounded-full shadow-sm transition-all duration-base ${isMe ? 'bg-bg-primary text-primary' : 'bg-primary text-white'
+              }`}>
+              <Pause size={18} />
+            </div>
+            <div className="flex-1">
+              <div className="text-[13px] font-bold mb-0.5">Tin nhắn thoại</div>
+              <div className={`flex items-center gap-1.5 opacity-80 ${isMe ? 'text-text-on-primary' : 'text-text-tertiary'}`}>
+                <Mic size={12} />
+                <span className="text-[11px]">{uploadProgress[message.id].error ? 'Lỗi tải lên' : `Đang tải ${Math.round(uploadProgress[message.id].progress)}%`}</span>
+              </div>
+            </div>
+          </div>
+        );
+      }
+
       return (
         <div
           className={`flex items-center gap-3 p-3 rounded-2xl min-w-[200px] cursor-pointer transition-all duration-base ${isMe

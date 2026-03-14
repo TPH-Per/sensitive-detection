@@ -120,6 +120,9 @@ export const createRtdbMessageSlice: StateCreator<RtdbChatState, [], [], RtdbMes
                 replyToId,
                 onProgressWithId: (messageId, progress) => {
                     get().setUploadProgress(messageId, progress.progress);
+                    if (progress.state === 'error' || progress.state === 'canceled') {
+                        get().setUploadError(messageId, true);
+                    }
                 }
             });
         } catch (error) {
@@ -134,6 +137,9 @@ export const createRtdbMessageSlice: StateCreator<RtdbChatState, [], [], RtdbMes
                 replyToId,
                 onProgressWithId: (messageId, progress) => {
                     get().setUploadProgress(messageId, progress.progress);
+                    if (progress.state === 'error' || progress.state === 'canceled') {
+                        get().setUploadError(messageId, true);
+                    }
                 }
             });
         } catch (error) {
@@ -148,6 +154,9 @@ export const createRtdbMessageSlice: StateCreator<RtdbChatState, [], [], RtdbMes
                 replyToId,
                 onProgressWithId: (messageId, progress) => {
                     get().setUploadProgress(messageId, progress.progress);
+                    if (progress.state === 'error' || progress.state === 'canceled') {
+                        get().setUploadError(messageId, true);
+                    }
                 }
             });
         } catch (error) {
@@ -162,6 +171,9 @@ export const createRtdbMessageSlice: StateCreator<RtdbChatState, [], [], RtdbMes
                 replyToId,
                 onProgressWithId: (messageId, progress) => {
                     get().setUploadProgress(messageId, progress.progress);
+                    if (progress.state === 'error' || progress.state === 'canceled') {
+                        get().setUploadError(messageId, true);
+                    }
                 }
             });
         } catch (error) {

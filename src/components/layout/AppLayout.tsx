@@ -25,7 +25,7 @@ import { CONFIRM_MESSAGES } from '../../constants';
 export const AppLayout: React.FC = () => {
   const { user } = useAuthStore();
   const { mode, toggleTheme } = useThemeStore();
-  const { subscribeToConversations, selectedConversationId } = useRtdbChatStore();
+  const { subscribeToConversations, selectedConversationId, sendCallMessage } = useRtdbChatStore();
   const { receivedRequests, subscribeToRequests, subscribeToFriends } = useContactStore();
   const { initialize: initNotifications, unreadCount: unreadNotifications } = useNotificationStore();
 
@@ -77,11 +77,18 @@ export const AppLayout: React.FC = () => {
           playSound('connected');
         }
       },
-      onCallRejected: () => {
+      onCallRejected: async () => {
+        if (isCaller && callConversationId && user?.id) {
+          await sendCallMessage(callConversationId, user.id, { callType, status: 'rejected' });
+        }
         playSound('busy');
         resetCall();
       },
-      onCallEnded: () => {
+      onCallEnded: async () => {
+        if (isCaller && callConversationId && user?.id && callPhase === 'in-call') {
+          const duration = callStartTime ? Math.max(0, Math.floor((Date.now() - callStartTime) / 1000)) : undefined;
+          await sendCallMessage(callConversationId, user.id, { callType, status: 'ended', duration });
+        }
         if (callPhase === 'in-call') {
           playSound('ended');
         }
