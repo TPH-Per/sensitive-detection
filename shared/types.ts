@@ -232,11 +232,14 @@ export interface RtdbPresence {
 
 export interface RtdbCallSignaling {
     callerId: string;
+    callerName: string;
+    callerAvatar: string;
     conversationId: string;
     callType: 'voice' | 'video';
     status: 'ringing' | 'accepted' | 'rejected' | 'ended';
     zegoToken?: string;
     timestamp: number;
+    isGroupCall?: boolean;
 }
 
 // ========== POSTS & COMMENTS ==========

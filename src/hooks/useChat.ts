@@ -47,8 +47,8 @@ export const useChat = () => {
   const [forwardingMessage, setForwardingMessage] = useState<{ id: string; data: RtdbMessage } | null>(null);
   const [replyingTo, setReplyingTo] = useState<{ id: string; data: RtdbMessage } | null>(null);
   const [editingMessage, setEditingMessage] = useState<{ id: string; data: RtdbMessage } | null>(null);
-  const [sentRequests, setSentRequests] = useState<FriendRequest[]>([]);
-  const [receivedRequests, setReceivedRequests] = useState<FriendRequest[]>([]);
+  const sentRequests = useContactStore(state => state.sentRequests);
+  const receivedRequests = useContactStore(state => state.receivedRequests);
 
   const selectedConversation = useMemo(
     () => conversations.find(c => c.id === selectedConversationId),
@@ -81,13 +81,6 @@ export const useChat = () => {
     : null;
 
   const partner = partnerId ? (usersMap[partnerId] ?? null) : null;
-
-  useEffect(() => {
-    if (!currentUser?.id) return;
-    const unsubSent = friendService.subscribeToSentRequests(currentUser.id, setSentRequests);
-    const unsubReceived = friendService.subscribeToReceivedRequests(currentUser.id, setReceivedRequests);
-    return () => { unsubSent(); unsubReceived(); };
-  }, [currentUser?.id]);
 
   const friendIds = useContactStore(state => state.friends.map(f => f.id));
   const partnerFriendStatus = useMemo(() => {

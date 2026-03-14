@@ -71,7 +71,7 @@ export const AppLayout: React.FC = () => {
     {
       onCallAccepted: (signal) => {
         if (!signal.isGroupCall) {
-          setActiveRoomId(signal.roomId);
+          setActiveRoomId(signal.conversationId);
           setCallType(signal.callType);
           setCallPhase('in-call');
           setCallStartTime(Date.now());
@@ -114,7 +114,7 @@ export const AppLayout: React.FC = () => {
     if (!incomingCall) return;
     await acceptCall(incomingCall);
     setCallType(incomingCall.callType);
-    setActiveRoomId(incomingCall.roomId);
+    setActiveRoomId(incomingCall.conversationId);
     setOtherUserIds([incomingCall.callerId]);
     setIsGroupCall(incomingCall.isGroupCall || false);
     setIsCaller(false);
@@ -359,7 +359,7 @@ export const AppLayout: React.FC = () => {
       {/* Global Call UI */}
       {incomingCall && callPhase === 'idle' && (
         <IncomingCallDialog
-          callerName={incomingCall.callerName}
+          callerName={incomingCall.callerName!}
           callerId={incomingCall.callerId}
           callType={incomingCall.callType}
           isGroupCall={incomingCall.isGroupCall}

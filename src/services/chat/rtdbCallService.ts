@@ -4,28 +4,50 @@ import { RtdbCallSignaling } from '../../types';
 
 export const rtdbCallService = {
     /**
-     * Bắt đầu cuộc gọi
+     * Khởi tạo cuộc gọi (Hỗ trợ 1-1 và Group)
      */
     initiateCall: async (
         callerId: string,
-        calleeId: string,
+        recipientIds: string[],
         convId: string,
         callType: 'video' | 'voice',
-        zegoToken: string
-    ): Promise<void> => {
+        zegoToken: string,
+        callerName: string,
+        callerAvatar: string,
+        isGroupCall?: boolean
+    ): Promise<{ success: boolean; reason?: string }> => {
         try {
-            const signalingRef = ref(rtdb, `call_signaling/${calleeId}`);
+            if (!isGroupCall && recipientIds.length === 1) {
+                const recipientId = recipientIds[0];
+                const recipientSignal = await rtdbCallService.getCallSignaling(recipientId);
+                if (recipientSignal && (recipientSignal.status === 'ringing' || recipientSignal.status === 'accepted')) {
+                    return { success: false, reason: 'busy' };
+                }
+            }
 
+            const updates: Record<string, any> = {};
             const signalingData: RtdbCallSignaling = {
                 callerId,
+                callerName,
+                callerAvatar,
                 conversationId: convId,
                 callType,
                 status: 'ringing',
                 zegoToken,
-                timestamp: Date.now()
+                timestamp: Date.now(),
+                isGroupCall
             };
 
-            await set(signalingRef, signalingData);
+            recipientIds.forEach(id => {
+                updates[`call_signaling/${id}`] = signalingData;
+            });
+
+            if (!isGroupCall) {
+                updates[`call_signaling/${callerId}`] = signalingData;
+            }
+            
+            await update(ref(rtdb), updates);
+            return { success: true };
         } catch (error) {
             console.error('[rtdbCallService] Lỗi initiateCall:', error);
             throw error;
@@ -33,12 +55,23 @@ export const rtdbCallService = {
     },
 
     /**
-     * Chấp nhận cuộc gọi
+     * Phản hồi cuộc gọi (Chấp nhận/Từ chối)
      */
-    answerCall: async (calleeId: string, status: 'accepted' | 'rejected'): Promise<void> => {
+    answerCall: async (
+        calleeId: string, 
+        callerId: string, 
+        status: 'accepted' | 'rejected',
+        isGroupCall?: boolean
+    ): Promise<void> => {
         try {
-            const signalingRef = ref(rtdb, `call_signaling/${calleeId}`);
-            await update(signalingRef, { status });
+            const updates: Record<string, any> = {};
+
+            if (!isGroupCall) {
+                updates[`call_signaling/${callerId}/status`] = status;
+            }
+            updates[`call_signaling/${calleeId}`] = null;
+
+            await update(ref(rtdb), updates);
         } catch (error) {
             console.error('[rtdbCallService] Lỗi answerCall:', error);
             throw error;
@@ -46,7 +79,7 @@ export const rtdbCallService = {
     },
 
     /**
-     * Lắng nghe cuộc gọi đến
+     * Lắng nghe tín hiệu cuộc gọi đến
      */
     subscribeToIncomingCall: (
         uid: string,
@@ -70,7 +103,7 @@ export const rtdbCallService = {
     },
 
     /**
-     * Xóa signaling sau khi kết thúc cuộc gọi
+     * Xóa tín hiệu gọi cho một người dùng (khi kết thúc/hủy)
      */
     clearSignaling: async (uid: string): Promise<void> => {
         try {
@@ -78,6 +111,22 @@ export const rtdbCallService = {
             await remove(signalingRef);
         } catch (error) {
             console.error('[rtdbCallService] Lỗi clearSignaling:', error);
+            throw error;
+        }
+    },
+
+    /**
+     * Xóa tín hiệu cho nhiều người dùng (dùng cho caller khi hủy cuộc gọi group)
+     */
+    clearSignalingForUsers: async (uids: string[]): Promise<void> => {
+        try {
+            const updates: Record<string, null> = {};
+            uids.forEach(id => {
+                updates[`call_signaling/${id}`] = null;
+            });
+            await update(ref(rtdb), updates);
+        } catch (error) {
+            console.error('[rtdbCallService] Lỗi clearSignalingForUsers:', error);
             throw error;
         }
     },
@@ -102,7 +151,7 @@ export const rtdbCallService = {
     },
 
     /**
-     * Bắt đầu cuộc gọi
+     * Đánh dấu cuộc gọi đang diễn ra trong hội thoại
      */
     startActiveCall: async (convId: string, callerId: string, callType: 'voice' | 'video', messageId: string): Promise<void> => {
         try {
@@ -120,7 +169,7 @@ export const rtdbCallService = {
     },
 
     /**
-     * Cập nhật người tham gia cuộc gọi
+     * Cập nhật người tham gia cuộc gọi đang diễn ra
      */
     updateCallParticipant: async (convId: string, userId: string, isJoining: boolean): Promise<void> => {
         try {
@@ -150,7 +199,7 @@ export const rtdbCallService = {
     },
 
     /**
-     * Kết thúc cuộc gọi
+     * Kết thúc cuộc gọi đang diễn ra
      */
     endActiveCall: async (convId: string): Promise<void> => {
         try {

@@ -290,14 +290,17 @@ _Mô tả: Lưu trữ mọi thông báo (Tương tác, Hệ thống) đẩy tớ
   },
 
   "call_signaling": {
-    // Mô tả: Bảng tạm (Ephemeral) để báo hiệu cuộc gọi WebRTC tới các User đang online (như chuông điện thoại reo).
+    // Mô tả: Bảng tạm (Ephemeral) để báo hiệu cuộc gọi tới các User đang online (như chuông điện thoại reo).
     "uid_2": {
       "callerId": "uid_1", // Required
+      "callerName": "Nguyen Van A", // Required
+      "callerAvatar": "https://...", // Required
       "conversationId": "conv_id_1", // Required
       "callType": "voice", // Enum: "voice", "video"
       "status": "ringing", // Enum: "ringing", "accepted", "rejected", "ended"
       "timestamp": 1678900000000, // Required
-      "zegoToken": "eyJhb..." // Optional
+      "zegoToken": "eyJhb...", // Optional
+      "isGroupCall": false // Optional (Mặc định false)
     }
   }
 }
