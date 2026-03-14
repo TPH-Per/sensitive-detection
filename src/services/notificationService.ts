@@ -147,6 +147,8 @@ export const notificationService = {
           : `${prefix}đã bình luận.`;
       case NotificationType.FRIEND_REQUEST:
         return `${prefix}đã gửi lời mời kết bạn.`;
+      case NotificationType.REPORT:
+        return notification.data.contentSnippet || 'Cập nhật về báo cáo vi phạm.';
       case NotificationType.SYSTEM:
         return notification.data.contentSnippet || 'Bạn có thông báo hệ thống mới.';
       default:

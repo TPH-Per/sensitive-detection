@@ -33,7 +33,7 @@ export const onReportCreated = onDocumentCreated(
         createNotification({
           receiverId: adminId,
           actorId: reporterId,
-          type: NotificationType.SYSTEM,
+          type: NotificationType.REPORT,
           data: { reportId, contentSnippet },
         })
       );
@@ -41,7 +41,7 @@ export const onReportCreated = onDocumentCreated(
       const pushNotifications = adminIds.map((adminId) =>
         sendPushNotification({
           receiverId: adminId,
-          type: NotificationType.SYSTEM,
+          type: NotificationType.REPORT,
           body: `Có báo cáo mới: ${contentSnippet}`,
           data: { reportId },
         })

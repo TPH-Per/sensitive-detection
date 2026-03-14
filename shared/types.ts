@@ -50,6 +50,7 @@ export enum NotificationType {
     COMMENT = "comment",
     FRIEND_REQUEST = "friend_request",
     SYSTEM = "system",
+    REPORT = "report",
 }
 
 export enum ReportType {

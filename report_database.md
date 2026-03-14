@@ -170,8 +170,8 @@ _Mô tả: Lưu trữ mọi thông báo (Tương tác, Hệ thống) đẩy tớ
 - `id` (String, **Required**): Document ID.
 - `receiverId` (String, **Required**).
 - `actorId` (String, **Required**).
-- `type` (String Enum, **Required**): `"reaction"`, `"comment"`, `"friend_request"`, `"system"`.
-- `data` (Map, **Required**): Có thể chứa `postId`, `commentId`, `friendRequestId`, `reportId`, `contentSnippet`, tuỳ type.
+- `type`: enum (`reaction`, `comment`, `friend_request`, `system`, `report`)
+- `data`: map (chứa `postId`, `commentId`, `friendRequestId`, `reportId`, `contentSnippet`)
 - `isRead` (Boolean, **Required**): Mặc định `false`.
 - `createdAt` (Timestamp, **Required**).
 

@@ -54,6 +54,13 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({ notification
       case NotificationType.FRIEND_REQUEST:
         navigate('/contacts');
         break;
+      case NotificationType.REPORT:
+        if (user?.role === 'admin') {
+          navigate('/admin/reports');
+        } else {
+          navigate('/notifications');
+        }
+        break;
       case NotificationType.SYSTEM:
         if (notification.data.friendRequestId) {
           navigate(`/profile/${notification.actorId}`);
@@ -73,7 +80,7 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({ notification
     NotificationType.FRIEND_REQUEST
   ].includes(notification.type);
 
-  const isSystem = notification.type === NotificationType.SYSTEM;
+  const isSystem = notification.type === NotificationType.SYSTEM || notification.type === NotificationType.REPORT;
 
   return (
     <div

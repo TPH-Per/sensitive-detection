@@ -41,12 +41,12 @@ export const rejectReport = onCall(
     await createNotification({
       receiverId: reportData.reporterId,
       actorId: adminId,
-      type: NotificationType.SYSTEM,
+      type: NotificationType.REPORT,
       data: { reportId, contentSnippet: 'Không phát hiện vi phạm' },
     });
     await sendPushNotification({
       receiverId: reportData.reporterId,
-      type: NotificationType.SYSTEM,
+      type: NotificationType.REPORT,
       body: 'Báo cáo của bạn đã được xem xét và không phát hiện vi phạm.',
       data: { reportId },
     });

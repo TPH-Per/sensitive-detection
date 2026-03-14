@@ -3,10 +3,11 @@ import { NotificationType } from '../types';
 
 // Titles cho từng loại notification
 const NOTIFICATION_TITLES: Partial<Record<NotificationType, string>> = {
-  [NotificationType.REACTION]: '❤️ Cảm xúc mới',
-  [NotificationType.COMMENT]: '💬 Bình luận mới',
-  [NotificationType.FRIEND_REQUEST]: '👋 Lời mời kết bạn',
-  [NotificationType.SYSTEM]: '🔔 Thông báo hệ thống',
+  [NotificationType.REACTION]: 'Cảm xúc mới',
+  [NotificationType.COMMENT]: 'Bình luận mới',
+  [NotificationType.FRIEND_REQUEST]: 'Lời mời kết bạn',
+  [NotificationType.SYSTEM]: 'Thông báo hệ thống',
+  [NotificationType.REPORT]: 'Báo cáo vi phạm',
 };
 
 async function getUserFcmTokens(userId: string): Promise<string[]> {
@@ -46,7 +47,7 @@ export async function sendPushNotification(opts: SendPushOptions): Promise<void>
   const tokens = await getUserFcmTokens(receiverId);
   if (tokens.length === 0) return;
 
-  const title = NOTIFICATION_TITLES[type] || '🔔 Thông báo mới';
+  const title = NOTIFICATION_TITLES[type] || 'Thông báo mới';
 
   const message = {
     notification: { title, body },

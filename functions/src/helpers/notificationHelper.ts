@@ -35,6 +35,8 @@ export function buildPushBody(
         : `${senderName} đã bình luận.`;
     case NotificationType.FRIEND_REQUEST:
       return `${senderName} đã gửi lời mời kết bạn.`;
+    case NotificationType.REPORT:
+      return extra?.contentSnippet || 'Cập nhật về báo cáo vi phạm.';
     case NotificationType.SYSTEM:
       return extra?.contentSnippet || 'Bạn có thông báo hệ thống mới.';
     default:

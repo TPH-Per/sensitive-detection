@@ -87,12 +87,12 @@ export const resolveReport = onCall(
     await createNotification({
       receiverId: reportData.reporterId,
       actorId: adminId,
-      type: NotificationType.SYSTEM,
+      type: NotificationType.REPORT,
       data: { reportId },
     });
     await sendPushNotification({
       receiverId: reportData.reporterId,
-      type: NotificationType.SYSTEM,
+      type: NotificationType.REPORT,
       body: 'Báo cáo của bạn đã được xử lý. Cảm ơn bạn!',
       data: { reportId },
     });
@@ -101,12 +101,12 @@ export const resolveReport = onCall(
       await createNotification({
         receiverId: reportData.targetOwnerId,
         actorId: adminId,
-        type: NotificationType.SYSTEM,
+        type: NotificationType.REPORT,
         data: { contentSnippet: reportData.reason },
       });
       await sendPushNotification({
         receiverId: reportData.targetOwnerId,
-        type: NotificationType.SYSTEM,
+        type: NotificationType.REPORT,
         body: 'Nội dung của bạn đã bị xem xét và xử lý do vi phạm quy tắc cộng đồng.',
       });
     }
@@ -115,7 +115,7 @@ export const resolveReport = onCall(
       await createNotification({
         receiverId: reportData.targetId,
         actorId: adminId,
-        type: NotificationType.SYSTEM,
+        type: NotificationType.REPORT,
         data: { contentSnippet: `Cảnh báo: Tài khoản bị báo cáo vì: ${reportData.reason}. Vui lòng tuân thủ quy tắc cộng đồng.` },
       });
     }
