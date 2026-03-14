@@ -1,7 +1,9 @@
 import { useEffect } from 'react';
 import { usePresenceStore } from '../store/presenceStore';
 
-// Dùng store tập trung, chỉ 1 listener per userId dù nhiều component subscribe
+/**
+ * Hook quản lý trạng thái online/offline
+ */
 export const usePresence = (userId: string | undefined, initialStatus?: 'active' | 'banned') => {
   const subscribe = usePresenceStore(state => state.subscribe);
   const unsubscribe = usePresenceStore(state => state.unsubscribe);

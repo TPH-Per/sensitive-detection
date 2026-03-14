@@ -5,6 +5,9 @@ import { NotificationType } from '../types';
 import { createNotification, getSenderName, buildPushBody } from '../helpers/notificationHelper';
 import { sendPushNotification } from '../helpers/fcmHelper';
 
+/**
+ * Xử lý khi có bình luận mới
+ */
 export const onCommentReactionWrite = onDocumentWritten(
   { document: 'comments/{commentId}/reactions/{userId}', region: 'us-central1' },
   async (event) => {
@@ -22,13 +25,11 @@ export const onCommentReactionWrite = onDocumentWritten(
     const commentRef = db.collection('comments').doc(commentId);
     const updates: Record<string, FieldValue> = {};
 
-    // Update reactions Map
     if (isCreate) {
       updates[`reactions.${afterData!.type}`] = FieldValue.increment(1);
     } else if (isDelete) {
       updates[`reactions.${beforeData!.type}`] = FieldValue.increment(-1);
     } else {
-      // Đổi loại cảm xúc
       updates[`reactions.${beforeData!.type}`] = FieldValue.increment(-1);
       updates[`reactions.${afterData!.type}`] = FieldValue.increment(1);
     }

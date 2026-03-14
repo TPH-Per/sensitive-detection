@@ -23,7 +23,7 @@ import { compressImage } from '../utils/imageUtils';
 import { IMAGE_COMPRESSION } from '../constants';
 
 export const reportService = {
-  // Upload ảnh bằng chứng cho báo cáo (tối đa 5 ảnh)
+  /** Upload ảnh bằng chứng cho báo cáo (tối đa 5 ảnh) */
   uploadReportImages: async (
     files: File[],
     reporterId: string,
@@ -35,7 +35,6 @@ export const reportService = {
       }
 
       const uploadPromises = files.map(async (file, index) => {
-        // Compress ảnh trước khi upload
         const compressedFile = await compressImage(file, IMAGE_COMPRESSION.POST);
 
         const fileExt = file.name.split('.').pop();
@@ -66,7 +65,7 @@ export const reportService = {
     }
   },
 
-  // Cloud Function onReportCreated xử lý notification cho admin
+  /** Tạo báo cáo */
   createReport: async (data: Omit<Report, 'id' | 'status' | 'createdAt'>): Promise<string> => {
     try {
       const cleanData = Object.fromEntries(
@@ -88,7 +87,7 @@ export const reportService = {
     }
   },
 
-  // Kiểm tra user đã báo cáo nội dung này chưa
+  /** Kiểm tra user đã báo cáo nội dung này chưa */
   hasUserReported: async (
     reporterId: string,
     targetType: ReportType,
@@ -110,7 +109,7 @@ export const reportService = {
     }
   },
 
-  // Lấy danh sách báo cáo chờ xử lý (Admin)
+  /** Lấy danh sách báo cáo chờ xử lý (Admin) */
   getPendingReports: async (limitCount: number = PAGINATION.ADMIN_REPORTS): Promise<Report[]> => {
     try {
       const q = query(
@@ -131,7 +130,7 @@ export const reportService = {
     }
   },
 
-  // Lấy tất cả báo cáo (Admin)
+  /** Lấy tất cả báo cáo (Admin) */
   getAllReports: async (limitCount: number = PAGINATION.ADMIN_REPORTS): Promise<Report[]> => {
     try {
       const q = query(
@@ -152,7 +151,7 @@ export const reportService = {
     }
   },
 
-  // Xử lý báo cáo theo thời gian thực
+  /** Lắng nghe thay đổi báo cáo theo thời gian thực */
   subscribeToReports: (
     callback: (reports: Report[]) => void,
     statusFilter?: ReportStatus,
@@ -180,7 +179,7 @@ export const reportService = {
     });
   },
 
-  // Admin xử lý báo cáo qua Cloud Function (có auth check và token revoke)
+  /** Admin xử lý báo cáo qua Cloud Function (có auth check và token revoke) */
   resolveReport: async (
     reportId: string,
     resolution: string = 'Đã xử lý',
@@ -190,7 +189,7 @@ export const reportService = {
     await fn({ reportId, resolution, action });
   },
 
-  // Admin từ chối báo cáo qua Cloud Function
+  /** Admin từ chối báo cáo qua Cloud Function */
   rejectReport: async (reportId: string): Promise<void> => {
     const fn = httpsCallable(functions, 'rejectReport');
     await fn({ reportId });

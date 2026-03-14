@@ -1,7 +1,9 @@
 import { onDocumentCreated } from 'firebase-functions/v2/firestore';
 import * as admin from 'firebase-admin';
 
-// Fan-out post vào feed bạn bè, bỏ qua người chặn tác giả
+/**
+ * Xử lý khi có bài viết mới
+ */
 export const onPostCreated = onDocumentCreated(
     { document: 'posts/{postId}', region: 'us-central1' },
     async (event) => {
@@ -27,7 +29,6 @@ export const onPostCreated = onDocumentCreated(
                 createdAt: postData.createdAt || admin.firestore.FieldValue.serverTimestamp(),
             };
 
-            // Fan-out vào feed tác giả
             batch.set(
                 db.collection('users').doc(authorId).collection('feeds').doc(postId),
                 feedEntry
@@ -41,7 +42,6 @@ export const onPostCreated = onDocumentCreated(
 
             const friendIds = friendsSnap.docs.map(d => d.id);
 
-            // Check từng bạn có đang hide tác giả không
             const usersHidingAuthor = new Set<string>();
             const chunkSize = 10;
 
@@ -63,7 +63,6 @@ export const onPostCreated = onDocumentCreated(
             const MAX_BATCH_SIZE = 500;
 
             for (const friendId of friendIds) {
-                // Bỏ qua người chặn tác giả bằng hideTheirActivity
                 if (usersHidingAuthor.has(friendId)) continue;
 
                 batch.set(

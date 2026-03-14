@@ -60,7 +60,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           throw new Error("Tài khoản của bạn đã bị khóa do vi phạm quy định cộng đồng. Vui lòng liên hệ admin để biết thêm chi tiết.");
         }
 
-        // Set presence online
         await presenceService.setOnline(firebaseUser.uid);
 
         set({
@@ -104,12 +103,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     const { user } = get();
 
     try {
-      // Set presence offline trước khi logout
       if (user) {
         await presenceService.setOffline(user.id);
       }
-
-      // Giữ userCache — tránh flash data khi login lại
       usePresenceStore.getState().reset();
       useRtdbChatStore.getState().reset();
       usePostStore.getState().reset();
@@ -165,7 +161,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
             userService.getBlockedUsers(firebaseUser.uid),
           ]);
           if (userData) {
-            // Set presence online
             await presenceService.setOnline(firebaseUser.uid);
 
             set({ user: userData, blockedUsers });
@@ -194,7 +189,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     useUserCache.getState().setUser(updatedUser);
   },
 
-  // Thêm/xóa/cập nhật entry trong blockedUsers map
   updateBlockEntry: (action, targetUserId, options?) => {
     const current = get().blockedUsers;
     if (action === "add" && options) {
@@ -236,7 +230,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
               return;
             }
 
-            // Set presence online
             await presenceService.setOnline(firebaseUser.uid);
 
             set({

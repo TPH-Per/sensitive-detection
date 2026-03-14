@@ -4,13 +4,12 @@ import { RtdbCallSignaling } from '../types';
 import { useCallStore } from '../store/callStore';
 
 /**
- * Hook to manage RTDB call signaling
+ * Hook quản lý cuộc gọi
  */
 export const useRtdbCall = (userId: string | null) => {
     const [incomingCall, setIncomingCall] = useState<RtdbCallSignaling | null>(null);
     const { setCallPhase, setCallType, setActiveRoomId, setOtherUserIds, setIsCaller, setCallConversationId } = useCallStore();
 
-    // Subscribe to incoming calls
     useEffect(() => {
         if (!userId) return;
 
@@ -33,7 +32,7 @@ export const useRtdbCall = (userId: string | null) => {
     }, [userId, setCallPhase, setCallType, setOtherUserIds, setIsCaller, setCallConversationId]);
 
     /**
-     * Initiate a call
+     * Bắt đầu cuộc gọi
      */
     const initiateCall = async (
         calleeId: string,
@@ -57,7 +56,7 @@ export const useRtdbCall = (userId: string | null) => {
     };
 
     /**
-     * Accept incoming call
+     * Chấp nhận cuộc gọi
      */
     const acceptCall = async () => {
         if (!userId || !incomingCall) return;
@@ -73,7 +72,7 @@ export const useRtdbCall = (userId: string | null) => {
     };
 
     /**
-     * Reject incoming call
+     * Từ chối cuộc gọi
      */
     const rejectCall = async () => {
         if (!userId || !incomingCall) return;
@@ -90,7 +89,7 @@ export const useRtdbCall = (userId: string | null) => {
     };
 
     /**
-     * End call
+     * Kết thúc cuộc gọi
      */
     const endCall = async () => {
         if (!userId) return;
@@ -98,7 +97,6 @@ export const useRtdbCall = (userId: string | null) => {
         try {
             await rtdbCallService.clearSignaling(userId);
 
-            // Clear signaling for other participants if caller
             if (incomingCall && useCallStore.getState().isCaller) {
                 for (const otherUserId of useCallStore.getState().otherUserIds) {
                     await rtdbCallService.clearSignaling(otherUserId);

@@ -8,7 +8,6 @@ export const rtdbConversationService = {
      */
     getOrCreateDirect: async (user1Id: string, user2Id: string): Promise<string> => {
         try {
-            // Tạo ID nhất quán cho hội thoại 1-1
             const sortedIds = [user1Id, user2Id].sort();
             const convId = `direct_${sortedIds[0]}_${sortedIds[1]}`;
 
@@ -18,7 +17,6 @@ export const rtdbConversationService = {
             const updates: Record<string, any> = {};
 
             if (convSnap.exists()) {
-                // Khôi phục phòng chat.
                 updates[`user_chats/${user1Id}/${convId}/isArchived`] = false;
                 updates[`user_chats/${user2Id}/${convId}/isArchived`] = false;
 
@@ -33,7 +31,6 @@ export const rtdbConversationService = {
                 return convId;
             }
 
-            // Tạo hội thoại mới
             const conversationData: RtdbConversation = {
                 isGroup: false,
                 name: null,
@@ -79,7 +76,7 @@ export const rtdbConversationService = {
     },
 
     /**
-     * Subscribe to user's conversations
+     * Lắng nghe danh sách hội thoại
      */
     subscribeToUserConversations: (
         userId: string,
@@ -89,7 +86,6 @@ export const rtdbConversationService = {
         const conversationListeners: Array<() => void> = [];
 
         const mainUnsubscribe = onValue(userChatsRef, async (snapshot) => {
-            // Unsubscribe from old conversation listeners
             conversationListeners.forEach(unsub => unsub());
             conversationListeners.length = 0;
 
@@ -106,15 +102,11 @@ export const rtdbConversationService = {
                 return;
             }
 
-            // Store conversations data
             const conversationsMap = new Map<string, { id: string; data: RtdbConversation; userChat: RtdbUserChat }>();
 
-            // Function to update callback with sorted and filtered conversations
             const updateCallback = () => {
                 const conversations = Array.from(conversationsMap.values())
                     .filter(c => {
-                        // Chỉ hiển thị hội thoại nếu có tin nhắn mới hơn thời điểm xóa (clearedAt)
-                        // Hoặc hội thoại mới tinh chưa có tin nhắn nào (lastMsgTimestamp >= clearedAt)
                         const lastTs = c.userChat.lastMsgTimestamp || 0;
                         const clearedTs = c.userChat.clearedAt || 0;
                         return lastTs > clearedTs;
@@ -124,7 +116,6 @@ export const rtdbConversationService = {
                 callback(conversations);
             };
 
-            // Subscribe to each conversation
             for (const convId of convIds) {
                 const convRef = ref(rtdb, `conversations/${convId}`);
 
@@ -153,7 +144,6 @@ export const rtdbConversationService = {
             console.error('[rtdbConversationService] Lỗi subscribe user_chats:', error);
         });
 
-        // Return combined unsubscribe function
         return () => {
             mainUnsubscribe();
             conversationListeners.forEach(unsub => unsub());
@@ -161,7 +151,7 @@ export const rtdbConversationService = {
     },
 
     /**
-     * Update conversation metadata (name, avatar)
+     * Cập nhật thông tin hội thoại
      */
     updateConversationMeta: async (convId: string, updates: Partial<Pick<RtdbConversation, 'name' | 'avatar'>>): Promise<void> => {
         try {
@@ -177,7 +167,7 @@ export const rtdbConversationService = {
     },
 
     /**
-     * Toggle pin conversation
+     * Ghim hội thoại
      */
     togglePin: async (uid: string, convId: string, isPinned: boolean): Promise<void> => {
         try {
@@ -190,7 +180,7 @@ export const rtdbConversationService = {
     },
 
     /**
-     * Toggle mute conversation
+     * Tắt thông báo hội thoại
      */
     toggleMute: async (uid: string, convId: string, isMuted: boolean): Promise<void> => {
         try {
@@ -203,7 +193,7 @@ export const rtdbConversationService = {
     },
 
     /**
-     * Toggle archive conversation
+     * Lưu trữ hội thoại
      */
     toggleArchive: async (uid: string, convId: string, isArchived: boolean): Promise<void> => {
         try {
@@ -216,7 +206,7 @@ export const rtdbConversationService = {
     },
 
     /**
-     * Xóa cuộc hội thoại (Ẩn lịch sử trò chuyện phía người dùng)
+     * Xóa cuộc hội thoại
      */
     deleteConversation: async (uid: string, convId: string): Promise<void> => {
         try {
@@ -232,7 +222,7 @@ export const rtdbConversationService = {
     },
 
     /**
-     * Reset unread count
+     * Reset số tin nhắn chưa đọc
      */
     resetUnreadCount: async (uid: string, convId: string, lastReadMsgId?: string): Promise<void> => {
         try {
@@ -253,7 +243,7 @@ export const rtdbConversationService = {
     },
 
     /**
-     * Mark all conversations as read
+     * Đánh dấu tất cả hội thoại đã đọc
      */
     markAllAsRead: async (uid: string): Promise<void> => {
         try {
@@ -281,7 +271,7 @@ export const rtdbConversationService = {
     },
 
     /**
-     * Mark conversation as unread (set unreadCount to 1)
+     * Đánh dấu hội thoại chưa đọc
      */
     markAsUnread: async (uid: string, convId: string): Promise<void> => {
         try {
@@ -296,7 +286,7 @@ export const rtdbConversationService = {
     },
 
     /**
-     * Set typing indicator for user in conversation
+     * Đặt trạng thái đang gõ
      */
     setTyping: async (convId: string, uid: string, isTyping: boolean): Promise<void> => {
         try {
@@ -312,7 +302,7 @@ export const rtdbConversationService = {
     },
 
     /**
-     * Subscribe to typing indicators in conversation
+     * Lắng nghe trạng thái đang gõ
      */
     subscribeToTyping: (convId: string, callback: (typingUserIds: string[]) => void): (() => void) => {
         const typingRef = ref(rtdb, `conversations/${convId}/typing`);

@@ -5,6 +5,9 @@ import { NotificationType } from '../types';
 import { createNotification, getSenderName, buildPushBody } from '../helpers/notificationHelper';
 import { sendPushNotification } from '../helpers/fcmHelper';
 
+/**
+ * Xử lý khi có bình luận mới
+ */
 export const onPostReactionWrite = onDocumentWritten(
   { document: 'posts/{postId}/reactions/{userId}', region: 'us-central1' },
   async (event) => {
@@ -29,7 +32,6 @@ export const onPostReactionWrite = onDocumentWritten(
       updates['reactionCount'] = FieldValue.increment(-1);
       updates[`reactionSummary.${beforeData!.type}`] = FieldValue.increment(-1);
     } else {
-      // Đổi loại cảm xúc
       updates[`reactionSummary.${beforeData!.type}`] = FieldValue.increment(-1);
       updates[`reactionSummary.${afterData!.type}`] = FieldValue.increment(1);
     }

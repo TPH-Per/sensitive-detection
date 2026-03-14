@@ -5,7 +5,9 @@ import { NotificationType, ReportStatus } from '../types';
 import { createNotification } from '../helpers/notificationHelper';
 import { sendPushNotification } from '../helpers/fcmHelper';
 
-// Admin từ chối báo cáo — không vi phạm
+/**
+ * Từ chối báo cáo
+ */
 export const rejectReport = onCall(
   {
     region: 'us-central1',
@@ -37,7 +39,6 @@ export const rejectReport = onCall(
       resolution: 'Không phát hiện vi phạm',
     });
 
-    // Thông báo người báo cáo
     await createNotification({
       receiverId: reportData.reporterId,
       actorId: adminId,

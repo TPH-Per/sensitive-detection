@@ -1,5 +1,8 @@
 import { useEffect, RefObject } from 'react';
 
+/**
+ * Hook xử lý click outside
+ */
 export const useClickOutside = (
   refs: RefObject<HTMLElement | null> | RefObject<HTMLElement | null>[],
   callback: () => void,

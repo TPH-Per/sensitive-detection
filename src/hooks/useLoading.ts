@@ -41,7 +41,6 @@ export const useLoading = (key?: LoadingKey) => {
         [key, setLoading]
     );
 
-    // checkLoading dùng getState() cho callbacks, không reactive
     const checkLoading = useCallback((k: LoadingKey) => {
         return useLoadingStore.getState().loadingStates[k] ?? false;
     }, []);

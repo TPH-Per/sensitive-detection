@@ -4,7 +4,7 @@ import { RtdbCallSignaling } from '../../types';
 
 export const rtdbCallService = {
     /**
-     * Initiate a call (write to callee's signaling node)
+     * Bắt đầu cuộc gọi
      */
     initiateCall: async (
         callerId: string,
@@ -33,7 +33,7 @@ export const rtdbCallService = {
     },
 
     /**
-     * Answer call (update status)
+     * Chấp nhận cuộc gọi
      */
     answerCall: async (calleeId: string, status: 'accepted' | 'rejected'): Promise<void> => {
         try {
@@ -46,7 +46,7 @@ export const rtdbCallService = {
     },
 
     /**
-     * Subscribe to incoming calls
+     * Lắng nghe cuộc gọi đến
      */
     subscribeToIncomingCall: (
         uid: string,
@@ -64,14 +64,13 @@ export const rtdbCallService = {
 
         onValue(signalingRef, handler);
 
-        // Return unsubscribe function
         return () => {
             off(signalingRef, 'value', handler);
         };
     },
 
     /**
-     * Clear signaling after call ends
+     * Xóa signaling sau khi kết thúc cuộc gọi
      */
     clearSignaling: async (uid: string): Promise<void> => {
         try {
@@ -84,7 +83,7 @@ export const rtdbCallService = {
     },
 
     /**
-     * Get current call signaling data
+     * Lấy thông tin signaling hiện tại
      */
     getCallSignaling: async (uid: string): Promise<RtdbCallSignaling | null> => {
         try {
@@ -103,7 +102,7 @@ export const rtdbCallService = {
     },
 
     /**
-     * Manage active call session in a conversation
+     * Bắt đầu cuộc gọi
      */
     startActiveCall: async (convId: string, callerId: string, callType: 'voice' | 'video', messageId: string): Promise<void> => {
         try {
@@ -120,6 +119,9 @@ export const rtdbCallService = {
         }
     },
 
+    /**
+     * Cập nhật người tham gia cuộc gọi
+     */
     updateCallParticipant: async (convId: string, userId: string, isJoining: boolean): Promise<void> => {
         try {
             const participantRef = ref(rtdb, `conversations/${convId}/activeCall/participants/${userId}`);
@@ -133,6 +135,9 @@ export const rtdbCallService = {
         }
     },
 
+    /**
+     * Lấy thông tin cuộc gọi đang diễn ra
+     */
     getActiveCall: async (convId: string): Promise<any> => {
         try {
             const activeCallRef = ref(rtdb, `conversations/${convId}/activeCall`);
@@ -144,6 +149,9 @@ export const rtdbCallService = {
         }
     },
 
+    /**
+     * Kết thúc cuộc gọi
+     */
     endActiveCall: async (convId: string): Promise<void> => {
         try {
             const activeCallRef = ref(rtdb, `conversations/${convId}/activeCall`);

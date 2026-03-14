@@ -1,7 +1,9 @@
 import { onDocumentWritten } from 'firebase-functions/v2/firestore';
 import * as admin from 'firebase-admin';
 
-// Đồng bộ feed khi block options thay đổi
+/**
+ * Đồng bộ feed khi block options thay đổi
+ */
 export const onBlockedUserWrite = onDocumentWritten(
     { document: 'users/{userId}/blockedUsers/{blockedUid}', region: 'us-central1' },
     async (event) => {
@@ -28,6 +30,9 @@ export const onBlockedUserWrite = onDocumentWritten(
     }
 );
 
+/**
+ * Xóa bài viết khỏi feed
+ */
 async function removePostsFromFeed(db: admin.firestore.Firestore, targetUserId: string, authorId: string): Promise<void> {
     try {
         const feedSnap = await db.collection('users').doc(targetUserId).collection('feeds').get();
@@ -59,6 +64,9 @@ async function removePostsFromFeed(db: admin.firestore.Firestore, targetUserId: 
     }
 }
 
+/**
+ * Khôi phục bài viết vào feed nếu là bạn
+ */
 async function restorePostsIfFriend(db: admin.firestore.Firestore, targetUserId: string, authorId: string): Promise<void> {
     try {
         const friendSnap = await db.collection('users').doc(targetUserId).collection('friends').doc(authorId).get();

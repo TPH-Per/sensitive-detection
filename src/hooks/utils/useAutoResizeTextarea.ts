@@ -1,5 +1,8 @@
 import { useEffect, RefObject } from 'react';
 
+/**
+ * Hook tự động resize textarea
+ */
 export const useAutoResizeTextarea = (
   ref: RefObject<HTMLTextAreaElement | null>,
   content: string,

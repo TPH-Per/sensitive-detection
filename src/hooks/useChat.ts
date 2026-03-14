@@ -50,13 +50,11 @@ export const useChat = () => {
   const [sentRequests, setSentRequests] = useState<FriendRequest[]>([]);
   const [receivedRequests, setReceivedRequests] = useState<FriendRequest[]>([]);
 
-  // RTDB structure: conversations is Array<{id, data: RtdbConversation, userChat: RtdbUserChat}>
   const selectedConversation = useMemo(
     () => conversations.find(c => c.id === selectedConversationId),
     [conversations, selectedConversationId]
   );
 
-  // Dữ liệu hội thoại gốc từ store
   const filteredConversations = conversations;
 
   const archivedCount = useMemo(
@@ -64,7 +62,6 @@ export const useChat = () => {
     [conversations]
   );
 
-  // RTDB messages structure: Record<convId, Array<{id, data: RtdbMessage}>>
   const currentMessages = selectedConversationId ? (messages[selectedConversationId] ?? EMPTY_MESSAGES) : EMPTY_MESSAGES;
   const currentTypingUsers = selectedConversationId ? (typingUsers[selectedConversationId] ?? EMPTY_TYPING) : EMPTY_TYPING;
 
@@ -72,7 +69,6 @@ export const useChat = () => {
   const isLoadingMore = selectedConversationId ? (storeIsLoadingMore[selectedConversationId] || false) : false;
   const hasMoreMessages = selectedConversationId ? (storeHasMoreMessages[selectedConversationId] || false) : false;
 
-  // Get participants for selected conversation - RTDB uses members map
   const participantIds = useMemo(() => {
     if (!selectedConversation) return [];
     return Object.keys(selectedConversation.data.members);
@@ -86,7 +82,6 @@ export const useChat = () => {
 
   const partner = partnerId ? (usersMap[partnerId] ?? null) : null;
 
-  // Subscribe friend requests
   useEffect(() => {
     if (!currentUser?.id) return;
     const unsubSent = friendService.subscribeToSentRequests(currentUser.id, setSentRequests);
@@ -94,14 +89,12 @@ export const useChat = () => {
     return () => { unsubSent(); unsubReceived(); };
   }, [currentUser?.id]);
 
-  // Friend status with partner
   const friendIds = useContactStore(state => state.friends.map(f => f.id));
   const partnerFriendStatus = useMemo(() => {
     if (!partnerId) return undefined;
     return friendIds.includes(partnerId) ? FriendStatus.FRIEND : undefined;
   }, [partnerId, friendIds]);
 
-  // Pending request ID
   const partnerPendingRequestId = useMemo(() => {
     if (!partnerId) return undefined;
     const sent = sentRequests.find(r => r.receiverId === partnerId);
@@ -110,7 +103,6 @@ export const useChat = () => {
     return received?.id;
   }, [partnerId, sentRequests, receivedRequests]);
 
-  // Friend request status
   const friendRequestStatus = useMemo(() => {
     if (!partnerId) return 'none' as const;
     if (sentRequests.some(r => r.receiverId === partnerId)) return 'sent' as const;
@@ -123,7 +115,6 @@ export const useChat = () => {
     [partnerId, receivedRequests]
   );
 
-  // Sub-hooks composition
   const actions = useChatActions({
     selectedConversationId,
     currentUserId: currentUser?.id ?? null,
@@ -152,7 +143,6 @@ export const useChat = () => {
     currentUserName: currentUser?.fullName,
   });
 
-  // Subscribe to messages and typing
   useEffect(() => {
     if (!selectedConversationId || !currentUser) return;
     const unsubMessages = subscribeToMessages(selectedConversationId);
@@ -164,7 +154,6 @@ export const useChat = () => {
     };
   }, [selectedConversationId, currentUser, subscribeToMessages, subscribeToTyping, markAsDelivered]);
 
-  // Auto mark as read
   useEffect(() => {
     if (!selectedConversationId || !currentUser) return;
     
@@ -181,7 +170,6 @@ export const useChat = () => {
     if (hasUnread) markAsRead(selectedConversationId, currentUser.id);
   }, [messages, selectedConversationId, currentUser, markAsRead, conversations, friendIds]);
 
-  // Fetch user info
   useEffect(() => {
     if (!selectedConversationId || !currentUser) return;
     const msgs = messages[selectedConversationId] || [];
@@ -252,7 +240,6 @@ export const useChat = () => {
     getOrCreateConversation,
     setIsChatVisible,
 
-    // Block
     isBlocked: block.isBlocked,
     isBlockedByMe: block.isBlockedByMe,
     isMessageBlockedByMe: block.isMessageBlockedByMe,
@@ -264,7 +251,6 @@ export const useChat = () => {
     getBlockedMessage: block.getBlockedMessage,
     handleApplyBlock: block.handleApplyBlock,
     handleUnblock: block.handleUnblock,
-    // Friend requests
     friendRequestStatus,
     currentReceivedRequest,
     sentRequests,

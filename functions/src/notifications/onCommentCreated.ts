@@ -5,6 +5,9 @@ import { NotificationType } from '../types';
 import { createNotification, getSenderName, buildPushBody } from '../helpers/notificationHelper';
 import { sendPushNotification } from '../helpers/fcmHelper';
 
+/**
+ * Xử lý khi có bình luận mới
+ */
 export const onCommentCreated = onDocumentCreated(
   { document: 'comments/{commentId}', region: 'us-central1' },
   async (event) => {
@@ -26,7 +29,6 @@ export const onCommentCreated = onDocumentCreated(
       const senderName = await getSenderName(senderId);
 
       if (parentId) {
-        // Reply to comment - notify parent comment author
         const parentCommentSnap = await db.collection('comments').doc(parentId).get();
         if (!parentCommentSnap.exists) return;
 
@@ -49,7 +51,6 @@ export const onCommentCreated = onDocumentCreated(
           data: { postId, commentId },
         });
       } else {
-        // Comment on post - notify post author
         const postSnap = await db.collection('posts').doc(postId).get();
         if (!postSnap.exists) return;
 

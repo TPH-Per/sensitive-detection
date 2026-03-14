@@ -6,7 +6,9 @@ interface UseIntersectionObserverOptions {
   enabled?: boolean;
 }
 
-// Theo dõi element hiển thị trong viewport
+/**
+ * Theo dõi element hiển thị trong viewport
+ */
 export const useIntersectionObserver = (
   callback: () => void,
   options: UseIntersectionObserverOptions = {}

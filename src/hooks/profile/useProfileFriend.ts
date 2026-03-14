@@ -13,7 +13,9 @@ interface UseProfileFriendProps {
   loadProfile: () => Promise<void>;
 }
 
-// Xử lý friend request và friend status
+/**
+ * Xử lý friend request và friend status
+ */
 export const useProfileFriend = ({
   currentUser,
   profile,

@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 
-// Theo dõi trạng thái kết nối Internet
+/**
+ * Theo dõi trạng thái kết nối Internet
+ */
 export const useConnectionStatus = () => {
     const [isOnline, setIsOnline] = useState(navigator.onLine);
 

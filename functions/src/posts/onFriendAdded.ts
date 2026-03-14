@@ -2,8 +2,7 @@ import { onDocumentCreated } from 'firebase-functions/v2/firestore';
 import * as admin from 'firebase-admin';
 
 /**
- * Fan-out posts cũ của bạn mới vào feed của user
- * Trigger: onCreate users/{userId}/friends/{friendId}
+ * Xử lý khi có bạn mới
  */
 export const onFriendAdded = onDocumentCreated(
     { document: 'users/{userId}/friends/{friendId}', region: 'us-central1' },
@@ -14,13 +13,12 @@ export const onFriendAdded = onDocumentCreated(
         try {
             const db = admin.firestore();
 
-            // Lấy tất cả posts ACTIVE của friend
             const friendPostsSnapshot = await db.collection('posts')
                 .where('authorId', '==', friendId)
                 .where('status', '==', 'active')
                 .where('visibility', 'in', ['public', 'friends'])
                 .orderBy('createdAt', 'desc')
-                .limit(100) // Giới hạn số posts để tránh quá tải
+                .limit(100)
                 .get();
 
             if (friendPostsSnapshot.empty) {

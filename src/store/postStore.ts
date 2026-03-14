@@ -406,7 +406,6 @@ export const usePostStore = create<PostState>()(
         const prevMyReaction = get().myPostReactions[postId];
         const isRemove = prevMyReaction === reaction || reaction === 'REMOVE';
 
-        // Update myPostReactions
         const newMyReactions = { ...get().myPostReactions };
         if (isRemove) {
           delete newMyReactions[postId];

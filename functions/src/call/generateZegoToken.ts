@@ -1,6 +1,9 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { generateZegoKitToken } from '../helpers/zegoTokenHelper';
 
+/**
+ * Tạo token Zego (Zegocloud)
+ */
 export const generateZegoToken = onCall(
   {
     region: 'us-central1',
@@ -21,7 +24,6 @@ export const generateZegoToken = onCall(
       throw new HttpsError('invalid-argument', 'Thiếu roomId, userId hoặc userName.');
     }
 
-    // Chỉ cho phép tạo token cho chính mình
     if (request.auth.uid !== userId) {
       throw new HttpsError('permission-denied', 'Không được tạo token cho người khác.');
     }

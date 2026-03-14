@@ -68,13 +68,12 @@ export const rtdbGroupService = {
             const allMemberIds = [creatorId, ...memberIds.filter(id => id !== creatorId)];
 
             if (allMemberIds.length > GROUP_LIMITS.MAX_MEMBERS) {
-                throw new Error(`NhÃ³m chá»‰ Ä‘Æ°á»£c tá»‘i Ä‘a ${GROUP_LIMITS.MAX_MEMBERS} thÃ nh viÃªn`);
+                throw new Error(`Nhóm chỉ được tối đa ${GROUP_LIMITS.MAX_MEMBERS} thành viên`);
             }
 
             const newConvRef = push(ref(rtdb, 'conversations'));
             const convId = newConvRef.key!;
 
-            // Build members object
             const members: Record<string, MemberRole> = {};
             members[creatorId] = 'admin';
             memberIds.forEach(id => {
@@ -97,7 +96,6 @@ export const rtdbGroupService = {
 
             await set(newConvRef, conversationData);
 
-            // Create user_chats entries for all members
             const updates: Record<string, any> = {};
             allMemberIds.forEach(uid => {
                 updates[`user_chats/${uid}/${convId}`] = {
@@ -214,14 +212,11 @@ export const rtdbGroupService = {
             const now = Date.now();
             const updates: Record<string, any> = {};
 
-            // Đánh dấu nhóm đã giải tán
             updates[`conversations/${convId}/isDisbanded`] = true;
             updates[`conversations/${convId}/updatedAt`] = now;
 
-            // Xóa toàn bộ tin nhắn
             updates[`messages/${convId}`] = null;
 
-            // Cập nhật lastMessage cho conversation
             updates[`conversations/${convId}/lastMessage`] = {
                 senderId: 'system',
                 content: 'Nhóm đã giải tán',
@@ -344,7 +339,7 @@ export const rtdbGroupService = {
     },
 
     /**
-     * Upload group avatar
+     * Upload ảnh đại diện nhóm
      */
     uploadGroupAvatar: async (
         conversationId: string,

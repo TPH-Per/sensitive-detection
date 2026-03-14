@@ -1,5 +1,8 @@
 import * as crypto from 'crypto';
 
+/**
+ * Tạo token Zego
+ */
 export function generateZegoKitToken(
   appId: number,
   serverSecret: string,

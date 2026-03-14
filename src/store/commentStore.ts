@@ -302,6 +302,7 @@ export const useCommentStore = create<CommentState>((set, get) => ({
       createdAt: Timestamp.now(),
       replyCount: 0,
       status: CommentStatus.ACTIVE,
+      updatedAt: Timestamp.now(),
     };
 
     const previousState = {

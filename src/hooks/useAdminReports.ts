@@ -14,6 +14,9 @@ interface Stats {
   rejected: number;
 }
 
+/**
+ * Hook quản lý báo cáo (admin)
+ */
 export function useAdminReports() {
   const { user } = useAuthStore();
   const navigate = useNavigate();

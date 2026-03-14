@@ -37,6 +37,9 @@ interface UseContactsReturn {
   handleMessage: (friendId: string) => Promise<string | null>;
 }
 
+/**
+ * Hook quản lý danh bạ
+ */
 export const useContacts = (): UseContactsReturn => {
   const { user: currentUser } = useAuthStore();
   const {

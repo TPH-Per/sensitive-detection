@@ -37,7 +37,6 @@ export const ReportDetailModal: React.FC<ReportDetailModalProps> = ({ reportId, 
   const [resolver, setResolver] = useState<User | null>(null);
   const [deleter, setDeleter] = useState<User | null>(null);
 
-  // Viewer State replacing previewImage
   const [viewerState, setViewerState] = useState({
     isOpen: false,
     media: [] as { type: 'image' | 'video'; url: string }[],

@@ -4,6 +4,9 @@ import { db, auth } from '../app';
 import { NotificationType, UserStatus, FriendRequestStatus } from '../types';
 import { createNotification } from '../helpers/notificationHelper';
 
+/**
+ * Khóa/mở khóa tài khoản
+ */
 export const banUser = onCall(
   {
     region: 'us-central1',

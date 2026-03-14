@@ -10,7 +10,9 @@ const REPORT_TYPE_LABELS: Record<string, string> = {
   user: 'Người dùng',
 };
 
-// Client không đủ quyền query admin — chỉ CF mới làm được
+/**
+ * Xử lý khi có báo cáo mới
+ */
 export const onReportCreated = onDocumentCreated(
   { document: 'reports/{reportId}', region: 'us-central1' },
   async (event) => {

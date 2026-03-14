@@ -101,7 +101,6 @@ export const userService = {
     });
   },
 
-  // Cloud Function tìm kiếm user
   searchUsers: async (searchTerm: string, currentUserId: string): Promise<User[]> => {
     try {
       const fn = httpsCallable<{ searchTerm: string; currentUserId: string }, { users: User[] }>(functions, 'searchUsers');

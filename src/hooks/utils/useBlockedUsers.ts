@@ -1,7 +1,9 @@
 import { useMemo, useCallback } from 'react';
 import { useAuthStore } from '../../store/authStore';
 
-// Helpers kiểm tra block từng loại
+/**
+ * Helpers kiểm tra block từng loại
+ */
 export const useBlockedUsers = () => {
   const blockedUsers = useAuthStore(state => state.blockedUsers);
 

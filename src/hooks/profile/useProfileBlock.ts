@@ -16,7 +16,9 @@ interface UseProfileBlockProps {
   isOwnProfile: boolean;
 }
 
-// Xử lý block/unblock và mở modal options
+/**
+ * Xử lý block/unblock và mở modal options
+ */
 export const useProfileBlock = ({
   currentUser,
   profile,
@@ -37,13 +39,11 @@ export const useProfileBlock = ({
     [blockedUsers, profileUserId]
   );
 
-  // Mở modal chọn options
   const handleOpenBlockModal = useCallback(() => {
     if (!currentUser || !profile || isOwnProfile) return;
     setIsBlockModalOpen(true);
   }, [currentUser, profile, isOwnProfile]);
 
-  // Lắng nghe xem đối phương có chặn mình xem hoạt động không
   useEffect(() => {
     if (!currentUser || !profileUserId || isOwnProfile) {
       setIsActivityBlockedByPartner(false);

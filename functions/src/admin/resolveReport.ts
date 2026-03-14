@@ -5,14 +5,15 @@ import { NotificationType, ReportType, ReportStatus, PostStatus, CommentStatus, 
 import { createNotification } from '../helpers/notificationHelper';
 import { sendPushNotification } from '../helpers/fcmHelper';
 
-// Soft delete post — set status to DELETED
+/**
+ * Xóa bài viết (soft delete)
+ */
 async function deletePostById(postId: string, adminId: string): Promise<void> {
   const postRef = db.collection('posts').doc(postId);
   const postSnap = await postRef.get();
   if (!postSnap.exists) return;
 
   const data = postSnap.data();
-  // Chỉ xóa nếu chưa bị xóa
   if (data?.status !== PostStatus.DELETED) {
     await postRef.update({
       status: PostStatus.DELETED,
@@ -22,14 +23,15 @@ async function deletePostById(postId: string, adminId: string): Promise<void> {
   }
 }
 
-// Soft delete comment — set status to DELETED
+/**
+ * Xóa bình luận (soft delete)
+ */
 async function deleteCommentById(commentId: string, adminId: string): Promise<void> {
   const commentRef = db.collection('comments').doc(commentId);
   const commentSnap = await commentRef.get();
   if (!commentSnap.exists) return;
 
   const data = commentSnap.data();
-  // Chỉ xóa nếu chưa bị xóa
   if (data?.status !== CommentStatus.DELETED) {
     await commentRef.update({
       status: CommentStatus.DELETED,
@@ -39,6 +41,9 @@ async function deleteCommentById(commentId: string, adminId: string): Promise<vo
   }
 }
 
+/**
+ * Xử lý báo cáo
+ */
 export const resolveReport = onCall(
   {
     region: 'us-central1',

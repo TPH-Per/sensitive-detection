@@ -9,7 +9,9 @@ interface SearchResult {
   status?: string;
 }
 
-// Thay thế getDocs toàn collection — tìm user theo email chính xác
+/**
+ * Tìm kiếm người dùng theo email
+ */
 export const searchUsers = onCall(
   {
     region: 'us-central1',
@@ -39,7 +41,6 @@ export const searchUsers = onCall(
         .filter((u) => u.id !== currentUserId && u.status !== 'banned');
 
       if (currentUserId && users.length > 0) {
-        // Get blocked users from subcollection
         const blockedUsersSnap = await db
           .collection('users')
           .doc(currentUserId)
@@ -54,7 +55,6 @@ export const searchUsers = onCall(
           const safeUsers: SearchResult[] = [];
 
           for (const targetUser of users) {
-            // Check if target user has blocked current user
             const targetBlockedSnap = await db
               .collection('users')
               .doc(targetUser.id)

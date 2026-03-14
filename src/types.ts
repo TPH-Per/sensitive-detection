@@ -88,7 +88,7 @@ export interface MediaObject {
   fileName: string;
   mimeType: string;
   size: number;
-  thumbnailUrl?: string; // Chỉ có ở Video
+  thumbnailUrl?: string;
   isSensitive: boolean;
 }
 

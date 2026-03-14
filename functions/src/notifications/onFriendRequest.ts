@@ -3,6 +3,9 @@ import { NotificationType, FriendRequestStatus } from '../types';
 import { createNotification, getSenderName, buildPushBody } from '../helpers/notificationHelper';
 import { sendPushNotification } from '../helpers/fcmHelper';
 
+/**
+ * Xử lý khi có lời mời kết bạn
+ */
 export const onFriendRequestCreated = onDocumentCreated(
   { document: 'friendRequests/{reqId}', region: 'us-central1' },
   async (event) => {
@@ -50,7 +53,6 @@ export const onFriendRequestUpdated = onDocumentUpdated(
     }
 
     const { senderId, receiverId } = after;
-    // receiverId là người chấp nhận — notify cho người gửi
     try {
       const acceptorName = await getSenderName(receiverId);
       const body = buildPushBody(NotificationType.SYSTEM, acceptorName, {
@@ -75,6 +77,9 @@ export const onFriendRequestUpdated = onDocumentUpdated(
   }
 );
 
+/**
+ * Xử lý khi có lời mời kết bạn bị xóa
+ */
 export const onFriendRequestDeleted = onDocumentDeleted(
   { document: 'friendRequests/{reqId}', region: 'us-central1' },
   async (event) => {

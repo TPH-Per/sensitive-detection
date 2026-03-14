@@ -39,7 +39,6 @@ function convertDocToComment(docSnap: DocumentSnapshot | QueryDocumentSnapshot<D
 }
 
 export const commentService = {
-  /** Tạo ID mới cho bình luận */
   generateCommentId: () => {
     return doc(collection(db, 'comments')).id;
   },
@@ -169,7 +168,6 @@ export const commentService = {
         updatedAt: serverTimestamp()
       });
 
-      // Cleanup related notifications
       const notifQuery = query(
         collection(db, 'notifications'),
         where('data.commentId', '==', commentId)
@@ -214,7 +212,6 @@ export const commentService = {
       } else {
         await setDoc(reactionRef, { type: reaction, createdAt: serverTimestamp() });
       }
-      // CF onCommentReactionWrite xử lý update Map reactions + notification
     } catch (error) {
       console.error("Lỗi react comment:", error);
       throw error;
@@ -334,8 +331,6 @@ export const commentService = {
     callback: (action: 'initial' | 'add' | 'update' | 'remove', data: Comment[] | { replies: Comment[]; lastDoc: DocumentSnapshot | null; hasMore: boolean }) => void,
     limitCount: number = PAGINATION.REPLIES
   ) => {
-    // Sử dụng helper convertDocToComment đã định nghĩa ở đầu file
-
     const q = query(
       collection(db, 'comments'),
       where('postId', '==', postId),

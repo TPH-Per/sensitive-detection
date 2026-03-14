@@ -97,7 +97,6 @@ export const UsersView: React.FC = () => {
         toast.success(TOAST_MESSAGES.ADMIN.UNBAN_SUCCESS(userName));
       }
       
-      // Cập nhật lại thống kê ngay lập tức
       fetchStats();
     } catch (error) {
       toast.error(type === 'ban' ? TOAST_MESSAGES.ADMIN.BAN_FAILED : TOAST_MESSAGES.ADMIN.UNBAN_FAILED);

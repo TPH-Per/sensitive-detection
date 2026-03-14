@@ -1,7 +1,7 @@
 import { messaging, db } from '../app';
 import { NotificationType } from '../types';
 
-// Titles cho từng loại notification
+// Tiêu đề cho từng loại notification
 const NOTIFICATION_TITLES: Partial<Record<NotificationType, string>> = {
   [NotificationType.REACTION]: 'Cảm xúc mới',
   [NotificationType.COMMENT]: 'Bình luận mới',
@@ -10,6 +10,9 @@ const NOTIFICATION_TITLES: Partial<Record<NotificationType, string>> = {
   [NotificationType.REPORT]: 'Báo cáo vi phạm',
 };
 
+/**
+ * Lấy danh sách token FCM của user
+ */
 async function getUserFcmTokens(userId: string): Promise<string[]> {
   try {
     const fcmDoc = await db.collection('users').doc(userId)
@@ -29,7 +32,6 @@ async function removeInvalidToken(userId: string, token: string): Promise<void> 
       .collection('private').doc('fcm')
       .update({ tokens: FieldValue.arrayRemove(token) });
   } catch {
-    // Bỏ qua
   }
 }
 
@@ -58,7 +60,6 @@ export async function sendPushNotification(opts: SendPushOptions): Promise<void>
   try {
     const response = await messaging.sendEachForMulticast(message);
 
-    // Dọn token lỗi để tránh spam gửi lại
     const failedTokens: string[] = [];
     response.responses.forEach((resp, idx) => {
       if (!resp.success) {

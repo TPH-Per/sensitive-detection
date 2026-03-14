@@ -93,7 +93,6 @@ export const presenceService = {
             callback(null);
         });
 
-        // Return unsubscribe function
         return () => {
             off(userPresenceRef, 'value', listener);
         };
@@ -121,7 +120,6 @@ export const presenceService = {
             unsubscribers.push(unsubscribe);
         });
 
-        // Return function to unsubscribe all
         return () => {
             unsubscribers.forEach(unsub => unsub());
         };
@@ -149,9 +147,6 @@ export const presenceService = {
         }
     },
 
-    /**
-     * Cancel onDisconnect handlers
-     */
     cancelDisconnect: async (uid: string): Promise<void> => {
         try {
             const userPresenceRef = presenceRef(uid);

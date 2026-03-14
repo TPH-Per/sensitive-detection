@@ -2,6 +2,9 @@ import { useMemo } from 'react';
 import { useRtdbChatStore } from '../../store';
 import { useAuthStore } from '../../store/authStore';
 
+/**
+ * Tính tổng số tin nhắn chưa đọc
+ */
 export const useUnreadCount = (): number => {
   const user = useAuthStore(state => state.user);
   const conversations = useRtdbChatStore(state => state.conversations);

@@ -1,6 +1,8 @@
 import { useEffect } from 'react';
 
-// Khóa cuộn trang.
+/**
+ * Khóa cuộn trang
+ */
 export const useScrollLock = (lock: boolean) => {
   useEffect(() => {
     if (lock) {

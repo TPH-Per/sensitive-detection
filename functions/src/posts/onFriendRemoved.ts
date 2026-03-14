@@ -2,8 +2,7 @@ import { onDocumentDeleted } from 'firebase-functions/v2/firestore';
 import * as admin from 'firebase-admin';
 
 /**
- * Xóa posts của ex-friend khỏi feed của user
- * Trigger: onDelete users/{userId}/friends/{friendId}
+ * Xử lý khi có bạn bị xóa
  */
 export const onFriendRemoved = onDocumentDeleted(
     { document: 'users/{userId}/friends/{friendId}', region: 'us-central1' },
@@ -14,7 +13,6 @@ export const onFriendRemoved = onDocumentDeleted(
         try {
             const db = admin.firestore();
 
-            // Lấy tất cả feed entries của ex-friend trong feed của user
             const feedSnapshot = await db.collection('users').doc(userId).collection('feeds').get();
 
             if (feedSnapshot.empty) {
@@ -22,17 +20,14 @@ export const onFriendRemoved = onDocumentDeleted(
                 return;
             }
 
-            // Lấy tất cả postIds từ feed
             const postIds = feedSnapshot.docs.map(doc => doc.data().postId);
 
             if (postIds.length === 0) {
                 return;
             }
 
-            // Batch get posts để check authorId
             const postsToRemove: string[] = [];
 
-            // Firestore 'in' query giới hạn 10 items, nên chia nhỏ
             const chunkSize = 10;
             for (let i = 0; i < postIds.length; i += chunkSize) {
                 const chunk = postIds.slice(i, i + chunkSize);
@@ -51,7 +46,6 @@ export const onFriendRemoved = onDocumentDeleted(
                 return;
             }
 
-            // Xóa feed entries
             const batch = db.batch();
             let batchCount = 0;
             const MAX_BATCH_SIZE = 500;

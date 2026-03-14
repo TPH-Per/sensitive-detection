@@ -575,7 +575,7 @@ export const rtdbMessageService = {
     },
 
     /**
-     * ÄÃ¡nh dáº¥u tin nháº¯n Ä‘Ã£ nháº­n
+     * Đánh dấu tin nhắn đã nhận
      */
     markAsDelivered: async (convId: string, uid: string): Promise<void> => {
         try {
@@ -670,7 +670,7 @@ export const rtdbMessageService = {
     },
 
     /**
-     * XÃ³a tin nháº¯n phÃ­a tÃ´i
+     * Xóa tin nhắn phía tôi
      */
     deleteForMe: async (convId: string, msgId: string, uid: string): Promise<void> => {
         try {
@@ -900,7 +900,6 @@ export const rtdbMessageService = {
             };
             await update(msgRef, updates);
 
-            // Cập nhật lastMessage nếu cần
             const convRef = ref(rtdb, `conversations/${convId}`);
             const convSnap = await get(convRef);
             if (convSnap.exists()) {

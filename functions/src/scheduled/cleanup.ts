@@ -66,7 +66,6 @@ export const cleanupSoftDeletedContent = onSchedule(
     const BATCH_SIZE = 400;
 
     try {
-      // Cleanup soft-deleted posts
       const postsSnap = await db
         .collection('posts')
         .where('status', '==', PostStatus.DELETED)
@@ -79,11 +78,9 @@ export const cleanupSoftDeletedContent = onSchedule(
           const postDocs = postsSnap.docs.slice(i, i + BATCH_SIZE);
 
           for (const postDoc of postDocs) {
-            // Xóa reactions subcollection
             const reactionsSnap = await postDoc.ref.collection('reactions').get();
             reactionsSnap.docs.forEach((reactionDoc) => batch.delete(reactionDoc.ref));
 
-            // Xóa post document
             batch.delete(postDoc.ref);
           }
 
@@ -92,7 +89,6 @@ export const cleanupSoftDeletedContent = onSchedule(
         console.log(`[cleanupSoftDeletedContent] Đã xóa ${postsSnap.size} posts`);
       }
 
-      // Cleanup soft-deleted comments
       const commentsSnap = await db
         .collection('comments')
         .where('status', '==', CommentStatus.DELETED)
@@ -103,11 +99,9 @@ export const cleanupSoftDeletedContent = onSchedule(
           const commentDocs = commentsSnap.docs.slice(i, i + BATCH_SIZE);
 
           for (const commentDoc of commentDocs) {
-            // Xóa reactions subcollection
             const reactionsSnap = await commentDoc.ref.collection('reactions').get();
             reactionsSnap.docs.forEach((reactionDoc) => batch.delete(reactionDoc.ref));
 
-            // Xóa comment document
             batch.delete(commentDoc.ref);
           }
 

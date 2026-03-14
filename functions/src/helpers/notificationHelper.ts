@@ -2,6 +2,9 @@ import * as admin from 'firebase-admin';
 import { db } from '../app';
 import { NotificationType, NotificationData } from '../types';
 
+/**
+ * Tạo thông báo
+ */
 export async function createNotification(data: NotificationData): Promise<string> {
   const { FieldValue } = admin.firestore;
   const docRef = await db.collection('notifications').add({
@@ -12,6 +15,9 @@ export async function createNotification(data: NotificationData): Promise<string
   return docRef.id;
 }
 
+/**
+ * Lấy tên người gửi
+ */
 export async function getSenderName(senderId: string): Promise<string> {
   try {
     const userDoc = await db.collection('users').doc(senderId).get();
@@ -21,6 +27,9 @@ export async function getSenderName(senderId: string): Promise<string> {
   }
 }
 
+/**
+ * Xây dựng nội dung push notification
+ */
 export function buildPushBody(
   type: NotificationType,
   senderName: string,

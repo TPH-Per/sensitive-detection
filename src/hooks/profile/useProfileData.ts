@@ -11,7 +11,9 @@ interface UseProfileDataProps {
   currentUser: User | null;
 }
 
-// Lấy và đồng bộ dữ liệu profile
+/**
+ * Lấy và đồng bộ dữ liệu profile
+ */
 export const useProfileData = ({ profileUserId, currentUser }: UseProfileDataProps) => {
   const [profile, setProfile] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);

@@ -2,8 +2,7 @@ import { onDocumentUpdated } from 'firebase-functions/v2/firestore';
 import * as admin from 'firebase-admin';
 
 /**
- * Xóa post entries khỏi tất cả feeds khi post bị soft-delete
- * Trigger: onUpdate posts/{postId} (khi status = DELETED)
+ * Xử lý khi có bài viết bị xóa
  */
 export const onPostDeleted = onDocumentUpdated(
     { document: 'posts/{postId}', region: 'us-central1' },
@@ -17,7 +16,6 @@ export const onPostDeleted = onDocumentUpdated(
             return;
         }
 
-        // Chỉ xử lý khi post chuyển sang DELETED
         if (beforeData.status !== 'deleted' && afterData.status === 'deleted') {
             const authorId = afterData.authorId;
 
@@ -30,11 +28,9 @@ export const onPostDeleted = onDocumentUpdated(
                 const db = admin.firestore();
                 const batch = db.batch();
 
-                // Xóa khỏi feed của tác giả
                 const authorFeedRef = db.collection('users').doc(authorId).collection('feeds').doc(postId);
                 batch.delete(authorFeedRef);
 
-                // Lấy danh sách bạn bè
                 const friendsSnapshot = await db.collection('users').doc(authorId).collection('friends').get();
 
                 let batchCount = 0;
