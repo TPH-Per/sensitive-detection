@@ -90,17 +90,6 @@ export const useChatBlock = ({
 
   const blockedMessage = useMemo(() => getBlockedMessage(), [getBlockedMessage]);
 
-  const handleApplyBlock = useCallback(async (options: BlockOptions) => {
-    if (!partnerId || !currentUser) return;
-    try {
-      await userService.blockUser(currentUser.id, partnerId, options);
-      useAuthStore.getState().updateBlockEntry('add', partnerId, options);
-      toast.success(TOAST_MESSAGES.BLOCK.BLOCK_SUCCESS);
-    } catch {
-      toast.error(TOAST_MESSAGES.BLOCK.BLOCK_FAILED);
-    }
-  }, [partnerId, currentUser]);
-
   const handleUnblock = useCallback(async () => {
     if (!partnerId || !currentUser) return;
     try {
@@ -111,6 +100,27 @@ export const useChatBlock = ({
       toast.error(TOAST_MESSAGES.BLOCK.UNBLOCK_FAILED);
     }
   }, [partnerId, currentUser]);
+
+  const handleApplyBlock = useCallback(async (options: BlockOptions) => {
+    if (!partnerId || !currentUser) return;
+    
+    const hasAnyOption = options.blockMessages || 
+                        options.blockCalls || 
+                        options.blockViewMyActivity || 
+                        options.hideTheirActivity;
+    
+    if (!hasAnyOption) {
+      return handleUnblock();
+    }
+
+    try {
+      await userService.blockUser(currentUser.id, partnerId, options);
+      useAuthStore.getState().updateBlockEntry('add', partnerId, options);
+      toast.success(TOAST_MESSAGES.BLOCK.BLOCK_SUCCESS);
+    } catch {
+      toast.error(TOAST_MESSAGES.BLOCK.BLOCK_FAILED);
+    }
+  }, [partnerId, currentUser, handleUnblock]);
 
   return {
     isBlocked,

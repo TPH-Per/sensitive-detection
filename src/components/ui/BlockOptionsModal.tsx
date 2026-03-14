@@ -65,14 +65,23 @@ export const BlockOptionsModal: React.FC<BlockOptionsModalProps> = ({
   onApply,
   onClose,
 }) => {
-  const [options, setOptions] = useState<BlockOptions>({
-    ...DEFAULT_OPTIONS,
-    ...initialOptions,
-  });
-  const [activityExpanded, setActivityExpanded] = useState(
-    !!(initialOptions?.blockViewMyActivity || initialOptions?.hideTheirActivity)
-  );
+  const [options, setOptions] = useState<BlockOptions>(DEFAULT_OPTIONS);
+  const [activityExpanded, setActivityExpanded] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
+  React.useEffect(() => {
+    if (isOpen) {
+      const mergedOptions = {
+        ...DEFAULT_OPTIONS,
+        blockMessages: initialOptions?.blockMessages ?? DEFAULT_OPTIONS.blockMessages,
+        blockCalls: initialOptions?.blockCalls ?? DEFAULT_OPTIONS.blockCalls,
+        blockViewMyActivity: initialOptions?.blockViewMyActivity ?? DEFAULT_OPTIONS.blockViewMyActivity,
+        hideTheirActivity: initialOptions?.hideTheirActivity ?? DEFAULT_OPTIONS.hideTheirActivity,
+      };
+      setOptions(mergedOptions);
+      setActivityExpanded(!!(mergedOptions.blockViewMyActivity || mergedOptions.hideTheirActivity));
+    }
+  }, [isOpen, initialOptions]);
 
   useScrollLock(isOpen);
 
@@ -92,8 +101,6 @@ export const BlockOptionsModal: React.FC<BlockOptionsModalProps> = ({
   };
 
   const handleApply = async () => {
-    const hasAnyOption = Object.values(options).some(Boolean);
-    if (!hasAnyOption) return;
     setIsLoading(true);
     try {
       await onApply(options);
