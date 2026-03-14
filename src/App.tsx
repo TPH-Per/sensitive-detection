@@ -4,8 +4,9 @@ import { useAuthStore } from './store/authStore';
 import { AppLayout } from './components/layout/AppLayout';
 import { ScreenLoader, ToastContainer, ConnectionStatus, ErrorBoundary } from './components/ui';
 import { ReportModal } from './components/ui/ReportModal';
-import { UserStatus } from './types';
 import { AdminLayout } from './components/layout/AdminLayout';
+import { ProtectedRoute } from './components/layout/ProtectedRoute';
+import { useSelfPresence } from './hooks/useSelfPresence';
 import LoginPage from './pages/LoginPage';
 import ChatPage from './pages/ChatPage';
 
@@ -20,72 +21,18 @@ const MobileMenuPage = React.lazy(() => import('./pages/MobileMenuPage'));
 const AdminReportsPage = React.lazy(() => import('./pages/AdminReportsPage'));
 const AdminUsersPage = React.lazy(() => import('./pages/AdminUsersPage'));
 
-const ProtectedRoute: React.FC<{ children: React.ReactNode; requireAdmin?: boolean }> = ({ children, requireAdmin }) => {
-  const { user, isPendingVerification, isInitialized } = useAuthStore();
-
-  if (!isInitialized) {
-    return <ScreenLoader />;
-  }
-
-  if (isPendingVerification) {
-    return <Navigate to="/verify-email" replace />;
-  }
-
-  if (!user) {
-    return <Navigate to="/login" replace />;
-  }
-
-  if (user.status === 'banned') {
-    return <Navigate to="/banned" replace />;
-  }
-
-  if (requireAdmin && user?.role !== 'admin') {
-    return <Navigate to="/" replace />;
-  }
-
-  return <>{children}</>;
-};
-
-import { ref, onValue, onDisconnect, set, serverTimestamp } from 'firebase/database';
-import { rtdb } from './firebase/config';
-
 const App: React.FC = () => {
   const { user } = useAuthStore();
   const initializeAuth = useAuthStore(state => state.initialize);
 
+  // Khởi tạo Auth listener
   useEffect(() => {
     const unsubscribeAuth = initializeAuth();
     return () => unsubscribeAuth();
   }, [initializeAuth]);
 
-  useEffect(() => {
-    if (!user) return;
-
-    const presenceRef = ref(rtdb, `/presence/${user.id}`);
-    const connectedRef = ref(rtdb, '.info/connected');
-
-    const unsubscribeConnected = onValue(connectedRef, (snap) => {
-      if (snap.val() === true) {
-        onDisconnect(presenceRef).set({
-          isOnline: false,
-          lastSeen: serverTimestamp()
-        }).then(() => {
-          set(presenceRef, {
-            isOnline: true,
-            lastSeen: serverTimestamp()
-          });
-        });
-      }
-    });
-
-    return () => {
-      unsubscribeConnected();
-      set(presenceRef, {
-        isOnline: false,
-        lastSeen: serverTimestamp()
-      });
-    };
-  }, [user]);
+  // Quản lý trạng thái Online/Offline của bản thân
+  useSelfPresence(user);
 
   return (
     <ErrorBoundary>
@@ -93,7 +40,6 @@ const App: React.FC = () => {
         <React.Suspense fallback={<ScreenLoader />}>
           <Routes>
             <Route path="/login" element={<LoginPage />} />
-
 
             <Route path="/" element={
               <ProtectedRoute>
@@ -108,7 +54,6 @@ const App: React.FC = () => {
               <Route path="settings" element={<SettingsPage />} />
               <Route path="notifications" element={<NotificationsPage />} />
             </Route>
-
 
             <Route path="/admin" element={
               <ProtectedRoute requireAdmin>

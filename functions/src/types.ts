@@ -1,39 +1,6 @@
-// ========== IMPORTS FROM SHARED ==========
-// Enums và types dùng chung — import từ shared/types.ts
+export * from '../../shared/types';
 
-import {
-  UserStatus,
-  PostStatus,
-  CommentStatus,
-  Visibility,
-  NotificationType,
-  ReportType,
-  ReportReason,
-  ReportStatus,
-  FriendRequestStatus,
-  MessageType,
-  ReactionType,
-  Gender,
-  NotificationPayload,
-} from "../../shared/types";
-
-// Re-export for consumers
-export {
-  UserStatus,
-  PostStatus,
-  CommentStatus,
-  Visibility,
-  NotificationType,
-  ReportType,
-  ReportReason,
-  ReportStatus,
-  FriendRequestStatus,
-  MessageType,
-  ReactionType,
-  Gender,
-};
-
-export type { NotificationPayload };
+import { NotificationType, NotificationPayload } from '../../shared/types';
 
 // ========== BACKEND-SPECIFIC TYPES ==========
 
