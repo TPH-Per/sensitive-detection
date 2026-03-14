@@ -4,7 +4,7 @@ import { Ban, MessageCircle, Phone, Eye, EyeOff, ChevronDown, ChevronRight } fro
 import { Button } from './Button';
 import { IconButton } from './IconButton';
 import { X } from 'lucide-react';
-import { BlockOptions } from '../../types';
+import { BlockOptions } from '../../../shared/types';
 import { useScrollLock } from '../../hooks/utils/useScrollLock';
 
 interface BlockOptionsModalProps {

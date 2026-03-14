@@ -1,6 +1,6 @@
 import React from 'react';
 import { Mail, MapPin, Calendar, User as UserIcon } from 'lucide-react';
-import { User } from '../../types';
+import { User } from '../../../shared/types';
 import { formatDob } from '../../utils/dateUtils';
 
 interface AboutTabProps {

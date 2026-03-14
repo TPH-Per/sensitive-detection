@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import { User, FriendRequest } from '../types';
+import { User, FriendRequest } from '../../shared/types';
 import { userService } from '../services/userService';
 import { friendService } from '../services/friendService';
 import { useLoadingStore } from './loadingStore';
@@ -44,7 +44,7 @@ export const useContactStore = create<ContactState>()(
 
       subscribeToFriends: (userId: string) => {
         useLoadingStore.getState().setLoading('contacts.friends', true);
-        return userService.subscribeToFriends(userId, (friends) => {
+        return friendService.subscribeToFriends(userId, (friends) => {
           set({ friends });
           useLoadingStore.getState().setLoading('contacts.friends', false);
         });

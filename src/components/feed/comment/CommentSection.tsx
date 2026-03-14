@@ -3,7 +3,7 @@ import { X } from 'lucide-react';
 import { Button, ConfirmDialog, UploadProgress } from '../../ui';
 import { CONFIRM_MESSAGES } from '../../../constants';
 import { toast } from '../../../store/toastStore';
-import { Comment, User, ReportType, MediaObject } from '../../../types';
+import { Comment, User, ReportType, MediaObject } from '../../../../shared/types';
 import { postService } from '../../../services/postService';
 import { useCommentStore } from '../../../store/commentStore';
 import { useUserCache } from '../../../store/userCacheStore';

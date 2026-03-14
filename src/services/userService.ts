@@ -19,7 +19,7 @@ import {
 } from 'firebase/firestore';
 import { db, functions } from '../firebase/config';
 import { httpsCallable } from 'firebase/functions';
-import { User, MediaObject, UserRole, UserStatus, BlockOptions, BlockedUserEntry, UserSettings, Visibility, PostType } from '../types';
+import { User, MediaObject, UserRole, UserStatus, BlockOptions, BlockedUserEntry, UserSettings, Visibility, PostType } from '../../shared/types';
 import { postService } from './postService';
 import { SOCIAL_MESSAGES } from '../constants/socialMessages';
 import { batchGetUsers } from '../utils/batchUtils';
@@ -27,18 +27,10 @@ import { compressImage } from '../utils/imageUtils';
 import { withRetry } from '../utils/retryUtils';
 import { uploadWithProgress, ProgressCallback, deleteStorageFile } from '../utils/uploadUtils';
 import { PAGINATION, IMAGE_COMPRESSION } from '../constants';
+import { convertDoc } from '../utils/firebaseUtils';
 
-function convertDocToUser(doc: DocumentSnapshot): User {
-  const data = doc.data();
-  return {
-    ...data,
-    id: doc.id,
-    createdAt: data?.createdAt as Timestamp,
-    updatedAt: data?.updatedAt as Timestamp | undefined,
-    deletedAt: data?.deletedAt as Timestamp | undefined,
-    dob: data?.dob as Timestamp | undefined,
-  } as User;
-}
+// Xử lý document thành đối tượng User
+const userConverter = (doc: DocumentSnapshot) => convertDoc<User>(doc);
 
 export const userService = {
   // Lấy thông tin user
@@ -46,7 +38,7 @@ export const userService = {
     try {
       const userDoc = await getDoc(doc(db, 'users', id));
       if (userDoc.exists()) {
-        return convertDocToUser(userDoc);
+        return userConverter(userDoc);
       }
       return undefined;
     } catch (error) {
@@ -57,50 +49,6 @@ export const userService = {
 
 
 
-  // Lấy danh sách bạn bè
-  getAllFriends: async (currentUserId: string): Promise<User[]> => {
-    try {
-      const snap = await getDocs(collection(db, 'users', currentUserId, 'friends'));
-      const friendIds = snap.docs.map(d => d.id);
-      if (friendIds.length === 0) return [];
-      const friendsMap = await batchGetUsers(friendIds);
-      return Object.values(friendsMap).filter(u => u.status !== 'banned');
-    } catch (error) {
-      console.error("Lỗi lấy danh sách bạn bè", error);
-      return [];
-    }
-  },
-
-  // Theo dõi bạn bè realtime
-  subscribeToFriends: (userId: string, callback: (friends: User[]) => void): (() => void) => {
-    const friendsRef = collection(db, 'users', userId, 'friends');
-    let previousFriendIds: string[] = [];
-
-    return onSnapshot(friendsRef, async (snapshot) => {
-      const friendIds = snapshot.docs.map(d => d.id);
-
-      // Skip fetch khi friendIds chưa thay đổi
-      const isIdsChanged = friendIds.length !== previousFriendIds.length ||
-        !friendIds.every((id) => previousFriendIds.includes(id));
-
-      if (!isIdsChanged && previousFriendIds.length > 0) return;
-      previousFriendIds = friendIds;
-
-      if (friendIds.length === 0) {
-        callback([]);
-        return;
-      }
-
-      try {
-        const friendsMap = await batchGetUsers(friendIds);
-        const friends = Object.values(friendsMap).filter(u => u.status !== 'banned');
-        callback(friends);
-      } catch (error) {
-        console.error("Lỗi fetch friends realtime", error);
-      }
-    });
-  },
-
   searchUsers: async (searchTerm: string, currentUserId: string): Promise<User[]> => {
     try {
       const fn = httpsCallable<{ searchTerm: string; currentUserId: string }, { users: User[] }>(functions, 'searchUsers');
@@ -108,27 +56,6 @@ export const userService = {
       return result.data.users;
     } catch (error) {
       console.error("Lỗi tìm kiếm người dùng", error);
-      return [];
-    }
-  },
-
-  // Tìm kiếm trong danh sách bạn bè
-  searchFriends: async (searchTerm: string, currentUserId: string): Promise<User[]> => {
-    try {
-      const snap = await getDocs(collection(db, 'users', currentUserId, 'friends'));
-      const friendIds = snap.docs.map(d => d.id);
-      if (friendIds.length === 0) return [];
-
-      const friendsMap = await batchGetUsers(friendIds);
-      const friends = Object.values(friendsMap);
-
-      return friends.filter(friend =>
-        friend.status !== 'banned' &&
-        (friend.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          friend.email?.toLowerCase().includes(searchTerm.toLowerCase()))
-      );
-    } catch (error) {
-      console.error("Lỗi tìm kiếm bạn bè", error);
       return [];
     }
   },
@@ -330,7 +257,7 @@ export const userService = {
     const userRef = doc(db, 'users', userId);
     return onSnapshot(userRef, (snapshot) => {
       if (snapshot.exists()) {
-        callback(convertDocToUser(snapshot));
+        callback(userConverter(snapshot));
       }
     });
   },
@@ -352,7 +279,7 @@ export const userService = {
       }
 
       const snapshot = await getDocs(q);
-      const users = snapshot.docs.map(doc => convertDocToUser(doc));
+      const users = snapshot.docs.map(doc => userConverter(doc));
 
       const lastDoc = snapshot.docs[snapshot.docs.length - 1] || null;
       return { users, lastDoc };
@@ -395,7 +322,7 @@ export const userService = {
     );
 
     return onSnapshot(q, (snapshot) => {
-      const users = snapshot.docs.map(doc => convertDocToUser(doc));
+      const users = snapshot.docs.map(doc => userConverter(doc));
       callback(users);
     }, (error) => {
       if (onError) onError(error);

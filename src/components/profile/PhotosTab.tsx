@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback, useRef, useMemo } from 'react';
-import { MessageType } from '../../types';
+import { MessageType } from '../../../shared/types';
 import { postService } from '../../services/postService';
 import { Skeleton, MediaViewer, LazyImage } from '../ui';
 import { Image as ImageIcon, Loader2 } from 'lucide-react';

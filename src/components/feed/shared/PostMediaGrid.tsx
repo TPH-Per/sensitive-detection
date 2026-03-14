@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { ChevronRight, Loader2 } from 'lucide-react';
 import { IconButton, LazyImage, CircularProgressOverlay } from '../../ui';
-import { MediaObject } from '../../../types';
+import { MediaObject } from '../../../../shared/types';
 
 interface MediaItem {
   url: string;

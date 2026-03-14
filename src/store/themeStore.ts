@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { ThemeMode } from '../types';
+import { ThemeMode } from '../../shared/types';
 
 interface ThemeState {
   mode: ThemeMode;

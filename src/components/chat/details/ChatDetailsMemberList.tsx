@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, RtdbConversation, RtdbUserChat } from '../../../types';
+import { User, RtdbConversation, RtdbUserChat } from '../../../../shared/types';
 import { UserAvatar, UserStatusText, Dropdown, DropdownItem, ConfirmDialog, Button, IconButton } from '../../ui';
 import { Crown, Shield, UserPlus, MoreVertical, UserMinus, ShieldPlus, ShieldMinus, LogOut, Lock } from 'lucide-react';
 

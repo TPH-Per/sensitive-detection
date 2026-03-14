@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { rtdbCallService } from '../../services/chat/rtdbCallService';
-import { RtdbCallSignaling } from '../../types';
+import { RtdbCallSignaling } from '../../../shared/types';
 
 interface UseCallSignalingOptions {
   onCallAccepted?: (signal: RtdbCallSignaling) => void;

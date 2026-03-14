@@ -1,6 +1,6 @@
 import { ref, set, get, update, onValue, push, query, orderByChild, equalTo, serverTimestamp, remove } from 'firebase/database';
 import { rtdb } from '../../firebase/config';
-import { RtdbConversation, RtdbUserChat } from '../../types';
+import { RtdbConversation, RtdbUserChat } from '../../../shared/types';
 
 export const rtdbConversationService = {
     /**

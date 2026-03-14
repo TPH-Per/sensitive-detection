@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Post, User } from '../../types';
+import { Post, User } from '../../../shared/types';
 import { PostItem, CreatePost } from '../feed';
 import { ConfirmDialog } from '../ui';
 import { toast } from '../../store/toastStore';

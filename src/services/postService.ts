@@ -17,25 +17,17 @@ import {
   DocumentSnapshot,
 } from 'firebase/firestore';
 import { db } from '../firebase/config';
-import { Post, Visibility, ReactionType, PostStatus, MediaObject, PostType } from '../types';
+import { Post, Visibility, ReactionType, PostStatus, MediaObject, PostType } from '../../shared/types'
 import { chunkArray, batchGetUsers } from '../utils/batchUtils';
 import { userService } from './userService';
 import { PAGINATION, FIREBASE_LIMITS, IMAGE_COMPRESSION } from '../constants';
 import { compressImage, isImageFile } from '../utils/imageUtils';
 import { withRetry } from '../utils/retryUtils';
 import { uploadWithProgress, ProgressCallback, deleteStorageFiles } from '../utils/uploadUtils';
+import { convertDoc, convertDocs } from '../utils/firebaseUtils';
 
-function convertDocToPost(document: DocumentSnapshot): Post {
-  const data = document.data()!;
-  return {
-    ...data,
-    id: document.id,
-    createdAt: data.createdAt as Timestamp,
-    updatedAt: data.updatedAt as Timestamp,
-    editedAt: data.editedAt as Timestamp | undefined,
-    deletedAt: data.deletedAt as Timestamp | undefined,
-  } as Post;
-}
+// Chuyển đổi Firestore document sang Post
+const postConverter = (doc: DocumentSnapshot) => convertDoc<Post>(doc);
 
 // Phân quyền hiển thị
 function getVisibilityFilter(isOwner: boolean, isFriend: boolean): Visibility[] {
@@ -87,7 +79,7 @@ export const postService = {
         );
 
         const postsSnapshot = await getDocs(postsQuery);
-        posts.push(...postsSnapshot.docs.map(convertDocToPost));
+        posts.push(...convertDocs<Post>(postsSnapshot.docs));
       }
 
       posts.sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis());
@@ -149,7 +141,7 @@ export const postService = {
           
           const postUnsub = onSnapshot(doc(db, 'posts', p.id), (postDoc) => {
             if (postDoc.exists()) {
-              const updatedPost = convertDocToPost(postDoc);
+              const updatedPost = postConverter(postDoc);
               callback('update', [updatedPost]);
             }
           });
@@ -167,7 +159,7 @@ export const postService = {
         if (change.type === 'added') {
           const postDoc = await getDoc(doc(db, 'posts', postId));
           if (postDoc.exists() && postDoc.data().status === PostStatus.ACTIVE) {
-            const post = convertDocToPost(postDoc);
+            const post = postConverter(postDoc);
             
             // Kiểm tra xem tác giả có bị chặn ẩn hoạt động không
             const blockedUsersMap = await userService.getBlockedUsers(userId);
@@ -180,7 +172,7 @@ export const postService = {
 
             const postUnsub = onSnapshot(doc(db, 'posts', postId), (updatedPostDoc) => {
               if (updatedPostDoc.exists()) {
-                const updatedPost = convertDocToPost(updatedPostDoc);
+                const updatedPost = postConverter(updatedPostDoc);
                 callback('update', [updatedPost]);
               }
             });
@@ -247,7 +239,7 @@ export const postService = {
       }
 
       const querySnapshot = await getDocs(q);
-      const posts = querySnapshot.docs.map(convertDocToPost);
+      const posts = convertDocs<Post>(querySnapshot.docs);
 
       const lastVisible = querySnapshot.docs[querySnapshot.docs.length - 1] || null;
 
@@ -285,7 +277,7 @@ export const postService = {
       }
 
       unsubscribe = onSnapshot(q, (snapshot) => {
-        const posts = snapshot.docs.map(convertDocToPost);
+        const posts = convertDocs<Post>(snapshot.docs);
 
         callback(posts);
       }, (error) => {

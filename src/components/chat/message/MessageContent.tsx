@@ -1,7 +1,7 @@
 import React from 'react';
 import { FileText, Download, Image as ImageIcon, Play, Pause, Mic, PhoneIncoming, Phone, PhoneMissed, Video } from 'lucide-react';
 
-import { RtdbMessage, MessageType } from '../../../types';
+import { RtdbMessage, MessageType } from '../../../../shared/types';
 import { IconButton, LazyVideo, LazyImage } from '../../ui';
 
 

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Check, CheckCheck } from 'lucide-react';
-import { User } from '../../../types';
+import { User } from '../../../../shared/types';
 import { Avatar } from '../../ui';
 
 interface MessageStatusProps {

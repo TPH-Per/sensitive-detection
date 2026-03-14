@@ -1,6 +1,6 @@
 import React from 'react';
 import { getInitials, getAvatarGradient } from '../../utils';
-import { User, MediaObject } from '../../types';
+import { User, MediaObject } from '../../../shared/types';
 
 interface AvatarProps {
   src?: string | MediaObject;

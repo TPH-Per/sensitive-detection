@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { Comment, ReactionType, CommentStatus } from '../types';
+import { Comment, ReactionType, CommentStatus } from '../../shared/types';
 import { DocumentSnapshot, Timestamp } from 'firebase/firestore';
 import { commentService } from '../services/commentService';
 import { PAGINATION } from '../constants';

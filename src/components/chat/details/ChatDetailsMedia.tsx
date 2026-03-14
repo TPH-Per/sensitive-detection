@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { RtdbMessage, MediaObject } from '../../../types';
+import { RtdbMessage, MediaObject } from '../../../../shared/types';
 import { Image, Film, FileText, Download, ExternalLink } from 'lucide-react';
 import { LazyImage } from '../../ui';
 

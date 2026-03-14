@@ -17,10 +17,11 @@ import {
 } from 'firebase/firestore';
 import { getMessaging, getToken, onMessage } from 'firebase/messaging';
 import { db } from '../firebase/config';
-import type { Notification } from '../types';
-import { NotificationType, ReportReason } from '../types';
+import type { Notification } from '../../shared/types';
+import { NotificationType, ReportReason } from '../../shared/types';
 import { REPORT_CONFIG } from '../constants/appConfig';
 import { getValidatedEnvConfig } from '../utils/validateEnv';
+import { convertDocs } from '../utils/firebaseUtils';
 
 export const notificationService = {
   // Theo dõi thông báo mới nhất.
@@ -33,12 +34,7 @@ export const notificationService = {
     );
 
     return onSnapshot(q, (snapshot) => {
-      const notifications = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-        createdAt: doc.data().createdAt as Timestamp,
-      } as Notification));
-      callback(notifications);
+      callback(convertDocs<Notification>(snapshot.docs));
     });
   },
 
@@ -104,7 +100,7 @@ export const notificationService = {
   requestPushPermission: async (userId: string): Promise<string | null> => {
     try {
       const messaging = getMessaging();
-      const permission = await Notification.requestPermission();
+      const permission = await window.Notification.requestPermission();
 
       if (permission === 'granted') {
         const { firebase } = getValidatedEnvConfig();

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { RtdbMessage, User, FriendStatus, FriendRequest } from '../types';
+import { RtdbMessage, User, FriendStatus, FriendRequest } from '../../shared/types';
 import { useAuthStore } from '../store/authStore';
 import { useRtdbChatStore } from '../store';
 import { useContactStore } from '../store/contactStore';

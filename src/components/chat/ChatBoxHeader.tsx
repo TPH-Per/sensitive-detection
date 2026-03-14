@@ -1,6 +1,6 @@
 import React from 'react';
 import { Phone, Video, Info, ChevronLeft } from 'lucide-react';
-import { RtdbConversation, RtdbUserChat, User } from '../../types';
+import { RtdbConversation, RtdbUserChat, User } from '../../../shared/types';
 import { Avatar, UserAvatar, UserStatusText, IconButton, Button, BannedBadge } from '../ui';
 
 interface ChatBoxHeaderProps {

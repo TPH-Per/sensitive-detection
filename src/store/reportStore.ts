@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { ReportType, ReportReason, Report, MediaObject } from '../types';
+import { ReportType, ReportReason, Report, MediaObject } from '../../shared/types';
 import { reportService } from '../services/reportService';
 import { userService } from '../services/userService';
 import { useAuthStore } from './authStore';

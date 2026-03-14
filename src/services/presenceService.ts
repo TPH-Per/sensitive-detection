@@ -8,7 +8,7 @@ import {
     get
 } from 'firebase/database';
 import { presenceRef, presencesRef } from '../firebase/rtdb';
-import { RtdbPresence } from '../types';
+import { RtdbPresence } from '../../shared/types';
 
 export const presenceService = {
     /**

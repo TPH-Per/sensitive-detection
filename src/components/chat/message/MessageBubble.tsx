@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom';
 import { Smile, Check, CheckCheck } from 'lucide-react';
 
-import { RtdbMessage, User, MessageType } from '../../../types';
+import { RtdbMessage, User, MessageType } from '../../../../shared/types';
 import {
   Avatar,
   UserAvatar,

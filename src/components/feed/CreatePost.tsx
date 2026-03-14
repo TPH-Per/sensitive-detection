@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { Image as ImageIcon, Video } from 'lucide-react';
 import { PostModal } from './modals/PostModal';
-import { User, Visibility, MediaObject } from '../../types';
+import { User, Visibility, MediaObject } from '../../../shared/types';
 import { Avatar, Button, Skeleton } from '../ui';
 import { usePostStore } from '../../store/postStore';
 import { postService } from '../../services/postService';

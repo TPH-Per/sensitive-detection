@@ -1,7 +1,8 @@
-import { getDocs, query, collection, where, documentId, Timestamp } from 'firebase/firestore';
+import { getDocs, query, collection, where, documentId } from 'firebase/firestore';
 import { db } from '../firebase/config';
-import { User } from '../types';
+import { User } from '../../shared/types';
 import { FIREBASE_LIMITS } from '../constants/appConfig';
+import { convertDocs } from './firebaseUtils';
 
 export const chunkArray = <T,>(array: T[], size: number): T[][] => {
   const chunks: T[][] = [];
@@ -25,12 +26,7 @@ export const batchGetUsers = async (userIds: string[]): Promise<Record<string, U
           where(documentId(), 'in', chunk)
         );
         const snapshot = await getDocs(q);
-        return snapshot.docs.map(doc => ({
-          ...doc.data(),
-          id: doc.id,
-          createdAt: doc.data().createdAt as Timestamp,
-          dob: doc.data().dob as Timestamp | undefined,
-        })) as User[];
+        return convertDocs<User>(snapshot.docs);
       })
     );
 

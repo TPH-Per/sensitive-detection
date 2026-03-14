@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { Modal, UserAvatar, Skeleton } from './index';
-import { User, ReactionType } from '../../types';
+import { User, ReactionType } from '../../../shared/types';
 import { batchGetUsers } from '../../utils/batchUtils';
 import { getReactionIcon } from '../chat/reactions/ReactionIcons';
 import { collection, getDocs } from 'firebase/firestore';

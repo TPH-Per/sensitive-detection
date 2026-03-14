@@ -1,8 +1,8 @@
 import React, { useRef, useState } from 'react';
 import { Users, MessageCircle, UserPlus, UserCheck, Edit, Trash2, Pencil, Settings, MoreHorizontal, Flag, Ban } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { User, ReportType } from '../../types';
-import { FriendStatus } from '../../types';
+import { User, ReportType } from '../../../shared/types';
+import { FriendStatus } from '../../../shared/types';
 import { UserAvatar, Button, Dropdown, DropdownItem, ImageCropper, LazyImage, CircularProgress } from '../ui';
 import { toast } from '../../store/toastStore';
 import { Image as ImageIcon } from 'lucide-react';

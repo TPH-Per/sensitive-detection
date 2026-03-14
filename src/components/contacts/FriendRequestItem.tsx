@@ -2,7 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Check, X, Clock } from 'lucide-react';
 import { UserAvatar, Button } from '../ui';
-import { FriendRequest, User } from '../../types';
+import { FriendRequest, User } from '../../../shared/types';
 import { formatRelativeTime } from '../../utils/dateUtils';
 
 interface FriendRequestItemProps {

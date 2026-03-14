@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Check, Loader2, UserPlus, Users } from 'lucide-react';
-import { User, RtdbConversation, RtdbUserChat } from '../../../types';
+import { User, RtdbConversation, RtdbUserChat } from '../../../../shared/types';
 import { userService } from '../../../services/userService';
+import { friendService } from '../../../services/friendService';
 import { Modal, Input, Button, Avatar, UserAvatar } from '../../ui';
 import { GROUP_LIMITS } from '../../../constants';
 import { toast } from '../../../store/toastStore';
@@ -41,7 +42,7 @@ export const AddMemberModal: React.FC<AddMemberModalProps> = ({
   const loadFriends = async () => {
     setIsLoading(true);
     try {
-      const friendsList = await userService.getAllFriends(currentUserId);
+      const friendsList = await friendService.getAllFriends(currentUserId);
       // Chỉ hiển thị bạn bè chưa có trong nhóm
       const availableFriends = friendsList.filter(
         f => !existingMemberIds.includes(f.id)

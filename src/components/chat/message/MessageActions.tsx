@@ -1,7 +1,7 @@
 import React from 'react';
 import { MoreVertical, Reply, Forward, RotateCcw, Edit2, Trash2 } from 'lucide-react';
 
-import { RtdbMessage, MessageType } from '../../../types';
+import { RtdbMessage, MessageType } from '../../../../shared/types';
 import { IconButton, Dropdown, DropdownItem } from '../../ui';
 
 interface MessageActionsProps {

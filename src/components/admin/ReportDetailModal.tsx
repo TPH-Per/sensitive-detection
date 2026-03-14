@@ -11,7 +11,7 @@ import {
   ChevronLeft,
   ChevronRight
 } from 'lucide-react';
-import { Report, ReportStatus, ReportType, User, Post, Comment, PostStatus, CommentStatus } from '../../types';
+import { Report, ReportStatus, ReportType, User, Post, Comment, PostStatus, CommentStatus } from '../../../shared/types';
 import { reportService } from '../../services/reportService';
 import { userService } from '../../services/userService';
 import { postService } from '../../services/postService';

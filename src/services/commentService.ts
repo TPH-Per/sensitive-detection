@@ -20,23 +20,16 @@ import {
   onSnapshot
 } from 'firebase/firestore';
 import { db } from '../firebase/config';
-import { Comment, ReactionType, CommentStatus, MediaObject } from '../types';
+import { Comment, ReactionType, CommentStatus, MediaObject } from '../../shared/types'
 import { PAGINATION, IMAGE_COMPRESSION } from '../constants';
 import { batchGetUsers } from '../utils/batchUtils';
 import { compressImage } from '../utils/imageUtils';
 import { uploadWithProgress } from '../utils/uploadUtils';
 import { withRetry } from '../utils/retryUtils';
-function convertDocToComment(docSnap: DocumentSnapshot | QueryDocumentSnapshot<DocumentData>): Comment {
-  const data = docSnap.data();
-  return {
-    ...data,
-    id: docSnap.id,
-    createdAt: data?.createdAt as Timestamp,
-    updatedAt: data?.updatedAt as Timestamp,
-    editedAt: data?.editedAt as Timestamp | undefined,
-    deletedAt: data?.deletedAt as Timestamp | undefined,
-  } as Comment;
-}
+import { convertDoc, convertDocs } from '../utils/firebaseUtils';
+
+// Chuyển đổi document sang đối tượng Comment
+const commentConverter = (doc: DocumentSnapshot | QueryDocumentSnapshot<DocumentData>) => convertDoc<Comment>(doc);
 
 export const commentService = {
   generateCommentId: () => {
@@ -66,8 +59,7 @@ export const commentService = {
       const authorIds = [...new Set(snapshot.docs.map(d => d.data().authorId))];
       const usersMap = await batchGetUsers(authorIds);
 
-      const comments = docsToProcess
-        .map(convertDocToComment)
+      const comments = convertDocs<Comment>(docsToProcess)
         .filter(c => !blockedUserIds.includes(c.authorId) && usersMap[c.authorId]?.status !== 'banned');
 
       return {
@@ -104,8 +96,7 @@ export const commentService = {
       const authorIds = [...new Set(snapshot.docs.map(d => d.data().authorId))];
       const usersMap = await batchGetUsers(authorIds);
 
-      const replies = docsToProcess
-        .map(convertDocToComment)
+      const replies = convertDocs<Comment>(docsToProcess)
         .filter(c => !blockedUserIds.includes(c.authorId) && usersMap[c.authorId]?.status !== 'banned');
 
       return {
@@ -292,8 +283,7 @@ export const commentService = {
         const hasMore = snapshot.docs.length > limitCount;
         const docsToProcess = hasMore ? snapshot.docs.slice(0, limitCount) : snapshot.docs;
 
-        const comments = docsToProcess
-          .map(convertDocToComment)
+        const comments = convertDocs<Comment>(docsToProcess)
           .filter(c => !blockedUserIds.includes(c.authorId) && usersMap[c.authorId]?.status !== 'banned');
 
         callback('initial', {
@@ -309,7 +299,7 @@ export const commentService = {
       const changeUsersMap = await batchGetUsers(changeUserIds);
 
       for (const change of changes) {
-        const comment = convertDocToComment(change.doc);
+        const comment = commentConverter(change.doc);
         if (blockedUserIds.includes(comment.authorId) || changeUsersMap[comment.authorId]?.status === 'banned') continue;
 
         if (change.type === 'added') {
@@ -356,7 +346,7 @@ export const commentService = {
         const docsToProcess = hasMore ? snapshot.docs.slice(0, limitCount) : snapshot.docs;
 
         const replies = docsToProcess
-          .map(convertDocToComment)
+          .map(commentConverter)
           .filter(c => !blockedUserIds.includes(c.authorId) && usersMap[c.authorId]?.status !== 'banned');
 
         callback('initial', {
@@ -368,7 +358,7 @@ export const commentService = {
       }
 
       snapshot.docChanges().forEach(change => {
-        const reply = convertDocToComment(change.doc);
+        const reply = commentConverter(change.doc);
         if (blockedUserIds.includes(reply.authorId)) return;
 
         if (change.type === 'added') {

@@ -11,7 +11,7 @@ import {
   Search,
   Filter
 } from 'lucide-react';
-import { ReportStatus, ReportType } from '../../types';
+import { ReportStatus, ReportType } from '../../../shared/types';
 import { Button, UserAvatar, Skeleton, Select } from '../ui';
 import { REPORT_CONFIG } from '../../constants';
 import { formatRelativeTime } from '../../utils/dateUtils';

@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { User } from '../../types';
+import { User } from '../../../shared/types';
 
 interface UseMentionsProps {
   inputText: string;

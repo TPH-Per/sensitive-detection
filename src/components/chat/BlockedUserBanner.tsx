@@ -1,7 +1,7 @@
 import React from 'react';
 import { Ban, Settings2 } from 'lucide-react';
 import { Button } from '../ui';
-import { BlockOptions } from '../../types';
+import { BlockOptions } from '../../../shared/types';
 
 interface BlockedUserBannerProps {
   partnerName: string;

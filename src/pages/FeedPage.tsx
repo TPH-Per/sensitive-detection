@@ -5,7 +5,7 @@ import { postService } from '../services/postService';
 import { useAuthStore } from '../store/authStore';
 import { usePostStore } from '../store/postStore';
 import { useLoadingStore } from '../store/loadingStore';
-import { Visibility } from '../types';
+import { Visibility } from '../../shared/types';
 import { useFeed } from '../hooks';
 import { ConfirmDialog } from '../components/ui';
 

@@ -1,5 +1,5 @@
 import { StateCreator } from 'zustand';
-import { MediaObject } from '../../types';
+import { MediaObject } from '../../../shared/types';
 import { rtdbGroupService } from '../../services/chat/rtdbGroupService';
 import { useAuthStore } from '../authStore';
 import { RtdbConversationSlice } from './rtdbConversationSlice';

@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo } from 'react';
-import { User } from '../../types';
+import { User } from '../../../shared/types';
 import { Avatar } from './Avatar';
 import { usePresence } from '../../hooks/usePresence';
 import { useAuthStore } from '../../store/authStore';

@@ -6,7 +6,7 @@ import { Modal } from './Modal';
 import { Button } from './Button';
 import { TextArea } from './TextArea';
 import { Checkbox } from './Checkbox';
-import { ReportReason, ReportType } from '../../types';
+import { ReportReason, ReportType } from '../../../shared/types';
 import { useReportStore } from '../../store/reportStore';
 import { useAuthStore } from '../../store/authStore';
 import { toast } from '../../store/toastStore';

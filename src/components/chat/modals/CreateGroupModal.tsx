@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { X, Search, Users, Camera, Check, Loader2, Crown } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { User } from '../../../types';
+import { User } from '../../../../shared/types';
 import { userService } from '../../../services/userService';
+import { friendService } from '../../../services/friendService';
 import { useAuthStore } from '../../../store/authStore';
 import { Modal, Input, Button, Avatar, UserAvatar, IconButton, ImageCropper } from '../../ui';
 import { groupSchema, GroupFormValues } from '../../../utils/validation';
@@ -68,7 +69,7 @@ export const CreateGroupModal: React.FC<CreateGroupModalProps> = ({
   const loadFriends = async () => {
     setIsLoading(true);
     try {
-      const friendsList = await userService.getAllFriends(currentUserId);
+      const friendsList = await friendService.getAllFriends(currentUserId);
       setFriends(friendsList);
     } catch (error) {
       console.error('Lỗi load friends', error);

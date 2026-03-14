@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ChevronDown, ChevronRight, Ellipsis, Flag, PenTool, Pencil, Trash2 } from 'lucide-react';
 import { UserAvatar, LazyImage, Skeleton, ReactionSelector, ReactionDisplay, ReactionDetailsModal, Dropdown, DropdownItem } from '../../ui';
 import { CommentInput } from './CommentInput';
-import { Comment, User, ReactionType, ReportType, MediaObject } from '../../../types';
+import { Comment, User, ReactionType, ReportType, MediaObject } from '../../../../shared/types';
 import { formatRelativeTime, formatDateTime } from '../../../utils/dateUtils';
 import { TruncatedText } from '../shared';
 import { useCommentStore } from '../../../store/commentStore';

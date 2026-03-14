@@ -1,6 +1,6 @@
 import { ref, set, get, update, push, query, orderByChild, limitToLast, endBefore, onChildAdded, onChildChanged, off, increment } from 'firebase/database';
 import { rtdb } from '../../firebase/config';
-import { RtdbMessage, RtdbConversation, MessageType, MediaObject } from '../../types';
+import { RtdbMessage, RtdbConversation, MessageType, MediaObject } from '../../../shared/types';
 import { TIME_LIMITS, IMAGE_COMPRESSION } from '../../constants';
 import { compressImage } from '../../utils/imageUtils';
 import { withRetry } from '../../utils/retryUtils';

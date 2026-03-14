@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { User, MediaObject } from '../../types';
+import { User, MediaObject } from '../../../shared/types';
 import { useAuthStore } from '../../store/authStore';
 import { userService } from '../../services/userService';
 import { useUserCache } from '../../store/userCacheStore';

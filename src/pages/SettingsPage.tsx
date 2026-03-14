@@ -20,7 +20,7 @@ import { useAuthStore } from '../store/authStore';
 import { useThemeStore } from '../store/themeStore';
 import { useUserCache } from '../store/userCacheStore';
 import { useLoadingStore } from '../store/loadingStore';
-import { User, BlockOptions, UserSettings, Visibility, BlockedUserEntry } from '../types';
+import { User, BlockOptions, UserSettings, Visibility, BlockedUserEntry } from '../../shared/types';
 import { usePostStore } from '../store/postStore';
 import { UserAvatar, ConfirmDialog, Button, Skeleton, BlockOptionsModal, Dropdown, DropdownItem } from '../components/ui';
 import { CONFIRM_MESSAGES } from '../constants';

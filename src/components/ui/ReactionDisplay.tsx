@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { ReactionType } from '../../types';
+import { ReactionType } from '../../../shared/types';
 import { getReactionIcon } from '../chat/reactions/ReactionIcons';
 
 interface ReactionDisplayProps {

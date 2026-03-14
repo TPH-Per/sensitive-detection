@@ -3,7 +3,7 @@ import { MoreHorizontal, Edit, Trash2, Flag } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { formatRelativeTime, formatDateTime } from '../../utils/dateUtils';
 import { UserAvatar, Skeleton, Dropdown, DropdownItem, IconButton } from '../ui';
-import { Post, PostStatus, Visibility, PostType, User, ReportType, ReactionType } from '../../types';
+import { Post, PostStatus, Visibility, PostType, User, ReportType, ReactionType } from '../../../shared/types';
 import { useReportStore } from '../../store/reportStore';
 import { usePostStore } from '../../store/postStore';
 import { useFriendIds, useFilteredReactions } from '../../hooks';

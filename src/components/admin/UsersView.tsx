@@ -9,7 +9,7 @@ import {
   Plus,
   Shield
 } from 'lucide-react';
-import { User, UserStatus } from '../../types';
+import { User, UserStatus } from '../../../shared/types';
 import { userService } from '../../services/userService';
 import { functions } from '../../firebase/config';
 import { httpsCallable } from 'firebase/functions';

@@ -1,9 +1,9 @@
-﻿import React, { useState } from 'react';
-import { RtdbConversation, RtdbUserChat } from '../../../types';
+import React, { useState } from 'react';
+import { RtdbConversation, RtdbUserChat } from '../../../../shared/types';
 import { Bell, BellOff, Pin, PinOff, Trash2, ChevronRight, Ban, UserCheck, LogOut, Edit3, User as UserIcon, Flag } from 'lucide-react';
 import { ConfirmDialog, Button } from '../../ui';
 import { useReportStore } from '../../../store/reportStore';
-import { ReportType, User } from '../../../types';
+import { ReportType, User } from '../../../../shared/types';
 import { CONFIRM_MESSAGES } from '../../../constants/confirmMessages';
 import { Archive as ArchiveIcon } from 'lucide-react';
 import { useConversationMemberSettings } from '../../../hooks/chat/useConversationMemberSettings';
@@ -51,14 +51,14 @@ export const ChatDetailsActions: React.FC<ChatDetailsActionsProps> = ({
   const isCreator = isGroup && conversation.data.creatorId === currentUserId;
   const isDisbandAction = isGroup && isCreator;
 
-  // Xác định các actions dựa trên loại conversation
+  // X�c d?nh c�c actions d?a tr�n lo?i conversation
   const actions = [];
 
-  // Mute/Unmute - cho cả group và 1-1
+  // Mute/Unmute - cho c? group v� 1-1
   const isMuted = memberSettings?.isMuted || false;
   actions.push({
     icon: isMuted ? <Bell size={20} /> : <BellOff size={20} />,
-    label: isMuted ? 'Bật thông báo' : 'Tắt thông báo',
+    label: isMuted ? 'B?t th�ng b�o' : 'T?t th�ng b�o',
     onClick: onToggleMute,
     variant: 'default' as const,
   });
@@ -66,7 +66,7 @@ export const ChatDetailsActions: React.FC<ChatDetailsActionsProps> = ({
   // Pin/Unpin
   actions.push({
     icon: memberSettings?.isPinned ? <PinOff size={20} /> : <Pin size={20} />,
-    label: memberSettings?.isPinned ? 'Bỏ ghim' : 'Ghim cuộc trò chuyện',
+    label: memberSettings?.isPinned ? 'B? ghim' : 'Ghim cu?c tr� chuy?n',
     onClick: onTogglePin,
     variant: 'default' as const,
   });
@@ -75,37 +75,37 @@ export const ChatDetailsActions: React.FC<ChatDetailsActionsProps> = ({
   if (onToggleArchive) {
     actions.push({
       icon: <ArchiveIcon size={20} />,
-      label: memberSettings?.isArchived ? 'Bỏ lưu trữ' : 'Lưu trữ cuộc trò chuyện',
+      label: memberSettings?.isArchived ? 'B? luu tr?' : 'Luu tr? cu?c tr� chuy?n',
       onClick: onToggleArchive,
       variant: 'default' as const,
     });
   }
 
-  // Đổi tên/ảnh nhóm — mọi thành viên đều có quyền
+  // �?i t�n/?nh nh�m � m?i th�nh vi�n d?u c� quy?n
   if (isGroup && onEditGroup) {
     actions.push({
       icon: <Edit3 size={20} />,
-      label: 'Chỉnh sửa nhóm',
+      label: 'Ch?nh s?a nh�m',
       onClick: onEditGroup,
       variant: 'default' as const,
     });
   }
 
-  // Xem trang cá nhân - chỉ cho chat 1-1
+  // Xem trang c� nh�n - ch? cho chat 1-1
   if (!isGroup && onViewProfile) {
     actions.push({
       icon: <UserIcon size={20} />,
-      label: 'Xem trang cá nhân',
+      label: 'Xem trang c� nh�n',
       onClick: onViewProfile,
       variant: 'default' as const,
     });
   }
 
-  // Block - chỉ cho chat 1-1
+  // Block - ch? cho chat 1-1
   if (!isGroup) {
     actions.push({
       icon: isBlocked ? <UserCheck size={20} /> : <Ban size={20} />,
-      label: isBlocked ? 'Bỏ chặn người dùng' : 'Chặn người dùng',
+      label: isBlocked ? 'B? ch?n ngu?i d�ng' : 'Ch?n ngu?i d�ng',
       onClick: onToggleBlock,
       variant: 'danger' as const,
     });
@@ -115,28 +115,28 @@ export const ChatDetailsActions: React.FC<ChatDetailsActionsProps> = ({
     if (partnerId) {
       actions.push({
         icon: <Flag size={20} />,
-        label: 'Báo cáo người dùng',
+        label: 'B�o c�o ngu?i d�ng',
         onClick: () => openReportModal(ReportType.USER, partnerId, partnerId),
         variant: 'danger' as const,
       });
     }
   }
 
-  // Leave group - cho group (không phải creator)
+  // Leave group - cho group (kh�ng ph?i creator)
   if (isGroup && onLeaveGroup) {
     actions.push({
       icon: <LogOut size={20} />,
-      label: 'Rời khỏi nhóm',
+      label: 'R?i kh?i nh�m',
       onClick: () => setShowLeaveConfirm(true),
       variant: 'danger' as const,
     });
   }
 
-  // Delete - cho phép mọi thành viên xóa lịch sử hội thoại
+  // Delete - cho ph�p m?i th�nh vi�n x�a l?ch s? h?i tho?i
   if (onDelete) {
     actions.push({
       icon: <Trash2 size={20} />,
-      label: isDisbandAction ? 'Giải tán nhóm' : 'Xóa cuộc trò chuyện',
+      label: isDisbandAction ? 'Gi?i t�n nh�m' : 'X�a cu?c tr� chuy?n',
       onClick: () => setShowDeleteConfirm(true),
       variant: 'danger' as const,
     });
@@ -145,7 +145,7 @@ export const ChatDetailsActions: React.FC<ChatDetailsActionsProps> = ({
   return (
     <div className="py-4 border-t border-border-light">
       <h3 className="px-4 text-sm font-semibold text-text-secondary mb-2">
-        Tùy chọn
+        T�y ch?n
       </h3>
 
       <div className="space-y-1">

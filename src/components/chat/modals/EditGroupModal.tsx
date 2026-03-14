@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { X, Camera, Loader2, Users } from 'lucide-react';
-import { RtdbConversation, RtdbUserChat, MediaObject } from '../../../types';
+import { RtdbConversation, RtdbUserChat, MediaObject } from '../../../../shared/types';
 import { Modal, Input, Button, Avatar, IconButton, ImageCropper } from '../../ui';
 import { toast } from '../../../store/toastStore';
 import { TOAST_MESSAGES } from '../../../constants';

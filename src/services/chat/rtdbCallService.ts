@@ -1,6 +1,6 @@
 import { ref, set, get, update, remove, onValue, off } from 'firebase/database';
 import { rtdb } from '../../firebase/config';
-import { RtdbCallSignaling } from '../../types';
+import { RtdbCallSignaling } from '../../../shared/types';
 
 export const rtdbCallService = {
     /**

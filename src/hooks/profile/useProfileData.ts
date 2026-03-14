@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { User } from '../../types';
+import { User } from '../../../shared/types';
 import { useFriendIds } from '../utils';
 import { userService } from '../../services/userService';
 import { postService } from '../../services/postService';

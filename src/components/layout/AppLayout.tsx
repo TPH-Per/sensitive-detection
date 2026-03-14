@@ -7,7 +7,7 @@ import { useRtdbChatStore } from '../../store';
 import { useContactStore } from '../../store/contactStore';
 import { useLoadingStore } from '../../store/loadingStore';
 import { Avatar, UserAvatar, ConfirmDialog, Button, IconButton, ScreenLoader } from '../ui';
-import { Post, Visibility, ReactionType } from '../../types';
+import { Post, Visibility, ReactionType } from '../../../shared/types';
 import { PostViewModal } from '../feed';
 import { usePostStore } from '../../store/postStore';
 import { useUserCache } from '../../store/userCacheStore';

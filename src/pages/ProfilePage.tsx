@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, Gender, ReactionType } from '../types';
+import { User, Gender, ReactionType } from '../../shared/types';
 import { useAuthStore } from '../store/authStore';
 import { Button, ConfirmDialog, BlockOptionsModal } from '../components/ui';
 import { CONFIRM_MESSAGES } from '../constants';

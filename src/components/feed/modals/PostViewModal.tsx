@@ -2,7 +2,7 @@ import React, { useState, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { X, ChevronLeft, ChevronRight, MoreHorizontal, Edit, Trash2, Flag } from 'lucide-react';
 import { UserAvatar, IconButton, Modal, Dropdown, DropdownItem, Skeleton, ReactionDetailsModal } from '../../ui';
-import { Post, User, ReportType, ReactionType } from '../../../types';
+import { Post, User, ReportType, ReactionType } from '../../../../shared/types';
 import { CommentSection } from '../comment/CommentSection';
 import { formatRelativeTime, formatDateTime } from '../../../utils/dateUtils';
 import { useReportStore } from '../../../store/reportStore';

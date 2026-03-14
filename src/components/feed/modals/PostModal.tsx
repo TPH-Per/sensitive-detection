@@ -5,7 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { UserAvatar, Button, EmojiPicker, Select, Modal, IconButton, ConfirmDialog } from '../../ui';
 import { toast } from '../../../store/toastStore';
 import { validateFileSize } from '../../../utils';
-import { User, Post, Visibility, MediaObject } from '../../../types';
+import { User, Post, Visibility, MediaObject } from '../../../../shared/types';
 import { postSchema, PostFormValues } from '../../../utils/validation';
 import { insertTextAtCursor } from '../../../utils/uiUtils';
 import { useAutoResizeTextarea } from '../../../hooks/utils';

@@ -16,11 +16,11 @@ import {
 } from 'firebase/firestore';
 import { db, functions } from '../firebase/config';
 import { httpsCallable } from 'firebase/functions';
-import { Report, ReportType, ReportStatus, MediaObject } from '../types';
-import { PAGINATION } from '../constants';
+import { Report, ReportType, ReportStatus, MediaObject } from '../../shared/types';
+import { PAGINATION, IMAGE_COMPRESSION } from '../constants';
 import { uploadWithProgress, ProgressCallback } from '../utils/uploadUtils';
 import { compressImage } from '../utils/imageUtils';
-import { IMAGE_COMPRESSION } from '../constants';
+import { convertDoc, convertDocs } from '../utils/firebaseUtils';
 
 export const reportService = {
   /** Upload ảnh bằng chứng cho báo cáo (tối đa 5 ảnh) */
@@ -119,11 +119,7 @@ export const reportService = {
         limit(limitCount)
       );
       const snapshot = await getDocs(q);
-      return snapshot.docs.map(docSnap => ({
-        id: docSnap.id,
-        ...docSnap.data(),
-        createdAt: docSnap.data().createdAt as Timestamp
-      })) as Report[];
+      return convertDocs<Report>(snapshot.docs);
     } catch (error) {
       console.error("Lỗi lấy báo cáo:", error);
       return [];
@@ -139,12 +135,7 @@ export const reportService = {
         limit(limitCount)
       );
       const snapshot = await getDocs(q);
-      return snapshot.docs.map(docSnap => ({
-        id: docSnap.id,
-        ...docSnap.data(),
-        createdAt: docSnap.data().createdAt as Timestamp,
-        resolvedAt: docSnap.data().resolvedAt as Timestamp | undefined
-      })) as Report[];
+      return convertDocs<Report>(snapshot.docs);
     } catch (error) {
       console.error("Lỗi lấy báo cáo:", error);
       return [];
@@ -169,13 +160,7 @@ export const reportService = {
     const q = query(collection(db, 'reports'), ...constraints);
 
     return onSnapshot(q, (snapshot) => {
-      const reports = snapshot.docs.map(docSnap => ({
-        id: docSnap.id,
-        ...docSnap.data(),
-        createdAt: docSnap.data().createdAt as Timestamp,
-        resolvedAt: docSnap.data().resolvedAt as Timestamp | undefined
-      })) as Report[];
-      callback(reports);
+      callback(convertDocs<Report>(snapshot.docs));
     });
   },
 
@@ -214,13 +199,7 @@ export const reportService = {
     try {
       const reportSnap = await getDoc(doc(db, 'reports', reportId));
       if (!reportSnap.exists()) return null;
-
-      return {
-        id: reportSnap.id,
-        ...reportSnap.data(),
-        createdAt: reportSnap.data().createdAt as Timestamp,
-        resolvedAt: reportSnap.data().resolvedAt as Timestamp | undefined
-      } as Report;
+      return convertDoc<Report>(reportSnap);
     } catch (error) {
       console.error("Lỗi lấy báo cáo:", error);
       return null;

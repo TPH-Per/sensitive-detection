@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Pin, VolumeX, Trash2, MoreVertical, Ban, Archive, MailCheck, Mail, Volume2, User as UserIcon } from 'lucide-react';
-import { RtdbConversation, RtdbUserChat, ReactionType } from '../../../types';
+import { RtdbConversation, RtdbUserChat, ReactionType } from '../../../../shared/types';
 import { Dropdown, DropdownItem, ConfirmDialog, UserAvatar, IconButton, BannedBadge } from '../../ui';
 import { useConversationItem } from '../../../hooks/chat/useConversationItem';
 import { useConversationMemberSettings } from '../../../hooks/chat/useConversationMemberSettings';

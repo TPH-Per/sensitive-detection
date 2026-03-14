@@ -1,5 +1,5 @@
 import { useRef, useEffect, useState, useCallback } from 'react';
-import { RtdbMessage } from '../../types';
+import { RtdbMessage } from '../../../shared/types';
 
 interface UseChatScrollProps {
   messages: Array<{ id: string; data: RtdbMessage }>;

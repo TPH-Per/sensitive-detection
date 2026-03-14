@@ -1,5 +1,5 @@
 import { getValidatedEnvConfig } from '../utils/validateEnv';
-import { ReactionType } from '../types';
+import { ReactionType } from '../../shared/types';
 
 // Phân trang
 export const PAGINATION = {

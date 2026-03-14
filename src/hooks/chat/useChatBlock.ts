@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { User, RtdbConversation, BlockOptions } from '../../types';
+import { User, RtdbConversation, BlockOptions } from '../../../shared/types';
 import { userService } from '../../services/userService';
 import { useUserCache } from '../../store/userCacheStore';
 import { useAuthStore } from '../../store/authStore';

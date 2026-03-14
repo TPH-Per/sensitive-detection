@@ -9,7 +9,7 @@ import { commentSchema, CommentFormValues } from '../../../utils/validation';
 import { insertTextAtCursor } from '../../../utils/uiUtils';
 import { useAutoResizeTextarea } from '../../../hooks/utils';
 import { MEDIA_CONSTRAINTS } from '../../../constants';
-import { MediaObject } from '../../../types';
+import { MediaObject } from '../../../../shared/types';
 
 interface CommentInputProps {
   user: {

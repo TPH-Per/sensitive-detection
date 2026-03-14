@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Search, Send } from 'lucide-react';
 import { Modal, Avatar, UserAvatar, Input, Button } from '../../ui';
-import { RtdbMessage, RtdbConversation, User, RtdbUserChat } from '../../../types';
+import { RtdbMessage, RtdbConversation, User, RtdbUserChat } from '../../../../shared/types';
 import { useRtdbChatStore } from '../../../store';
 import { useConversationParticipants } from '../../../hooks/chat/useConversationParticipants';
 

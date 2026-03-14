@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { presenceService } from '../services/presenceService';
-import { RtdbPresence } from '../types';
+import { RtdbPresence } from '../../shared/types';
 
 interface PresenceState {
   presenceMap: Record<string, RtdbPresence>;

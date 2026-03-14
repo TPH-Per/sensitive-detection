@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { User } from '../types';
+import { User } from '../../shared/types';
 import { useAuthStore } from '../store/authStore';
 import { userService } from '../services/userService';
 import { rtdbConversationService } from '../services/chat/rtdbConversationService';

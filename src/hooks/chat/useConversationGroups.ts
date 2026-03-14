@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { RtdbConversation, RtdbUserChat } from '../../types';
+import { RtdbConversation, RtdbUserChat } from '../../../shared/types';
 import { useRtdbChatStore } from '../../store';
 
 interface UseConversationGroupsProps {

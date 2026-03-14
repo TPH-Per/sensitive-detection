@@ -1,7 +1,7 @@
 import React from 'react';
 import { Trash2, Shield } from 'lucide-react';
 import { formatRelativeTime, formatDateTime } from '../../utils/dateUtils';
-import { Notification, NotificationType } from '../../types';
+import { Notification, NotificationType } from '../../../shared/types';
 import { UserAvatar, Button, Skeleton } from '../ui';
 import { notificationService } from '../../services/notificationService';
 import { useNavigate } from 'react-router-dom';

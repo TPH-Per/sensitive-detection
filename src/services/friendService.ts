@@ -7,16 +7,18 @@ import {
   where,
   orderBy,
   deleteDoc,
-  Timestamp,
   addDoc,
   onSnapshot,
   writeBatch,
   serverTimestamp
 } from 'firebase/firestore';
 import { db } from '../firebase/config';
-import { FriendRequest, FriendRequestStatus } from '../types';
+import { FriendRequest, FriendRequestStatus, User } from '../../shared/types';
+import { convertDoc, convertDocs } from '../utils/firebaseUtils';
+import { batchGetUsers } from '../utils/batchUtils';
 
 export const friendService = {
+  // Kiểm tra yêu cầu kết bạn đang chờ
   checkFriendRequestExists: async (senderId: string, receiverId: string): Promise<boolean> => {
     try {
       const q = query(
@@ -104,12 +106,7 @@ export const friendService = {
       );
 
       const querySnapshot = await getDocs(q);
-      return querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-        createdAt: doc.data().createdAt as Timestamp,
-        updatedAt: doc.data().updatedAt as Timestamp | undefined
-      } as FriendRequest));
+      return convertDocs<FriendRequest>(querySnapshot.docs);
     } catch (error) {
       console.error("Lỗi lấy lời mời kết bạn", error);
       return [];
@@ -125,13 +122,7 @@ export const friendService = {
     );
 
     return onSnapshot(q, (snapshot) => {
-      const requests = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-        createdAt: doc.data().createdAt as Timestamp,
-        updatedAt: doc.data().updatedAt as Timestamp | undefined
-      } as FriendRequest));
-      callback(requests);
+      callback(convertDocs<FriendRequest>(snapshot.docs));
     }, (error) => {
       console.error("Lỗi subscribe lời mời kết bạn", error);
     });
@@ -147,12 +138,7 @@ export const friendService = {
       );
 
       const querySnapshot = await getDocs(q);
-      return querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-        createdAt: doc.data().createdAt as Timestamp,
-        updatedAt: doc.data().updatedAt as Timestamp | undefined
-      } as FriendRequest));
+      return convertDocs<FriendRequest>(querySnapshot.docs);
     } catch (error) {
       console.error("Lỗi lấy lời mời đã gửi", error);
       return [];
@@ -168,13 +154,7 @@ export const friendService = {
     );
 
     return onSnapshot(q, (snapshot) => {
-      const requests = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-        createdAt: doc.data().createdAt as Timestamp,
-        updatedAt: doc.data().updatedAt as Timestamp | undefined
-      } as FriendRequest));
-      callback(requests);
+      callback(convertDocs<FriendRequest>(snapshot.docs));
     }, (error) => {
       console.error("Lỗi subscribe lời mời đã gửi", error);
     });
@@ -241,6 +221,69 @@ export const friendService = {
     } catch (error) {
       console.error("Lỗi hủy kết bạn", error);
       throw error;
+    }
+  },
+
+  // Lấy danh sách bạn bè (Move from userService)
+  getAllFriends: async (currentUserId: string): Promise<User[]> => {
+    try {
+      const snap = await getDocs(collection(db, 'users', currentUserId, 'friends'));
+      const friendIds = snap.docs.map(d => d.id);
+      if (friendIds.length === 0) return [];
+      const friendsMap = await batchGetUsers(friendIds);
+      return Object.values(friendsMap).filter(u => u.status !== 'banned');
+    } catch (error) {
+      console.error("Lỗi lấy danh sách bạn bè", error);
+      return [];
+    }
+  },
+
+  // Theo dõi bạn bè realtime (Move from userService)
+  subscribeToFriends: (userId: string, callback: (friends: User[]) => void): (() => void) => {
+    const friendsRef = collection(db, 'users', userId, 'friends');
+    let previousFriendIds: string[] = [];
+
+    return onSnapshot(friendsRef, async (snapshot) => {
+      const friendIds = snapshot.docs.map(d => d.id);
+      const isIdsChanged = friendIds.length !== previousFriendIds.length ||
+        !friendIds.every((id) => previousFriendIds.includes(id));
+
+      if (!isIdsChanged && previousFriendIds.length > 0) return;
+      previousFriendIds = friendIds;
+
+      if (friendIds.length === 0) {
+        callback([]);
+        return;
+      }
+
+      try {
+        const friendsMap = await batchGetUsers(friendIds);
+        const friends = Object.values(friendsMap).filter(u => u.status !== 'banned');
+        callback(friends);
+      } catch (error) {
+        console.error("Lỗi fetch friends realtime", error);
+      }
+    });
+  },
+
+  // Tìm kiếm trong danh sách bạn bè (Move from userService)
+  searchFriends: async (searchTerm: string, currentUserId: string): Promise<User[]> => {
+    try {
+      const snap = await getDocs(collection(db, 'users', currentUserId, 'friends'));
+      const friendIds = snap.docs.map(d => d.id);
+      if (friendIds.length === 0) return [];
+
+      const friendsMap = await batchGetUsers(friendIds);
+      const friends = Object.values(friendsMap);
+
+      return friends.filter(friend =>
+        friend.status !== 'banned' &&
+        (friend.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          friend.email?.toLowerCase().includes(searchTerm.toLowerCase()))
+      );
+    } catch (error) {
+      console.error("Lỗi tìm kiếm bạn bè", error);
+      return [];
     }
   },
 };

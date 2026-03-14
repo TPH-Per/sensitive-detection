@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "../firebase/config";
-import { User, BlockOptions } from "../types";
+import { User, BlockOptions } from "../../shared/types";
 import { userService } from "../services/userService";
 import { authService } from "../services/authService";
 import { useUserCache } from "./userCacheStore";

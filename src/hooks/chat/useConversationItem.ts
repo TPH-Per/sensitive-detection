@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { RtdbConversation, User, RtdbUserChat } from '../../types';
+import { RtdbConversation, User, RtdbUserChat } from '../../../shared/types';
 import { formatChatTime } from '../../utils/dateUtils';
 import { useUserCache } from '../../store/userCacheStore';
 import { useConversationParticipants } from './useConversationParticipants';

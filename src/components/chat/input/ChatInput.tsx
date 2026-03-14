@@ -10,7 +10,7 @@ import { useMentions } from '../../../hooks/chat/useMentions';
 import { toast } from '../../../store/toastStore';
 import { TOAST_MESSAGES, FILE_LIMITS, TIME_LIMITS } from '../../../constants';
 import { insertTextAtCursor, validateFileSize } from '../../../utils';
-import { RtdbMessage, User } from '../../../types';
+import { RtdbMessage, User } from '../../../../shared/types';
 
 interface ChatInputProps {
   onSendText: (text: string, mentions?: string[], replyToId?: string) => void;

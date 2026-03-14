@@ -1,7 +1,7 @@
 import React, { useCallback } from 'react';
 import { MoreVertical, UserMinus, User as UserIcon, Lock } from 'lucide-react';
 import { UserAvatar, UserStatusText, IconButton, Dropdown, DropdownItem, Skeleton } from '../ui';
-import { User, UserStatus } from '../../types';
+import { User, UserStatus } from '../../../shared/types';
 import { useNavigate } from 'react-router-dom';
 
 interface FriendItemProps {

@@ -1,5 +1,5 @@
 import React from 'react';
-import { ReactionType } from '../../../types';
+import { ReactionType } from '../../../../shared/types';
 
 // Import SVG files as React components using ?react suffix
 import SVGLike from '../../../assets/icons/like.svg?react';

@@ -1,5 +1,5 @@
 import React from 'react';
-import { User } from '../../types';
+import { User } from '../../../shared/types';
 import { getLastName } from '../../utils/uiUtils';
 
 interface TypingIndicatorProps {

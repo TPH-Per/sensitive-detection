@@ -1,7 +1,8 @@
 import { StateCreator } from 'zustand';
-import { RtdbConversation, RtdbUserChat, User } from '../../types';
+import { RtdbConversation, RtdbUserChat, User } from '../../../shared/types';
 import { rtdbConversationService } from '../../services/chat/rtdbConversationService';
 import { userService } from '../../services/userService';
+import { friendService } from '../../services/friendService';
 import { useAuthStore } from '../authStore';
 import { useLoadingStore } from '../loadingStore';
 import NotificationSound from '../../assets/sounds/message-notification.mp3';
@@ -113,7 +114,7 @@ export const createRtdbConversationSlice: StateCreator<RtdbChatState, [], [], Rt
                 return;
             }
 
-            const friendResults = await userService.searchFriends(term, userId);
+            const friendResults = await friendService.searchFriends(term, userId);
             set({ searchResults: { users: friendResults } });
         } catch (error) {
             console.error("Lỗi tìm bạn bè:", error);

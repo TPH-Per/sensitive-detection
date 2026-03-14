@@ -1,5 +1,5 @@
 import { StateCreator } from 'zustand';
-import { RtdbMessage } from '../../types';
+import { RtdbMessage } from '../../../shared/types';
 import { rtdbMessageService } from '../../services/chat/rtdbMessageService';
 import { useAuthStore } from '../authStore';
 import type { RtdbChatState } from '../rtdbChatStore';

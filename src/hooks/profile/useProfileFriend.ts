@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { User, UserStatus, FriendRequest, FriendStatus } from '../../types';
+import { User, UserStatus, FriendRequest, FriendStatus } from '../../../shared/types';
 import { friendService } from '../../services/friendService';
 import { toast } from '../../store/toastStore';
 import { useFriendIds } from '../utils';

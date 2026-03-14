@@ -1,6 +1,6 @@
 import { ref, set, get, update, push, increment } from 'firebase/database';
 import { rtdb } from '../../firebase/config';
-import { RtdbConversation, RtdbUserChat, MediaObject, MemberRole } from '../../types';
+import { RtdbConversation, RtdbUserChat, MediaObject, MemberRole } from '../../../shared/types';
 import { uploadWithProgress, UploadProgress, deleteStorageFile } from '../../utils/uploadUtils';
 import { compressImage } from '../../utils/imageUtils';
 import { IMAGE_COMPRESSION, GROUP_LIMITS } from '../../constants';

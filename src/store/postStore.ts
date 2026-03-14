@@ -1,4 +1,4 @@
-import { Post, Visibility, PostStatus, ReactionType, MediaObject, PostType } from '../types';
+import { Post, Visibility, PostStatus, ReactionType, MediaObject, PostType } from '../../shared/types';
 import { postService } from '../services/postService';
 import { DocumentSnapshot, Timestamp, onSnapshot, doc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../firebase/config';

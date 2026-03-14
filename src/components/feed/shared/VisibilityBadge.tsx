@@ -1,6 +1,6 @@
 import React from 'react';
 import { Globe, Users, Lock } from 'lucide-react';
-import { Visibility } from '../../../types';
+import { Visibility } from '../../../../shared/types';
 
 const VISIBILITY_ICONS: Record<Visibility, { Icon: typeof Globe; title: string }> = {
   [Visibility.PUBLIC]: { Icon: Globe, title: 'Công khai' },

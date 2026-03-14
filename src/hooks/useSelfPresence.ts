@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { ref, onValue, onDisconnect, set, serverTimestamp } from 'firebase/database';
 import { rtdb } from '../firebase/config';
-import { User } from '../types';
+import { User } from '../../shared/types';
 
 export const useSelfPresence = (user: User | null) => {
   useEffect(() => {

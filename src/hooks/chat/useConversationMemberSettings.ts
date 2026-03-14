@@ -1,5 +1,5 @@
 import { useRtdbChatStore } from '../../store';
-import { RtdbUserChat } from '../../types';
+import { RtdbUserChat } from '../../../shared/types';
 
 export const useConversationMemberSettings = (conversationId: string, _userId: string): RtdbUserChat | null => {
     const conversations = useRtdbChatStore(state => state.conversations);

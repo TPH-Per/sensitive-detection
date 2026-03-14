@@ -1,6 +1,7 @@
-import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, updateDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../firebase/config';
-import { UserRole } from '../types';
+import { User, UserStatus, UserRole } from '../../shared/types';
+import { convertDoc } from '../utils/firebaseUtils';
 
 export const adminService = {
     // Cập nhật vai trò người dùng

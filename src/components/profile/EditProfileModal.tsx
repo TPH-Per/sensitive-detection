@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Timestamp } from 'firebase/firestore';
-import { User, Gender } from '../../types';
+import { User, Gender } from '../../../shared/types';
 import { Button, Input, TextArea, Select, DatePicker, Modal } from '../ui';
 import { toDate } from '../../utils/dateUtils';
 import { toast } from '../../store/toastStore';
@@ -38,7 +38,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
       fullName: user.fullName,
       bio: user.bio || '',
       location: user.location || '',
-      gender: user.gender as Gender | "",
+      gender: user.gender as Gender,
       dob: user.dob ? toDate(user.dob)?.getTime() : undefined
     }
   });
@@ -51,7 +51,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
         fullName: user.fullName,
         bio: user.bio || '',
         location: user.location || '',
-        gender: user.gender as Gender | "",
+        gender: user.gender as Gender,
         dob: user.dob ? toDate(user.dob)?.getTime() : undefined
       });
       fetchProvinces();
@@ -164,7 +164,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
               <Select
                 label="Giới tính"
                 value={formData.gender || ''}
-                onChange={(val) => setValue('gender', val as Gender | "", { shouldDirty: true })}
+                onChange={(val) => setValue('gender', val as Gender, { shouldDirty: true })}
                 options={[
                   { value: 'male', label: 'Nam' },
                   { value: 'female', label: 'Nữ' }

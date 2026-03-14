@@ -1,5 +1,5 @@
 import React, { useRef, useEffect } from 'react';
-import { ReactionType } from '../../types';
+import { ReactionType } from '../../../shared/types';
 import { IconCancel } from '../chat/reactions/ReactionIcons';
 import { REACTIONS } from '../../constants';
 import { getReactionIcon } from '../chat/reactions/ReactionIcons';

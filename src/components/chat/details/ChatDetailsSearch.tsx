@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { RtdbMessage, User } from '../../../types';
+import { RtdbMessage, User } from '../../../../shared/types';
 import { Search, X, MessageCircle } from 'lucide-react';
 import { formatTimeOnly } from '../../../utils/dateUtils';
 import { Input, IconButton } from '../../ui';
