@@ -33,17 +33,17 @@ export const friendService = {
     }
   },
 
-  sendFriendRequest: async (senderId: string, receiverId: string): Promise<FriendRequest> => {
+  sendFriendRequest: async (senderId: string, receiverId: string): Promise<FriendRequest | void> => {
     try {
       if (senderId === receiverId) {
         throw new Error("Không thể gửi lời mời kết bạn cho chính mình");
       }
 
-      // Kiểm tra user tồn tại và block status từ subcollection blockedUsers
-      const [receiverSnap, receiverBlockedSnap, senderBlockedSnap] = await Promise.all([
+      const [receiverSnap, receiverBlockedSnap, senderBlockedSnap, isFriendSnap] = await Promise.all([
         getDoc(doc(db, 'users', receiverId)),
         getDoc(doc(db, 'users', receiverId, 'blockedUsers', senderId)),
         getDoc(doc(db, 'users', senderId, 'blockedUsers', receiverId)),
+        getDoc(doc(db, 'users', senderId, 'friends', receiverId)),
       ]);
 
       if (!receiverSnap.exists()) throw new Error("Người dùng không tồn tại");
@@ -52,6 +52,23 @@ export const friendService = {
       }
       if (senderBlockedSnap.exists()) {
         throw new Error("Bạn đã chặn người dùng này");
+      }
+      if (isFriendSnap.exists()) {
+        throw new Error("Hai người đã là bạn bè");
+      }
+
+      const reverseRequestQuery = query(
+        collection(db, 'friendRequests'),
+        where('senderId', '==', receiverId),
+        where('receiverId', '==', senderId),
+        where('status', '==', FriendRequestStatus.PENDING)
+      );
+      const reverseSnap = await getDocs(reverseRequestQuery);
+
+      if (!reverseSnap.empty) {
+        const requestId = reverseSnap.docs[0].id;
+        await friendService.acceptFriendRequest(requestId, receiverId, senderId);
+        return; 
       }
 
       const alreadySent = await friendService.checkFriendRequestExists(senderId, receiverId);
