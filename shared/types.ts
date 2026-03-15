@@ -325,7 +325,7 @@ export interface BlockOptions {
 }
 
 export interface BlockedUserEntry extends BlockOptions {
-    blockedUserId: string;
+    blockedUid: string;
     createdAt: Timestamp;
     updatedAt: Timestamp;
 }
