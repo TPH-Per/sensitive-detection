@@ -263,8 +263,8 @@ const LoginPage: React.FC = () => {
                 className="space-y-4"
               >
                 {infoMessage && (
-                  <div className="p-3.5 bg-primary/5 border border-primary/20 rounded-xl flex items-start gap-3">
-                    <AlertCircle size={18} className="text-primary shrink-0 mt-0.5" />
+                  <div className="p-3.5 bg-primary/5 border border-primary/20 rounded-xl flex items-center gap-3">
+                    <AlertCircle size={18} className="text-primary shrink-0" />
                     <div className="space-y-1.5 text-xs text-primary font-medium leading-[1.4]">
                       <p>{infoMessage}</p>
                       {showResend && (
@@ -276,8 +276,8 @@ const LoginPage: React.FC = () => {
                   </div>
                 )}
                 {authError && (
-                  <div className="p-3.5 bg-error/5 border border-error/20 rounded-xl flex items-start gap-3">
-                    <AlertCircle size={18} className="text-error shrink-0 mt-0.5" />
+                  <div className="p-3.5 bg-error/5 border border-error/20 rounded-xl flex items-center gap-3">
+                    <AlertCircle size={18} className="text-error shrink-0" />
                     <div className="space-y-1.5 text-xs text-error font-medium leading-[1.4]">
                       <p>{authError}</p>
                     </div>
@@ -285,8 +285,8 @@ const LoginPage: React.FC = () => {
                 )}
 
                 {verificationSent && !authError && activeTab === 'login' && (
-                  <div className="p-3.5 bg-success/5 border border-success/20 rounded-xl flex items-start gap-3">
-                    <AlertCircle size={18} className="text-success shrink-0 mt-0.5" />
+                  <div className="p-3.5 bg-success/5 border border-success/20 rounded-xl flex items-center gap-3">
+                    <AlertCircle size={18} className="text-success shrink-0" />
                     <div className="text-xs text-success font-medium">
                       Đã gửi link xác thực. Vui lòng kiểm tra email.
                     </div>

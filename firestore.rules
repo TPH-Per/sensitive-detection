@@ -47,12 +47,14 @@ service cloud.firestore {
     match /users/{userId} {
       match /private/fcm {
         allow read: if isOwner(userId);
-        allow write: if isOwner(userId) && canWrite();
+        allow create: if isOwner(userId);
+        allow update, delete: if isOwner(userId) && canWrite();
       }
 
       match /private/settings {
         allow read: if isOwner(userId);
-        allow write: if isOwner(userId) && canWrite();
+        allow create: if isOwner(userId);
+        allow update, delete: if isOwner(userId) && canWrite();
       }
 
       allow read: if isAuthenticated() && (isOwner(userId) || isNotBanned());

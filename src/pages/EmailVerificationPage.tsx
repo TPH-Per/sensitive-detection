@@ -15,7 +15,6 @@ const EmailVerificationPage: React.FC = () => {
   const [isChecking, setIsChecking] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
-  const [infoMessage, setInfoMessage] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isInitialized) return;
@@ -27,7 +26,6 @@ const EmailVerificationPage: React.FC = () => {
   useEffect(() => {
     const state = location.state as { source?: string } | null;
     if (state?.source === 'register') {
-      setInfoMessage('Tài khoản đã tạo. Vui lòng xác thực email để tiếp tục.');
       navigate(location.pathname, { replace: true, state: null });
     }
   }, [location.pathname, location.state, navigate]);
@@ -106,14 +104,7 @@ const EmailVerificationPage: React.FC = () => {
               Chúng tôi đã gửi link xác thực đến email của bạn. Vui lòng kiểm tra hộp thư (và cả mục Spam).
             </p>
           </div>
-          {infoMessage && (
-            <div className="p-3.5 bg-primary/5 border border-primary/20 rounded-xl flex items-start gap-3 mb-4">
-              <CheckCircle size={18} className="text-primary shrink-0 mt-0.5" />
-              <div className="text-xs text-primary font-medium leading-[1.4]">
-                {infoMessage}
-              </div>
-            </div>
-          )}
+
           <div className="space-y-4">
             <Button
               className="w-full h-12 text-sm font-bold rounded-xl shadow-md"
