@@ -82,20 +82,17 @@ export const presenceService = {
     subscribeToPresence: (uid: string, callback: (presence: RtdbPresence | null) => void): (() => void) => {
         const userPresenceRef = presenceRef(uid);
 
-        const listener = onValue(userPresenceRef, (snapshot) => {
+        return onValue(userPresenceRef, (snapshot) => {
             if (snapshot.exists()) {
                 callback(snapshot.val() as RtdbPresence);
             } else {
                 callback(null);
             }
         }, (error) => {
+            if (error.message.includes('permission_denied')) return;
             console.error('Lỗi subscribe presence:', error);
             callback(null);
         });
-
-        return () => {
-            off(userPresenceRef, 'value', listener);
-        };
     },
 
     /**

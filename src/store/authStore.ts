@@ -33,6 +33,24 @@ interface AuthState {
   updateBlockEntry: (action: "add" | "remove", targetUserId: string, options?: BlockOptions) => void;
 }
 
+const clearAllStores = () => {
+  usePresenceStore.getState().reset();
+  useRtdbChatStore.getState().reset();
+  usePostStore.getState().reset();
+  useContactStore.getState().reset();
+  useNotificationStore.getState().reset();
+  useCommentStore.getState().reset();
+  useReportStore.getState().reset();
+  useLoadingStore.getState().setMultipleLoading(
+    ['chat', 'chat.messages', 'chat.send', 'chat.loadMore',
+      'feed', 'feed.posts', 'feed.loadMore', 'feed.create', 'feed.update', 'feed.delete',
+      'contacts', 'contacts.friends', 'contacts.requests', 'contacts.search',
+      'profile', 'profile.data', 'profile.upload', 'profile.update',
+      'notifications', 'settings', 'admin.reports', 'admin.users'],
+    false
+  );
+};
+
 export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   blockedUsers: {},
@@ -106,22 +124,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       if (user) {
         await presenceService.setOffline(user.id);
       }
-      usePresenceStore.getState().reset();
-      useRtdbChatStore.getState().reset();
-      usePostStore.getState().reset();
-      useContactStore.getState().reset();
-      useNotificationStore.getState().reset();
-      useCommentStore.getState().reset();
-      useReportStore.getState().reset();
-      useLoadingStore.getState().setMultipleLoading(
-        ['chat', 'chat.messages', 'chat.send', 'chat.loadMore',
-          'feed', 'feed.posts', 'feed.loadMore', 'feed.create', 'feed.update', 'feed.delete',
-          'contacts', 'contacts.friends', 'contacts.requests', 'contacts.search',
-          'profile', 'profile.data', 'profile.upload', 'profile.update',
-          'notifications', 'settings', 'admin.reports', 'admin.users'],
-        false
-      );
-
+      clearAllStores();
       await authService.logout();
     } catch (error) {
       console.error("Lỗi logout:", error);
@@ -263,6 +266,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           useLoadingStore.getState().setLoading("auth", false);
         }
       } else {
+        clearAllStores();
         set({ user: null, isInitialized: true });
         useLoadingStore.getState().setLoading("auth", false);
       }
