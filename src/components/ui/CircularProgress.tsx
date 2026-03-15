@@ -1,5 +1,5 @@
 import React from 'react';
-import { X } from 'lucide-react';
+import { X, Check } from 'lucide-react';
 
 interface CircularProgressProps {
   progress: number;
@@ -20,9 +20,9 @@ export const CircularProgress: React.FC<CircularProgressProps> = ({
   onCancel,
   className = '',
 }) => {
-  const radius = (size - strokeWidth) / 2;
+  const radius = (size - strokeWidth * 2) / 2;
   const circumference = radius * 2 * Math.PI;
-  const offset = circumference - (progress / 100) * circumference;
+  const offset = circumference - (Math.min(progress, 100) / 100) * circumference;
   const isComplete = progress >= 100;
 
   return (
@@ -30,48 +30,42 @@ export const CircularProgress: React.FC<CircularProgressProps> = ({
       className={`relative inline-flex items-center justify-center ${className}`}
       style={{ width: size, height: size }}
     >
-      {/* Background circle */}
-      <svg className="absolute transform -rotate-90" width={size} height={size}>
+      <svg className="absolute -rotate-90" width={size} height={size}>
+        {/* Track */}
         <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
+          cx={size / 2} cy={size / 2} r={radius}
           fill="none"
-          stroke="var(--text-inverse, rgba(255,255,255,0.3))"
+          stroke="rgba(255,255,255,0.25)"
           strokeWidth={strokeWidth}
         />
-        {/* Progress circle */}
+        {/* Progress */}
         <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
+          cx={size / 2} cy={size / 2} r={radius}
           fill="none"
-          stroke={isComplete ? 'var(--color-success)' : 'var(--text-inverse, #ffffff)'}
+          stroke={isComplete ? 'var(--color-success)' : 'white'}
           strokeWidth={strokeWidth}
           strokeLinecap="round"
           strokeDasharray={circumference}
           strokeDashoffset={offset}
-          className="transition-all duration-slow"
+          className="transition-[stroke-dashoffset] duration-slow"
         />
       </svg>
 
-      {/* Center content */}
       <div className="relative z-10 flex items-center justify-center">
-        {showCancel && onCancel && !isComplete ? (
+        {isComplete ? (
+          <Check size={size * 0.35} className="text-white" strokeWidth={2.5} />
+        ) : showCancel && onCancel ? (
           <button
+            type="button"
             onClick={onCancel}
-            className="p-1 rounded-full hover:bg-white/20 active:bg-white/30 transition-all duration-base"
-            title="Hủy upload"
-            aria-label="Hủy upload"
+            className="rounded-full hover:bg-white/20 active:bg-white/30 transition-colors p-0.5"
+            aria-label="Hủy tải lên"
           >
-            <X size={size * 0.35} className="text-text-inverse" />
+            <X size={size * 0.32} className="text-white" />
           </button>
         ) : showPercentage ? (
-          <span
-            className="text-text-inverse font-semibold"
-            style={{ fontSize: size * 0.25 }}
-          >
-            {isComplete ? '✓' : `${Math.round(progress)}%`}
+          <span className="text-white font-semibold" style={{ fontSize: size * 0.24 }}>
+            {Math.round(progress)}%
           </span>
         ) : null}
       </div>
@@ -79,7 +73,7 @@ export const CircularProgress: React.FC<CircularProgressProps> = ({
   );
 };
 
-// ========== OVERLAY ========== 
+// Overlay dùng trên media item (ảnh/video đang upload)
 interface CircularProgressOverlayProps extends CircularProgressProps {
   isVisible: boolean;
 }
@@ -91,7 +85,7 @@ export const CircularProgressOverlay: React.FC<CircularProgressOverlayProps> = (
   if (!isVisible) return null;
 
   return (
-    <div className="absolute inset-0 flex items-center justify-center bg-black/50 backdrop-blur-[2px] rounded-lg z-10">
+    <div className="absolute inset-0 flex items-center justify-center bg-black/50 backdrop-blur-[2px] z-10">
       <CircularProgress {...props} />
     </div>
   );

@@ -3,6 +3,7 @@ import { X, Image as ImageIcon, Video, Globe, Users, Lock } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { UserAvatar, Button, EmojiPicker, Select, Modal, IconButton, ConfirmDialog } from '../../ui';
+import { CircularProgressOverlay } from '../../ui/CircularProgress';
 import { toast } from '../../../store/toastStore';
 import { validateFileSize } from '../../../utils';
 import { User, Post, Visibility, MediaObject } from '../../../../shared/types';
@@ -332,14 +333,23 @@ export const PostModal: React.FC<PostModalProps> = ({
                           }`}
                       >
                         {item.type === 'image' ? (
-                          <img src={item.url} alt="" className="w-full h-full object-cover" />
+                          <img src={item.url} alt="" className={`w-full h-full object-cover ${isSubmitting && item.isPending ? 'opacity-60' : ''}`} />
                         ) : (
                           <>
-                            <video src={item.url} className="w-full h-full object-cover" playsInline muted />
+                            <video src={item.url} className={`w-full h-full object-cover ${isSubmitting && item.isPending ? 'opacity-60' : ''}`} playsInline muted />
                             <div className="absolute inset-0 flex items-center justify-center bg-black/20">
                               <Video className="text-white/80" size={32} />
                             </div>
                           </>
+                        )}
+
+                        {isSubmitting && item.isPending && (
+                          <CircularProgressOverlay
+                            isVisible={true}
+                            progress={0}
+                            size={40}
+                            showPercentage={false}
+                          />
                         )}
 
                         <button

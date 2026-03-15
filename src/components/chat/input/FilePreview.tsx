@@ -1,9 +1,17 @@
 import React from 'react';
-import { X, Play, Pause, Paperclip, Video, Loader2 } from 'lucide-react';
+import { X, Play, Pause, Paperclip, Video } from 'lucide-react';
 import { IconButton } from '../../ui';
+import { CircularProgressOverlay } from '../../ui/CircularProgress';
+
+export interface FilePreviewItem {
+  file: File;
+  preview?: string;
+  type: 'image' | 'video' | 'file' | 'voice';
+  uploadProgress?: number;
+}
 
 interface FilePreviewProps {
-  files: { file: File; preview?: string; type: 'image' | 'video' | 'file' | 'voice' }[];
+  files: FilePreviewItem[];
   onRemove: (index: number) => void;
   onPlayVoice: (url: string, index: number) => void;
   playingIndex: number | null;
@@ -15,62 +23,67 @@ export const FilePreview: React.FC<FilePreviewProps> = ({
   onRemove,
   onPlayVoice,
   playingIndex,
-  isSending
+  isSending,
 }) => {
   if (files.length === 0) return null;
 
   return (
-    <div className="p-3 border-b border-border-light bg-bg-primary overflow-x-auto">
-      <div className="flex gap-3">
+    <div className="px-3 pt-3 pb-2 border-b border-border-light bg-bg-primary overflow-x-auto">
+      <div className="flex gap-2">
         {files.map((item, index) => (
-          <div key={index} className="relative flex-shrink-0 group w-20 h-20 bg-bg-secondary rounded-lg border border-border-light overflow-hidden">
+          <div
+            key={index}
+            className="relative flex-shrink-0 group w-[72px] h-[72px] bg-bg-secondary rounded-xl border border-border-light overflow-hidden"
+          >
             {item.preview ? (
               item.type === 'video' ? (
                 <div className="w-full h-full relative">
                   <video src={item.preview} className="w-full h-full object-cover" playsInline muted />
                   <div className="absolute inset-0 flex items-center justify-center bg-black/20">
-                    <Video size={20} className="text-white drop-shadow" />
+                    <Video size={18} className="text-white drop-shadow" />
                   </div>
                 </div>
               ) : item.type === 'voice' ? (
-                <div className="w-full h-full bg-secondary flex flex-col items-center justify-center gap-1 group/audio cursor-pointer"
-                  onClick={() => item.preview && onPlayVoice(item.preview, index)}>
-                  {playingIndex === index ? (
-                    <div className="p-1.5 bg-primary text-white rounded-full">
-                      <Pause size={16} fill="currentColor" />
-                    </div>
-                  ) : (
-                    <div className="p-1.5 bg-secondary-hover text-primary rounded-full group-hover/audio:bg-primary group-hover/audio:text-white transition-all duration-base">
-                      <Play size={16} fill="currentColor" />
-                    </div>
-                  )}
-                  <span className="text-[10px] text-text-secondary">Nghe lại</span>
+                <div
+                  className="w-full h-full flex flex-col items-center justify-center gap-1 cursor-pointer"
+                  onClick={() => item.preview && onPlayVoice(item.preview, index)}
+                >
+                  <div className={`p-1.5 rounded-full transition-colors ${playingIndex === index ? 'bg-primary text-white' : 'bg-bg-tertiary text-primary'}`}>
+                    {playingIndex === index
+                      ? <Pause size={14} fill="currentColor" />
+                      : <Play size={14} fill="currentColor" />
+                    }
+                  </div>
+                  <span className="text-[9px] text-text-tertiary font-medium">Voice</span>
                 </div>
               ) : (
-                <img src={item.preview} alt="preview" className="w-full h-full object-cover" />
+                <img src={item.preview} alt="" className="w-full h-full object-cover" />
               )
             ) : (
-              <div className="w-full h-full flex flex-col items-center justify-center text-text-secondary p-1">
-                <Paperclip size={20} className="mb-1" />
-                <span className="text-[10px] truncate w-full text-center">
-                  {item.file.name.split('.').pop()}
+              <div className="w-full h-full flex flex-col items-center justify-center text-text-tertiary gap-1 p-1">
+                <Paperclip size={18} />
+                <span className="text-[9px] truncate w-full text-center font-medium">
+                  {item.file.name.split('.').pop()?.toUpperCase()}
                 </span>
               </div>
+            )}
+
+            {isSending && (item.type === 'image' || item.type === 'video') && (
+              <CircularProgressOverlay
+                isVisible={true}
+                progress={item.uploadProgress ?? 0}
+                size={32}
+                showPercentage={false}
+              />
             )}
 
             {!isSending && (
               <IconButton
                 onClick={() => onRemove(index)}
-                className="absolute top-1 right-1 bg-black/60 hover:bg-black/80 active:bg-black/90 text-white opacity-100 md:opacity-0 md:group-hover:opacity-100 z-20 transition-all duration-base"
-                icon={<X size={14} />}
+                className="absolute top-1 right-1 !w-5 !h-5 !min-w-0 !min-h-0 bg-black/60 hover:bg-black/80 text-white opacity-0 group-hover:opacity-100 transition-opacity z-20 !rounded-full !p-0"
+                icon={<X size={11} />}
                 size="sm"
               />
-            )}
-
-            {isSending && (
-              <div className="absolute inset-0 flex items-center justify-center bg-black/50 backdrop-blur-[2px] rounded-lg z-10">
-                <Loader2 size={20} className="animate-spin text-white" />
-              </div>
             )}
           </div>
         ))}

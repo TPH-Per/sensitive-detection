@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Send, X, Edit2, Reply, Pause, Play } from 'lucide-react';
 import { EmojiPicker, Button, IconButton, TextArea } from '../../ui';
 import { MentionList } from './MentionList';
-import { FilePreview } from './FilePreview';
+import { FilePreview, FilePreviewItem } from './FilePreview';
 import { RecordingUI } from './RecordingUI';
 import { ActionsMenu } from './ActionsMenu';
 import { useAudioRecorder } from '../../../hooks/chat/useAudioRecorder';
@@ -54,7 +54,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   onDeleteConversation
 }) => {
   const [inputText, setInputText] = useState('');
-  const [selectedFiles, setSelectedFiles] = useState<{ file: File; preview?: string; type: 'image' | 'video' | 'file' | 'voice' }[]>([]);
+  const [selectedFiles, setSelectedFiles] = useState<FilePreviewItem[]>([]);
   const [isSending, setIsSending] = useState(false);
   const [showActions, setShowActions] = useState(false);
   const [playingPreview, setPlayingPreview] = useState<number | null>(null);
@@ -290,9 +290,9 @@ export const ChatInput: React.FC<ChatInputProps> = ({
             {isDisbanded ? 'Nhóm này đã giải tán.' : blockedMessage}
           </span>
           {isDisbanded && onDeleteConversation && (
-            <Button 
-              onClick={onDeleteConversation} 
-              variant="danger" 
+            <Button
+              onClick={onDeleteConversation}
+              variant="danger"
               size="sm"
               className="rounded-full px-6"
             >

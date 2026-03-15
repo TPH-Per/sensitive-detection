@@ -2,7 +2,8 @@ import React, { useRef, useEffect } from 'react';
 import { Image as ImageIcon, X, Send } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { UserAvatar, IconButton, Button, EmojiPicker, Loading } from '../../ui';
+import { UserAvatar, IconButton, Button, EmojiPicker } from '../../ui';
+import { CircularProgressOverlay } from '../../ui/CircularProgress';
 import { validateFileSize } from '../../../utils';
 import { toast } from '../../../store/toastStore';
 import { commentSchema, CommentFormValues } from '../../../utils/validation';
@@ -56,6 +57,7 @@ export const CommentInput: React.FC<CommentInputProps> = ({
 
   const formData = watch();
   const [isUploading, setIsUploading] = React.useState(false);
+  const [uploadProgress, setUploadProgress] = React.useState(0);
 
   // State cho file pending (chưa upload) và preview blob URL
   const [pendingImage, setPendingImage] = React.useState<File | null>(null);
@@ -110,13 +112,17 @@ export const CommentInput: React.FC<CommentInputProps> = ({
     let imageMedia: MediaObject | undefined = undefined;
     if (pendingImage) {
       setIsUploading(true);
+      setUploadProgress(0);
       try {
         imageMedia = await onUploadMedia(pendingImage);
+        setUploadProgress(100);
       } catch (error) {
         setIsUploading(false);
+        setUploadProgress(0);
         return;
       } finally {
         setIsUploading(false);
+        setUploadProgress(0);
       }
     } else if (submittedData.image) {
       // If there's an existing image URL (from initialImage), wrap it as MediaObject
@@ -180,25 +186,33 @@ export const CommentInput: React.FC<CommentInputProps> = ({
 
           {(formData.image || previewUrl || isUploading) && (
             <div className="mt-2 relative inline-block">
-              {isUploading ? (
-                <div className="w-20 h-20 flex items-center justify-center bg-bg-third rounded-lg">
-                  <Loading size="sm" />
-                </div>
-              ) : (formData.image || previewUrl) ? (
+              {(formData.image || previewUrl) ? (
                 <div className="relative group">
-                  <img src={previewUrl || formData.image} alt="Preview" className="h-20 w-auto rounded-lg object-cover" />
-                  {previewUrl && (
+                  <img
+                    src={previewUrl || formData.image}
+                    alt="Preview"
+                    className={`h-20 w-auto rounded-lg object-cover ${isUploading ? 'opacity-60' : ''}`}
+                  />
+                  <CircularProgressOverlay
+                    isVisible={isUploading}
+                    progress={uploadProgress}
+                    size={36}
+                    showPercentage={false}
+                  />
+                  {previewUrl && !isUploading && (
                     <div className="absolute bottom-1 left-1 px-1.5 py-0.5 bg-black/60 rounded text-[9px] text-white/80">
                       Chưa tải
                     </div>
                   )}
-                  <IconButton
-                    type="button"
-                    onClick={handleRemoveMedia}
-                    className="absolute -top-2 -right-2 bg-text-primary text-bg-primary shadow-md"
-                    size="sm"
-                    icon={<X size={12} />}
-                  />
+                  {!isUploading && (
+                    <IconButton
+                      type="button"
+                      onClick={handleRemoveMedia}
+                      className="absolute -top-2 -right-2 bg-text-primary text-bg-primary shadow-md"
+                      size="sm"
+                      icon={<X size={12} />}
+                    />
+                  )}
                 </div>
               ) : null}
             </div>

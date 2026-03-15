@@ -144,9 +144,19 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
           <div className="absolute inset-0 bg-gradient-to-br from-primary to-primary-active md:rounded-b-2xl overflow-hidden">
             <LazyImage
               src={user.cover?.url || '/cover-image.jpg'}
-              className="w-full h-full object-cover transition-all duration-base"
+              className={`w-full h-full object-cover transition-all duration-base ${uploading ? 'opacity-60' : ''}`}
               alt="Cover"
             />
+            {uploading && uploadProgress !== undefined && (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <CircularProgress
+                  progress={uploadProgress}
+                  size={56}
+                  strokeWidth={4}
+                  showPercentage={true}
+                />
+              </div>
+            )}
           </div>
 
           {isOwnProfile && (
