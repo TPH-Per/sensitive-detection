@@ -1,19 +1,21 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Lock, Mail, LogOut, AlertCircle } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 import { Button } from '../components/ui';
 import { notificationService } from '../services/notificationService';
 
 const BannedPage: React.FC = () => {
+  const navigate = useNavigate();
   const { user, logout } = useAuthStore();
   const [banReason, setBanReason] = useState<string>('');
 
   useEffect(() => {
     const fetchBanReason = async () => {
-      if (!user?.uid) return;
+      if (!user?.id) return;
 
       try {
-        const notifications = await notificationService.getLatestSystemNotifications(user.uid);
+        const notifications = await notificationService.getLatestSystemNotifications(user.id);
         const banNotification = notifications.find(n =>
           n.type === 'system' &&
           n.data?.contentSnippet?.includes('khóa')
@@ -28,11 +30,13 @@ const BannedPage: React.FC = () => {
     };
 
     fetchBanReason();
-  }, [user?.uid]);
+  }, [user?.id]);
 
-  const handleLogout = async () => {
-    await logout();
-    window.location.href = '#/login';
+  const handleAction = async () => {
+    if (user) {
+      await logout();
+    }
+    navigate('/login');
   };
 
   return (
@@ -44,23 +48,23 @@ const BannedPage: React.FC = () => {
         </div>
 
         {/* Title */}
-        <h1 className="text-2xl font-bold text-text-primary mb-3">
+        <h1 className="text-2xl font-black text-text-primary mb-3">
           TÀI KHOẢN ĐÃ BỊ KHÓA
         </h1>
 
         {/* Description */}
-        <p className="text-text-secondary mb-4">
-          Tài khoản của bạn đã bị khóa do vi phạm quy tắc cộng đồng của Smurfy.
+        <p className="text-text-secondary mb-4 font-medium">
+          Tài khoản của bạn đã bị khóa do vi phạm bộ quy tắc cộng đồng của Smurfy Social.
         </p>
 
         {/* Ban Reason */}
         {banReason && (
-          <div className="bg-error/5 border border-error/20 rounded-lg p-4 mb-6 text-left">
-            <div className="flex items-start gap-2">
+          <div className="bg-error/5 border border-error/20 rounded-xl p-4 mb-6 text-left">
+            <div className="flex items-start gap-3">
               <AlertCircle size={18} className="text-error mt-0.5 flex-shrink-0" />
-              <div>
-                <p className="text-sm font-medium text-text-primary mb-1">Lý do:</p>
-                <p className="text-sm text-text-secondary">{banReason}</p>
+              <div className="space-y-1">
+                <p className="text-xs font-bold text-text-primary uppercase tracking-wider">Chi tiết vi phạm:</p>
+                <p className="text-sm text-text-secondary leading-relaxed">{banReason}</p>
               </div>
             </div>
           </div>
@@ -70,31 +74,33 @@ const BannedPage: React.FC = () => {
         <div className="border-t border-border-light my-6" />
 
         {/* Appeal Section */}
-        <div className="text-left bg-bg-secondary rounded-xl p-4 mb-6">
-          <h3 className="font-semibold text-text-primary mb-2 flex items-center gap-2">
+        <div className="text-left bg-bg-secondary/50 rounded-2xl p-5 mb-6 border border-border-light">
+          <h3 className="font-bold text-text-primary mb-2 flex items-center gap-2">
             <Mail size={18} className="text-primary" />
             Khiếu nại quyết định
           </h3>
-          <p className="text-sm text-text-secondary mb-3">
-            Nếu bạn cho rằng đây là nhầm lẫn, vui lòng liên hệ với chúng tôi:
+          <p className="text-xs text-text-tertiary mb-4 leading-relaxed font-medium">
+            Nếu bạn cho rằng đây là một sự nhầm lẫn, vui lòng liên hệ với ban quản trị qua địa chỉ email dưới đây để được xem xét lại.
           </p>
           <a
             href="mailto:support@smurfy.com"
-            className="text-primary font-medium hover:underline text-sm flex items-center gap-1.5"
+            className="group inline-flex items-center gap-2.5 px-3.5 py-2 bg-bg-primary border border-border-light rounded-xl hover:border-primary/30 transition-all shadow-sm"
           >
-            <Mail size={14} />
-            support@smurfy.com
+            <div className="w-6 h-6 rounded-lg bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors">
+              <Mail size={12} />
+            </div>
+            <span className="text-sm font-bold text-text-primary group-hover:text-primary">support@smurfy.com</span>
           </a>
         </div>
 
-        {/* Logout Button */}
+        {/* Action Button */}
         <Button
-          variant="danger"
-          className="w-full"
-          icon={<LogOut size={18} />}
-          onClick={handleLogout}
+          variant={user ? "danger" : "primary"}
+          className="w-full h-12 rounded-xl font-bold"
+          icon={user ? <LogOut size={18} /> : undefined}
+          onClick={handleAction}
         >
-          Đăng xuất
+          {user ? 'Đăng xuất' : 'Quay lại đăng nhập'}
         </Button>
       </div>
     </div>

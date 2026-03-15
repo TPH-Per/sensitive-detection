@@ -75,7 +75,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       if (userData) {
         if (userData.status === 'banned') {
           await authService.logout();
-          throw new Error("Tài khoản của bạn đã bị khóa do vi phạm quy định cộng đồng. Vui lòng liên hệ admin để biết thêm chi tiết.");
+          const err = new Error("Account banned") as Error & { code?: string };
+          err.code = 'auth/user-disabled';
+          throw err;
         }
 
         await presenceService.setOnline(firebaseUser.uid);

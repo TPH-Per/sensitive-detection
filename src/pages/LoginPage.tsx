@@ -80,7 +80,7 @@ const LoginPage: React.FC = () => {
   const handleAuthError = (error: unknown) => {
     const err = error as { code?: string; message?: string };
     const errorCode = err.code;
-    let message = "Đã có lỗi xảy ra. Vui lòng thử lại.";
+    
     if (errorCode === 'auth/email-not-verified') {
       setAuthError(null);
       setInfoMessage('Email chưa được xác thực. Vui lòng kiểm tra hộp thư hoặc gửi lại email xác thực.');
@@ -89,9 +89,14 @@ const LoginPage: React.FC = () => {
       return;
     }
 
+    if (errorCode === 'auth/user-disabled') {
+      navigate('/banned');
+      return;
+    }
+
+    let message = "Đã có lỗi xảy ra. Vui lòng thử lại.";
     switch (errorCode) {
       case 'auth/invalid-email': message = "Email không hợp lệ."; break;
-      case 'auth/user-disabled': message = "Tài khoản này đã bị khóa."; break;
       case 'auth/user-not-found':
       case 'auth/wrong-password':
       case 'auth/invalid-credential': message = "Email hoặc mật khẩu không chính xác."; break;

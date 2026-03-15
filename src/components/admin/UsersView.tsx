@@ -217,9 +217,6 @@ export const UsersView: React.FC = () => {
                         className="cursor-pointer ring-2 ring-transparent group-hover:ring-primary/20 transition-all"
                         onClick={() => navigate(`/profile/${user.id}`)}
                       />
-                      {user.status === 'active' && (
-                        <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-success border-2 border-bg-primary rounded-full shadow-sm" />
-                      )}
                     </div>
                     
                     <div className="min-w-0 flex flex-col">
