@@ -26,6 +26,7 @@
   "hosting": {
     "public": "dist",
     "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+    "predeploy": ["npm run build"],
     "rewrites": [
       {
         "source": "**",
@@ -33,4 +34,5 @@
       }
     ]
   }
+
 }
