@@ -100,7 +100,7 @@ service cloud.firestore {
       allow create: if isNotBanned() && request.resource.data.authorId == request.auth.uid;
       allow update: if isNotBanned() && (
         resource.data.authorId == request.auth.uid ||
-        changed().hasOnly(['commentCount', 'reactions'])
+        changed().hasOnly(['commentCount'])
       );
       allow delete: if isAdmin() || (resource.data.authorId == request.auth.uid);
 
@@ -121,7 +121,7 @@ service cloud.firestore {
       allow create: if isNotBanned() && request.resource.data.authorId == request.auth.uid;
       allow update: if isNotBanned() && (
         resource.data.authorId == request.auth.uid ||
-        changed().hasOnly(['replyCount', 'reactions'])
+        changed().hasOnly(['replyCount'])
       );
       allow delete: if isAdmin() || resource.data.authorId == request.auth.uid || 
         get(/databases/$(database)/documents/posts/$(resource.data.postId)).data.authorId == request.auth.uid;

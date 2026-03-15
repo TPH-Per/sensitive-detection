@@ -2,6 +2,7 @@
 export { onPostReactionWrite } from './notifications/onPostReactionWrite';
 export { onCommentReactionWrite } from './notifications/onCommentReactionWrite';
 export { onCommentCreated } from './notifications/onCommentCreated';
+export { onCommentDeleted } from './notifications/onCommentDeleted';
 export { onFriendRequestCreated, onFriendRequestUpdated, onFriendRequestDeleted } from './notifications/onFriendRequest';
 export { onReportCreated } from './notifications/onReportCreated';
 
@@ -17,3 +18,4 @@ export { banUser } from './admin/banUser';
 export { searchUsers } from './search/searchUsers';
 export { cleanupOldNotifications, cleanupExpiredFriendRequests, cleanupSoftDeletedContent } from './scheduled/cleanup';
 export { generateZegoToken } from './call/generateZegoToken';
+

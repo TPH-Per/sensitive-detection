@@ -18,9 +18,9 @@ import {
 } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import { Post, Visibility, ReactionType, PostStatus, MediaObject, PostType } from '../../shared/types'
-import { chunkArray, batchGetUsers } from '../utils/batchUtils';
+import { batchGetUsers } from '../utils/batchUtils';
 import { userService } from './userService';
-import { PAGINATION, FIREBASE_LIMITS, IMAGE_COMPRESSION } from '../constants';
+import { PAGINATION, IMAGE_COMPRESSION } from '../constants';
 import { compressImage, isImageFile } from '../utils/imageUtils';
 import { withRetry } from '../utils/retryUtils';
 import { uploadWithProgress, ProgressCallback, deleteStorageFiles } from '../utils/uploadUtils';
@@ -90,8 +90,8 @@ export const postService = {
       );
       const authorIds = [...new Set(posts.map(p => p.authorId))];
       const usersMap = await batchGetUsers(authorIds);
-      const filteredPosts = posts.filter(p => 
-        usersMap[p.authorId]?.status !== 'banned' && 
+      const filteredPosts = posts.filter(p =>
+        usersMap[p.authorId]?.status !== 'banned' &&
         !hiddenAuthorIds.includes(p.authorId)
       );
 
@@ -138,7 +138,7 @@ export const postService = {
         result.posts.forEach(p => {
           const existingUnsub = postUnsubscribers.get(p.id);
           if (existingUnsub) existingUnsub();
-          
+
           const postUnsub = onSnapshot(doc(db, 'posts', p.id), (postDoc) => {
             if (postDoc.exists()) {
               const updatedPost = postConverter(postDoc);
@@ -160,7 +160,7 @@ export const postService = {
           const postDoc = await getDoc(doc(db, 'posts', postId));
           if (postDoc.exists() && postDoc.data().status === PostStatus.ACTIVE) {
             const post = postConverter(postDoc);
-            
+
             // Kiểm tra xem tác giả có bị chặn ẩn hoạt động không
             const blockedUsersMap = await userService.getBlockedUsers(userId);
             if (blockedUsersMap[post.authorId]?.hideTheirActivity === true) {
@@ -231,7 +231,7 @@ export const postService = {
         if (blockSnap.exists() && blockSnap.data().blockViewMyActivity === true) {
           return { posts: [], lastDoc: null };
         }
-        
+
         const myBlockSnap = await getDoc(doc(db, 'users', currentUserId, 'blockedUsers', userId));
         if (myBlockSnap.exists() && myBlockSnap.data().hideTheirActivity === true) {
           return { posts: [], lastDoc: null };
@@ -294,7 +294,7 @@ export const postService = {
   },
 
   /** Tạo bài viết mới */
-  createPost: async (postData: Omit<Post, 'id' | 'createdAt' | 'commentCount' | 'status' | 'reactions'>, predefinedId?: string): Promise<string> => {
+  createPost: async (postData: Omit<Post, 'id' | 'createdAt' | 'commentCount' | 'status'>, predefinedId?: string): Promise<string> => {
     try {
       const postRef = predefinedId ? doc(db, 'posts', predefinedId) : doc(collection(db, 'posts'));
 
@@ -312,7 +312,7 @@ export const postService = {
       if (postData.media && postData.media.length > 0) {
         dataToSave.media = postData.media;
       }
-      
+
       await setDoc(postRef, dataToSave);
       return postRef.id;
     } catch (error) {
@@ -483,7 +483,7 @@ export const postService = {
         const createdAt = Date.now();
         const fileName = `${createdAt}_${file.name}`;
         const path = `posts/${userId}/${typeFolder}/${fileName}`;
-        
+
         let thumbnailUrl: string | undefined = undefined;
 
         if (isImageFile(file)) {
@@ -491,12 +491,12 @@ export const postService = {
         } else if (isVideo) {
           // Trích xuất và upload thumbnail
           try {
-             const { generateVideoThumbnail } = await import('../utils/uploadUtils');
-             const thumbFile = await generateVideoThumbnail(file);
-             const thumbPath = `posts/${userId}/thumbnails/${createdAt}_${thumbFile.name}`;
-             thumbnailUrl = await uploadWithProgress(thumbPath, thumbFile);
+            const { generateVideoThumbnail } = await import('../utils/uploadUtils');
+            const thumbFile = await generateVideoThumbnail(file);
+            const thumbPath = `posts/${userId}/thumbnails/${createdAt}_${thumbFile.name}`;
+            thumbnailUrl = await uploadWithProgress(thumbPath, thumbFile);
           } catch (e) {
-             console.error("Lỗi tạo/up thumbnail:", e);
+            console.error("Lỗi tạo/up thumbnail:", e);
           }
         }
 
@@ -515,7 +515,7 @@ export const postService = {
           size: file.size,
           isSensitive: false
         };
-        
+
         if (thumbnailUrl) {
           mediaObject.thumbnailUrl = thumbnailUrl;
         }
