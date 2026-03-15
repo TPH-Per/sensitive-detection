@@ -19,3 +19,4 @@ export { searchUsers } from './search/searchUsers';
 export { cleanupOldNotifications, cleanupExpiredFriendRequests, cleanupSoftDeletedContent } from './scheduled/cleanup';
 export { generateZegoToken } from './call/generateZegoToken';
 
+export { onMessageCreated } from './notifications/onMessageCreated';

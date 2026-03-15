@@ -216,13 +216,12 @@ export const ChatInput: React.FC<ChatInputProps> = ({
         if (editingMessage) {
           await onEditMessage?.(inputText.trim());
         } else {
-          const mentionRegex = /@\[([^\]]+)\]/g;
+          // Parse mentions from format @[userId:fullName]
+          const mentionRegex = /@\[([^:]+):([^\]]+)\]/g;
           const mentions: string[] = [];
           let match;
           while ((match = mentionRegex.exec(inputText.trim())) !== null) {
-            const name = match[1];
-            const user = participants.find(p => p.fullName === name);
-            if (user) mentions.push(user.id);
+            mentions.push(match[1]); // match[1] is the userId
           }
           await onSendText(inputText.trim(), mentions.length > 0 ? [...new Set(mentions)] : undefined, replyingTo?.id);
         }
@@ -245,7 +244,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
       const cursor = e.currentTarget.selectionStart;
       const text = e.currentTarget.value;
       const beforeCursor = text.slice(0, cursor);
-      const mentionMatch = beforeCursor.match(/@\[[^\]]+\] ?$/);
+      const mentionMatch = beforeCursor.match(/@\[[^:]+:[^\]]+\] ?$/);
 
       if (mentionMatch) {
         e.preventDefault();
@@ -373,11 +372,14 @@ export const ChatInput: React.FC<ChatInputProps> = ({
             className="rounded-2xl"
             renderOverlay={(value) => (
               <>
-                {value.split(/(@\[[^\]]+\])/g).map((part, i) =>
-                  part.startsWith('@[') && part.endsWith(']')
-                    ? <span key={i} className="text-primary bg-primary/10 rounded box-decoration-clone">{part}</span>
-                    : <span key={i}>{part}</span>
-                )}
+                {value.split(/(@\[[^:]+:[^\]]+\])/g).map((part, i) => {
+                  if (part.startsWith('@[') && part.endsWith(']')) {
+                    const match = part.match(/@\[[^:]+:([^\]]+)\]/);
+                    const displayName = match ? `@${match[1]}` : part;
+                    return <span key={i} className="text-primary bg-primary/10 rounded box-decoration-clone">{displayName}</span>;
+                  }
+                  return <span key={i}>{part}</span>;
+                })}
                 {value.endsWith('\n') && <br />}
               </>
             )}

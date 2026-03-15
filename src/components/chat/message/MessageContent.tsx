@@ -385,17 +385,28 @@ const MessageContentInner: React.FC<MessageContentProps> = ({
 
     default:
       const renderTextWithMentions = (text: string) => {
-        const combinedRegex = /(@\[[^\]]+\]|(?:https?:\/\/|www\.)[^\s]+)/g;
+        const combinedRegex = /(@\[[^:]+:[^\]]+\]|(?:https?:\/\/|www\.)[^\s]+)/g;
         const parts = text.split(combinedRegex);
 
         return parts.map((part, index) => {
           if (part.startsWith('@[') && part.endsWith(']')) {
-            const name = part.slice(2, -1);
-            return (
-              <span key={index} className={`font-bold ${isMe ? 'text-white' : 'text-primary'}`}>
-                @{name}
-              </span>
-            );
+            const match = part.match(/@\[([^:]+):([^\]]+)\]/);
+            if (match) {
+              const [_, userId, name] = match;
+              return (
+                <a
+                  key={index}
+                  href={`/profile/${userId}`}
+                  className={`font-bold hover:underline transition-all duration-base ${isMe ? 'text-white' : 'text-primary'}`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    // Prevent default if you use a router link instead of a tag
+                  }}
+                >
+                  @{name}
+                </a>
+              );
+            }
           }
 
           if (/^(https?:\/\/|www\.)/.test(part)) {

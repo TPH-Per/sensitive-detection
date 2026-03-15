@@ -53,7 +53,7 @@ export const useMentions = ({
     const afterCursor = inputRef.current?.selectionStart || mentionStartPos + 1;
     const after = inputText.slice(afterCursor);
 
-    const mentionText = `@[${user.fullName}] `;
+    const mentionText = `@[${user.id}:${user.fullName}] `;
     const newText = before + mentionText + after;
 
     setInputText(newText);
