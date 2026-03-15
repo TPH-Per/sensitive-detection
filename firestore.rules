@@ -99,8 +99,9 @@ service cloud.firestore {
 
       allow create: if isNotBanned() && request.resource.data.authorId == request.auth.uid;
       allow update: if isNotBanned() && (
+        isAdmin() ||
         resource.data.authorId == request.auth.uid ||
-        changed().hasOnly(['commentCount'])
+        changed().hasOnly(['commentCount', 'updatedAt'])
       );
       allow delete: if isAdmin() || (resource.data.authorId == request.auth.uid);
 
@@ -120,8 +121,9 @@ service cloud.firestore {
       allow read: if isNotBanned();
       allow create: if isNotBanned() && request.resource.data.authorId == request.auth.uid;
       allow update: if isNotBanned() && (
+        isAdmin() ||
         resource.data.authorId == request.auth.uid ||
-        changed().hasOnly(['replyCount'])
+        changed().hasOnly(['replyCount', 'updatedAt'])
       );
       allow delete: if isAdmin() || resource.data.authorId == request.auth.uid || 
         get(/databases/$(database)/documents/posts/$(resource.data.postId)).data.authorId == request.auth.uid;
@@ -140,7 +142,7 @@ service cloud.firestore {
     // Thông báo
     match /notifications/{notificationId} {
       allow read: if isOwner(resource.data.receiverId);
-      allow update: if isOwner(resource.data.receiverId) && changed().hasOnly(['isRead']);
+      allow update: if isOwner(resource.data.receiverId) && changed().hasOnly(['isRead', 'updatedAt']);
       allow delete: if isOwner(resource.data.receiverId) || isAdmin();
     }
 

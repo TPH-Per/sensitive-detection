@@ -54,6 +54,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   onDeleteConversation
 }) => {
   const [inputText, setInputText] = useState('');
+  const [activeMentions, setActiveMentions] = useState<{ id: string; name: string }[]>([]);
   const [selectedFiles, setSelectedFiles] = useState<FilePreviewItem[]>([]);
   const [isSending, setIsSending] = useState(false);
   const [showActions, setShowActions] = useState(false);
@@ -94,7 +95,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
     mentionIndex,
     filteredParticipants,
     handleInputChange: handleMentionInputChange,
-    handleSelectMention,
+    handleSelectMention: handleSelectMentionInternal,
     handleKeyDown: handleMentionKeyDown
   } = useMentions({
     inputText,
@@ -104,6 +105,17 @@ export const ChatInput: React.FC<ChatInputProps> = ({
     isGroup,
     inputRef
   });
+
+  const onSelectMention = useCallback((user: User) => {
+      const userSelected = handleSelectMentionInternal(user);
+      
+      if (userSelected) {
+        setActiveMentions(prev => {
+          if (prev.find(m => m.id === userSelected.id)) return prev;
+          return [...prev, { id: userSelected.id, name: userSelected.fullName }];
+        });
+      }
+    }, [handleSelectMentionInternal]);
 
   useEffect(() => {
     if (!isSending && !disabled) {
@@ -122,6 +134,27 @@ export const ChatInput: React.FC<ChatInputProps> = ({
       });
     };
   }, [selectedFiles]);
+
+  useEffect(() => {
+    if (!inputText) {
+      if (activeMentions.length > 0) setActiveMentions([]);
+      return;
+    }
+
+    const mentionRegex = /@([^\n\u200B]+)\u200B/g;
+    const namesInText: string[] = [];
+    let match;
+    while ((match = mentionRegex.exec(inputText)) !== null) {
+      namesInText.push(match[1]);
+    }
+
+    if (namesInText.length !== activeMentions.length) {
+       const newActiveMentions = activeMentions.filter(m => namesInText.includes(m.name));
+       if (JSON.stringify(newActiveMentions) !== JSON.stringify(activeMentions)) {
+         setActiveMentions(newActiveMentions);
+       }
+    }
+  }, [inputText]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const text = e.target.value;
@@ -216,16 +249,26 @@ export const ChatInput: React.FC<ChatInputProps> = ({
         if (editingMessage) {
           await onEditMessage?.(inputText.trim());
         } else {
-          // Parse mentions from format @[userId:fullName]
-          const mentionRegex = /@\[([^:]+):([^\]]+)\]/g;
+          let finalContent = inputText.trim();
           const mentions: string[] = [];
-          let match;
-          while ((match = mentionRegex.exec(inputText.trim())) !== null) {
-            mentions.push(match[1]); // match[1] is the userId
-          }
-          await onSendText(inputText.trim(), mentions.length > 0 ? [...new Set(mentions)] : undefined, replyingTo?.id);
+
+          const tempActiveMentions = [...activeMentions];
+          
+          finalContent = finalContent.replace(/@([^\n\u200B]+)\u200B/g, (match, fullName) => {
+            const index = tempActiveMentions.findIndex(m => m.name === fullName);
+            if (index !== -1) {
+              const mention = tempActiveMentions[index];
+              mentions.push(mention.id);
+              tempActiveMentions.splice(index, 1);
+              return `@[${mention.id}:${mention.name}]`;
+            }
+            return match;
+          });
+
+          await onSendText(finalContent, mentions.length > 0 ? [...new Set(mentions)] : undefined, replyingTo?.id);
         }
         setInputText('');
+        setActiveMentions([]);
       }
       onCancelAction();
     } catch (error) {
@@ -244,13 +287,18 @@ export const ChatInput: React.FC<ChatInputProps> = ({
       const cursor = e.currentTarget.selectionStart;
       const text = e.currentTarget.value;
       const beforeCursor = text.slice(0, cursor);
-      const mentionMatch = beforeCursor.match(/@\[[^:]+:[^\]]+\] ?$/);
+      
+      const mentionMatch = beforeCursor.match(/@([^\n\u200B]+)\u200B ?$/);
 
       if (mentionMatch) {
         e.preventDefault();
         const deleteLength = mentionMatch[0].length;
+        const name = mentionMatch[1];
         const newText = text.substring(0, cursor - deleteLength) + text.substring(cursor);
         setInputText(newText);
+        
+        setActiveMentions(prev => prev.filter(m => m.name !== name || newText.includes(`@${m.name}\u200B`)));
+        
         setTimeout(() => {
           if (inputRef.current) {
             const newPos = cursor - deleteLength;
@@ -337,7 +385,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
           <MentionList
             users={filteredParticipants}
             selectedIndex={mentionIndex}
-            onSelect={handleSelectMention}
+            onSelect={onSelectMention}
           />
         )}
 
@@ -372,11 +420,13 @@ export const ChatInput: React.FC<ChatInputProps> = ({
             className="rounded-2xl"
             renderOverlay={(value) => (
               <>
-                {value.split(/(@\[[^:]+:[^\]]+\])/g).map((part, i) => {
-                  if (part.startsWith('@[') && part.endsWith(']')) {
-                    const match = part.match(/@\[[^:]+:([^\]]+)\]/);
-                    const displayName = match ? `@${match[1]}` : part;
-                    return <span key={i} className="text-primary bg-primary/10 rounded box-decoration-clone">{displayName}</span>;
+                {value.split(/(@[^\n\u200B]+\u200B)/g).map((part, i) => {
+                  if (part.startsWith('@') && part.endsWith('\u200B')) {
+                    return (
+                      <span key={i} className="text-primary bg-primary/10 rounded box-decoration-clone font-medium border-b-2 border-primary/20">
+                        {part.slice(0, -1)}
+                      </span>
+                    );
                   }
                   return <span key={i}>{part}</span>;
                 })}
