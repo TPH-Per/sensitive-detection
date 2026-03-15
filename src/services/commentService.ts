@@ -27,6 +27,11 @@ import { compressImage } from '../utils/imageUtils';
 import { uploadWithProgress } from '../utils/uploadUtils';
 import { withRetry } from '../utils/retryUtils';
 import { convertDoc, convertDocs } from '../utils/firebaseUtils';
+import {
+  validateCommentContent,
+  validateImageFile,
+  FileValidationError
+} from '../utils/fileValidation';
 
 // Chuyển đổi document sang đối tượng Comment
 const commentConverter = (doc: DocumentSnapshot | QueryDocumentSnapshot<DocumentData>) => convertDoc<Comment>(doc);
@@ -120,6 +125,9 @@ export const commentService = {
     preGeneratedId?: string
   ): Promise<string> => {
     try {
+      // Validate content
+      validateCommentContent(content);
+
       const commentData: any = {
         postId,
         authorId: userId,
@@ -143,6 +151,9 @@ export const commentService = {
 
       return docRefId!;
     } catch (error) {
+      if (error instanceof FileValidationError) {
+        throw error;
+      }
       throw error;
     }
   },
@@ -378,6 +389,8 @@ export const commentService = {
     onProgress?: (progress: number) => void
   ): Promise<MediaObject> => {
     try {
+      // Validate image
+      validateImageFile(file);
 
       const compressedFile = await compressImage(file, IMAGE_COMPRESSION.COMMENT);
 
@@ -397,6 +410,9 @@ export const commentService = {
         isSensitive: false,
       };
     } catch (error) {
+      if (error instanceof FileValidationError) {
+        throw error;
+      }
       console.error("Lỗi upload ảnh comment:", error);
       throw error;
     }

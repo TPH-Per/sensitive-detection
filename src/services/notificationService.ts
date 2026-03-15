@@ -124,6 +124,24 @@ export const notificationService = {
     }
   },
 
+  // Lấy notification hệ thống gần nhất
+  getLatestSystemNotifications: async (userId: string): Promise<Notification[]> => {
+    try {
+      const q = query(
+        collection(db, 'notifications'),
+        where('receiverId', '==', userId),
+        where('type', '==', NotificationType.SYSTEM),
+        orderBy('createdAt', 'desc'),
+        limit(5)
+      );
+      const snapshot = await getDocs(q);
+      return convertDocs<Notification>(snapshot.docs);
+    } catch (error) {
+      console.error("Lỗi lấy system notifications:", error);
+      return [];
+    }
+  },
+
   // Helper để lấy text hiển thị ngắn gọn cho thông báo
   getNotificationText: (notification: Notification, senderName: string): string => {
     const isInteraction = [

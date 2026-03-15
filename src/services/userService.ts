@@ -28,6 +28,13 @@ import { withRetry } from '../utils/retryUtils';
 import { uploadWithProgress, ProgressCallback, deleteStorageFile } from '../utils/uploadUtils';
 import { PAGINATION, IMAGE_COMPRESSION } from '../constants';
 import { convertDoc } from '../utils/firebaseUtils';
+import {
+  validateUserName,
+  validateBio,
+  validateAvatarFile,
+  validateCoverFile,
+  FileValidationError
+} from '../utils/fileValidation';
 
 // Xử lý document thành đối tượng User
 const userConverter = (doc: DocumentSnapshot) => convertDoc<User>(doc);
@@ -63,6 +70,13 @@ export const userService = {
   // Cập nhật hồ sơ
   updateProfile: async (userId: string, data: Partial<User>): Promise<User> => {
     try {
+      if (data.fullName !== undefined) {
+        validateUserName(data.fullName);
+      }
+      if (data.bio !== undefined) {
+        validateBio(data.bio);
+      }
+
       const userRef = doc(db, 'users', userId);
       await updateDoc(userRef, {
         ...data,
@@ -70,6 +84,9 @@ export const userService = {
       });
       return { ...data, id: userId } as User;
     } catch (error) {
+      if (error instanceof FileValidationError) {
+        throw error;
+      }
       console.error("Lỗi cập nhật profile", error);
       throw error;
     }
@@ -79,7 +96,7 @@ export const userService = {
   createUserDocument: async (userId: string, data: Partial<User>): Promise<void> => {
     try {
       const batch = writeBatch(db);
-      
+
       const userRef = doc(db, 'users', userId);
       batch.set(userRef, {
         fullName: data.fullName || '',
@@ -116,6 +133,13 @@ export const userService = {
     onProgress?: ProgressCallback
   ): Promise<MediaObject> => {
     try {
+      // Validate file
+      if (type === 'avatar') {
+        validateAvatarFile(file);
+      } else {
+        validateCoverFile(file);
+      }
+
       const compressionType = type === 'avatar' ? IMAGE_COMPRESSION.AVATAR : IMAGE_COMPRESSION.COVER;
       const compressedFile = await compressImage(file, compressionType);
 
@@ -160,6 +184,9 @@ export const userService = {
 
       return mediaObject;
     } catch (error) {
+      if (error instanceof FileValidationError) {
+        throw error;
+      }
       console.error(`Lỗi upload ${type}`, error);
       throw error;
     }
@@ -344,7 +371,7 @@ export const userService = {
           updatedAt: data.updatedAt as Timestamp
         } as UserSettings;
       }
-      
+
       // Trả về mặc định nếu chưa có document
       return {
         showOnlineStatus: true,

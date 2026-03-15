@@ -5,6 +5,14 @@ import { TIME_LIMITS, IMAGE_COMPRESSION } from '../../constants';
 import { compressImage } from '../../utils/imageUtils';
 import { withRetry } from '../../utils/retryUtils';
 import { uploadWithProgress, UploadProgress } from '../../utils/uploadUtils';
+import {
+    validateMessageContent,
+    validateImageFile,
+    validateVideoFile,
+    validateChatFile,
+    validateVoiceFile,
+    FileValidationError
+} from '../../utils/fileValidation';
 
 type ProgressWithId = (messageId: string, progress: UploadProgress) => void;
 
@@ -86,6 +94,17 @@ async function createAndSendMediaMessage(
         mentions?: string[];
     }
 ): Promise<string> {
+    // Validate file based on type
+    if (type === MessageType.IMAGE) {
+        validateImageFile(file);
+    } else if (type === MessageType.VIDEO) {
+        validateVideoFile(file);
+    } else if (type === MessageType.FILE) {
+        validateChatFile(file);
+    } else if (type === MessageType.VOICE) {
+        validateVoiceFile(file);
+    }
+
     let uploadFile: File = file;
 
     if (options.compress && type === MessageType.IMAGE) {
@@ -276,6 +295,9 @@ export const rtdbMessageService = {
         }
     ): Promise<string> => {
         try {
+            // Validate content
+            validateMessageContent(content);
+
             const newMsgRef = push(ref(rtdb, `messages/${convId}`));
             const msgId = newMsgRef.key!;
 
@@ -302,6 +324,9 @@ export const rtdbMessageService = {
 
             return msgId;
         } catch (error) {
+            if (error instanceof FileValidationError) {
+                throw error;
+            }
             console.error('[rtdbMessageService] Lỗi sendTextMessage:', error);
             throw error;
         }

@@ -25,6 +25,12 @@ import { compressImage, isImageFile } from '../utils/imageUtils';
 import { withRetry } from '../utils/retryUtils';
 import { uploadWithProgress, ProgressCallback, deleteStorageFiles } from '../utils/uploadUtils';
 import { convertDoc, convertDocs } from '../utils/firebaseUtils';
+import {
+  validatePostContent,
+  validateImageFile,
+  validateVideoFile,
+  FileValidationError
+} from '../utils/fileValidation';
 
 // Chuyển đổi Firestore document sang Post
 const postConverter = (doc: DocumentSnapshot) => convertDoc<Post>(doc);
@@ -296,6 +302,10 @@ export const postService = {
   /** Tạo bài viết mới */
   createPost: async (postData: Omit<Post, 'id' | 'createdAt' | 'commentCount' | 'status'>, predefinedId?: string): Promise<string> => {
     try {
+      if (postData.content) {
+        validatePostContent(postData.content);
+      }
+
       const postRef = predefinedId ? doc(db, 'posts', predefinedId) : doc(collection(db, 'posts'));
 
       const dataToSave: any = {
@@ -316,6 +326,9 @@ export const postService = {
       await setDoc(postRef, dataToSave);
       return postRef.id;
     } catch (error) {
+      if (error instanceof FileValidationError) {
+        throw error;
+      }
       console.error("Lỗi tạo bài viết", error);
       throw error;
     }
@@ -473,6 +486,17 @@ export const postService = {
     onProgress?: (progress: number, fileIndex: number, totalFiles: number) => void
   ): Promise<MediaObject[]> => {
     try {
+      // Validate files
+      for (const file of files) {
+        if (file.type.startsWith('image/')) {
+          validateImageFile(file);
+        } else if (file.type.startsWith('video/')) {
+          validateVideoFile(file);
+        } else {
+          throw new FileValidationError('File phải là ảnh hoặc video');
+        }
+      }
+
       const media: MediaObject[] = [];
       const totalFiles = files.length;
 
@@ -525,6 +549,9 @@ export const postService = {
 
       return media;
     } catch (error) {
+      if (error instanceof FileValidationError) {
+        throw error;
+      }
       console.error("Lỗi upload media", error);
       throw error;
     }
