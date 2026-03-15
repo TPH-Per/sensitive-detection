@@ -4,6 +4,7 @@ import { RtdbConversation, RtdbUserChat, MediaObject, MemberRole } from '../../.
 import { uploadWithProgress, UploadProgress, deleteStorageFile } from '../../utils/uploadUtils';
 import { compressImage } from '../../utils/imageUtils';
 import { IMAGE_COMPRESSION, GROUP_LIMITS } from '../../constants';
+import { systemMessages } from '../../constants/systemMessages';
 
 export const rtdbGroupService = {
     sendGroupSystemMessage: async (
@@ -154,7 +155,8 @@ export const rtdbGroupService = {
                         isArchived: false,
                         unreadCount: 0,
                         lastReadMsgId: null,
-                        lastMsgTimestamp: now
+                        lastMsgTimestamp: now,
+                        clearedAt: 0
                     } as RtdbUserChat;
                 }
             });
@@ -219,7 +221,7 @@ export const rtdbGroupService = {
 
             updates[`conversations/${convId}/lastMessage`] = {
                 senderId: 'system',
-                content: 'Nhóm đã giải tán',
+                content: systemMessages.DISBAND_GROUP(),
                 type: 'system',
                 timestamp: now,
                 messageId: null
@@ -255,7 +257,7 @@ export const rtdbGroupService = {
             const updateData: any = { ...updates, updatedAt: Date.now() };
             await update(convRef, updateData);
         } catch (error) {
-            console.error('[rtdbGroupService] Lá»—i updateGroupInfo:', error);
+            console.error('[rtdbGroupService] Lỗi updateGroupInfo:', error);
             throw error;
         }
     },
@@ -281,7 +283,7 @@ export const rtdbGroupService = {
 
             await update(ref(rtdb), updates);
         } catch (error) {
-            console.error('[rtdbGroupService] Lá»—i updateMemberRole:', error);
+            console.error('[rtdbGroupService] Lỗi updateMemberRole:', error);
             throw error;
         }
     },

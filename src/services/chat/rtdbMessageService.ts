@@ -500,7 +500,7 @@ export const rtdbMessageService = {
 
             return messages.sort((a, b) => a.data.createdAt - b.data.createdAt);
         } catch (error) {
-            console.error('[rtdbMessageService] Lá»—i loadMoreMessages:', error);
+            console.error('[rtdbMessageService] Lỗi loadMoreMessages:', error);
             throw error;
         }
     },
@@ -798,7 +798,10 @@ export const rtdbMessageService = {
     /**
      * Gửi tin nhắn hệ thống
      */
-    sendSystemMessage: async (convId: string, content: string): Promise<string> => {
+    sendSystemMessage: async (
+        convId: string,
+        content: string
+    ): Promise<string> => {
         try {
             const newMsgRef = push(ref(rtdb, `messages/${convId}`));
             const msgId = newMsgRef.key!;
@@ -822,20 +825,7 @@ export const rtdbMessageService = {
             };
 
             await set(newMsgRef, messageData);
-
-            const convRef = ref(rtdb, `conversations/${convId}`);
-            await update(convRef, {
-                lastMessage: {
-                    senderId: 'system',
-                    content,
-                    type: MessageType.SYSTEM,
-                    timestamp: Date.now(),
-                    messageId: msgId,
-                    readBy: {},
-                    deliveredTo: {}
-                },
-                updatedAt: Date.now()
-            });
+            await updateConversationAfterMessage(convId, 'system', messageData, content, msgId);
 
             return msgId;
         } catch (error) {

@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 import { MediaObject } from '../../../shared/types';
 import { useRtdbChatStore } from '../../store';
+import { systemMessages } from '../../constants/systemMessages';
 
 interface UseChatGroupsProps {
   selectedConversationId: string | null;
@@ -10,7 +11,9 @@ interface UseChatGroupsProps {
   currentUserName?: string;
 }
 
-// Qu?n lý nhóm chat
+/**
+ * Quáº£n lÃ½ cÃ¡c hÃ nh Ä‘á»™ng liÃªn quan Ä‘áº¿n nhÃ³m chat
+ */
 export const useChatGroups = ({
   selectedConversationId,
   currentUserId,
@@ -28,8 +31,8 @@ export const useChatGroups = ({
     sendGroupSystemMessage,
   } = useRtdbChatStore();
 
-  const getName = (uid: string) => usersMap[uid]?.fullName || 'Ngu?i dùng';
-  const getActorName = () => (currentUserId ? getName(currentUserId) : 'Ngu?i dùng');
+  const getName = (uid: string) => usersMap[uid]?.fullName || 'NgÆ°á»i dÃ¹ng';
+  const getActorName = () => (currentUserId ? getName(currentUserId) : 'NgÆ°á»i dÃ¹ng');
 
   const handleCreateGroup = useCallback(async (
     memberIds: string[],
@@ -38,7 +41,11 @@ export const useChatGroups = ({
   ) => {
     if (!currentUserId) return;
     const conversationId = await createGroup(currentUserId, memberIds, groupName, groupAvatar);
-    await sendGroupSystemMessage(conversationId, currentUserId, `${getActorName()} dã t?o nhóm`);
+    await sendGroupSystemMessage(
+      conversationId, 
+      currentUserId, 
+      systemMessages.CREATE_GROUP(getActorName())
+    );
   }, [currentUserId, createGroup, sendGroupSystemMessage, getActorName]);
 
   const handleAddMembers = useCallback(async (userIds: string[]) => {
@@ -47,10 +54,14 @@ export const useChatGroups = ({
       await addMember(selectedConversationId, userIds);
       if (currentUserId) {
         const names = userIds.map((id) => getName(id)).join(', ');
-        await sendGroupSystemMessage(selectedConversationId, currentUserId, `${getActorName()} dã thêm ${names} vào nhóm`);
+        await sendGroupSystemMessage(
+          selectedConversationId, 
+          currentUserId, 
+          systemMessages.ADD_MEMBERS(getActorName(), names)
+        );
       }
     } catch (error) {
-      console.error(error);
+      console.error('[useChatGroups] Lá»—i thÃªm thÃ nh viÃªn:', error);
     }
   }, [selectedConversationId, addMember, sendGroupSystemMessage, currentUserId, getActorName, getName]);
 
@@ -58,7 +69,11 @@ export const useChatGroups = ({
     if (!selectedConversationId) return;
     await removeMember(selectedConversationId, userId);
     if (currentUserId) {
-      await sendGroupSystemMessage(selectedConversationId, currentUserId, `${getActorName()} dã xóa ${getName(userId)} kh?i nhóm`);
+      await sendGroupSystemMessage(
+        selectedConversationId, 
+        currentUserId, 
+        systemMessages.REMOVE_MEMBER(getActorName(), getName(userId))
+      );
     }
   }, [selectedConversationId, removeMember, sendGroupSystemMessage, currentUserId, getActorName, getName]);
 
@@ -74,7 +89,7 @@ export const useChatGroups = ({
       }
     }
 
-    await sendGroupSystemMessage(selectedConversationId, currentUserId, `${getActorName()} dã r?i nhóm`);
+    await sendGroupSystemMessage(selectedConversationId, currentUserId, systemMessages.LEAVE_GROUP(getActorName()));
     await leaveGroup(selectedConversationId, currentUserId);
     return { needAssignAdmin: false };
   }, [selectedConversationId, currentUserId, conversations, leaveGroup, sendGroupSystemMessage, getActorName]);
@@ -82,8 +97,12 @@ export const useChatGroups = ({
   const handleAssignAdminAndLeave = useCallback(async (newAdminId: string) => {
     if (!selectedConversationId || !currentUserId) return;
     await updateMemberRole(selectedConversationId, newAdminId, 'admin');
-    await sendGroupSystemMessage(selectedConversationId, currentUserId, `${getActorName()} dã chuy?n quy?n qu?n tr? cho ${getName(newAdminId)}`);
-    await sendGroupSystemMessage(selectedConversationId, currentUserId, `${getActorName()} dã r?i nhóm`);
+    await sendGroupSystemMessage(
+      selectedConversationId, 
+      currentUserId, 
+      systemMessages.CHANGE_ADMIN_ROLE(getActorName(), getName(newAdminId))
+    );
+    await sendGroupSystemMessage(selectedConversationId, currentUserId, systemMessages.LEAVE_GROUP(getActorName()));
     await leaveGroup(selectedConversationId, currentUserId);
   }, [selectedConversationId, currentUserId, updateMemberRole, leaveGroup, sendGroupSystemMessage, getActorName, getName]);
 
@@ -91,7 +110,11 @@ export const useChatGroups = ({
     if (!selectedConversationId) return;
     await updateMemberRole(selectedConversationId, userId, 'admin');
     if (currentUserId) {
-      await sendGroupSystemMessage(selectedConversationId, currentUserId, `${getActorName()} dã thang ${getName(userId)} làm qu?n tr? viên`);
+      await sendGroupSystemMessage(
+        selectedConversationId, 
+        currentUserId, 
+        systemMessages.PROMOTE_TO_ADMIN(getActorName(), getName(userId))
+      );
     }
   }, [selectedConversationId, updateMemberRole, sendGroupSystemMessage, currentUserId, getActorName, getName]);
 
@@ -99,7 +122,11 @@ export const useChatGroups = ({
     if (!selectedConversationId) return;
     await updateMemberRole(selectedConversationId, userId, 'member');
     if (currentUserId) {
-      await sendGroupSystemMessage(selectedConversationId, currentUserId, `${getActorName()} dã h? quy?n qu?n tr? viên c?a ${getName(userId)}`);
+      await sendGroupSystemMessage(
+        selectedConversationId, 
+        currentUserId, 
+        systemMessages.DEMOTE_FROM_ADMIN(getActorName(), getName(userId))
+      );
     }
   }, [selectedConversationId, updateMemberRole, sendGroupSystemMessage, currentUserId, getActorName, getName]);
 
@@ -110,14 +137,16 @@ export const useChatGroups = ({
       const conv = conversations.find(c => c.id === selectedConversationId);
       const nameChanged = updates.name && updates.name !== conv?.data?.name;
       const avatarChanged = !!updates.avatar;
+      
       let content = '';
       if (nameChanged && avatarChanged) {
-        content = `${getActorName()} dã c?p nh?t ?nh nhóm và d?i tên nhóm thành "${updates.name}"`;
+        content = systemMessages.UPDATE_GROUP_BOTH(getActorName(), updates.name!);
       } else if (nameChanged) {
-        content = `${getActorName()} dã d?i tên nhóm thành "${updates.name}"`;
+        content = systemMessages.UPDATE_GROUP_NAME(getActorName(), updates.name!);
       } else if (avatarChanged) {
-        content = `${getActorName()} dã c?p nh?t ?nh nhóm`;
+        content = systemMessages.UPDATE_GROUP_AVATAR(getActorName());
       }
+      
       if (content) {
         await sendGroupSystemMessage(selectedConversationId, currentUserId, content);
       }

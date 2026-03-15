@@ -125,7 +125,6 @@ const ChatPage: React.FC = () => {
             setIsCaller(false);
             setCallPhase('in-call');
             setCallStartTime(activeCall.startedAt);
-            // participant node will be updated in CallWindow.tsx
         }
     };
 
