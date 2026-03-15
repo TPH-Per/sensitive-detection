@@ -51,6 +51,8 @@ export enum NotificationType {
     FRIEND_REQUEST = "friend_request",
     SYSTEM = "system",
     REPORT = "report",
+    CHAT = "chat",
+    MENTION = "mention",
 }
 
 export enum ReportType {
@@ -115,6 +117,8 @@ export interface NotificationPayload {
     friendRequestId?: string;
     contentSnippet?: string;
     reportId?: string;
+    convId?: string;
+    senderName?: string;
 }
 
 // ========== BASE ENTITIES ==========

@@ -61,6 +61,12 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({ notification
           navigate('/notifications');
         }
         break;
+      case NotificationType.CHAT:
+      case NotificationType.MENTION:
+        if (notification.data.convId) {
+          navigate(`/chat/${notification.data.convId}`);
+        }
+        break;
       case NotificationType.SYSTEM:
         if (notification.data.friendRequestId) {
           navigate(`/profile/${notification.actorId}`);
@@ -77,7 +83,9 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({ notification
   const isInteraction = [
     NotificationType.REACTION,
     NotificationType.COMMENT,
-    NotificationType.FRIEND_REQUEST
+    NotificationType.FRIEND_REQUEST,
+    NotificationType.CHAT,
+    NotificationType.MENTION
   ].includes(notification.type);
 
   const isSystem = notification.type === NotificationType.SYSTEM || notification.type === NotificationType.REPORT;
@@ -104,7 +112,7 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({ notification
                 : <Skeleton width={72} height={13} className="opacity-60 inline-block align-middle" />}
             </span>
           )}
-          {notificationService.getNotificationText(notification, '')}
+          {notificationService.getNotificationText(notification, sender?.fullName || '')}
         </p>
         <span className="text-xs text-text-tertiary mt-1 block" title={formatDateTime(notification.createdAt)}>
           {formatRelativeTime(notification.createdAt)}

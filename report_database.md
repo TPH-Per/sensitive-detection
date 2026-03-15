@@ -200,8 +200,8 @@ _Mô tả: Lưu trữ mọi thông báo (Tương tác, Hệ thống) đẩy tớ
 | `id` | String | **Required** | Document ID |
 | `receiverId` | String | **Required** | ID người nhận |
 | `actorId` | String | **Required** | ID người thực hiện hành động |
-| `type` | String Enum | **Required** | `reaction`, `comment`, `friend_request`, `system`, `report` |
-| `data` | Map | **Required** | Chứa `postId`, `commentId`, `friendRequestId`, v.v. |
+| `type` | String Enum | **Required** | `reaction`, `comment`, `friend_request`, `system`, `report`, `mention`. (Lưu ý: Loại `chat` chỉ gửi Push, không lưu vào Firestore) |
+| `data` | Map | **Required** | Chứa `postId`, `commentId`, `friendRequestId`, `convId`, `contentSnippet`, `senderName`, v.v. |
 | `isRead` | Boolean | **Required** | Đã đọc hay chưa. Mặc định `false` |
 | `createdAt` | Timestamp | **Required** | Thời điểm tạo |
 | `updatedAt` | Timestamp | **Required** | Thời điểm cập nhật |
