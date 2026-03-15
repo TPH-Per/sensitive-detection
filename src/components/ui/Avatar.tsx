@@ -94,19 +94,25 @@ const AvatarInner: React.FC<AvatarProps> = ({
                   <div className="w-full h-full flex items-center justify-center bg-bg-hover text-[8px] font-bold text-text-primary">
                     +{members.length - 3}
                   </div>
-                ) : member.avatar ? (
-                  <img
-                    src={typeof member.avatar === 'string' ? member.avatar : member.avatar.url}
-                    alt=""
-                    className={`w-full h-full object-cover ${typeof member.avatar === 'object' && member.avatar.isSensitive ? 'blur-sm' : ''}`}
-                  />
                 ) : (
-                  <div
-                    className="w-full h-full flex items-center justify-center text-[8px] font-bold text-text-on-primary uppercase"
-                    style={{ background: getAvatarGradient(member.fullName || member.id) }}
-                  >
-                    {getInitials(member.fullName).substring(0, 1)}
-                  </div>
+                  <>
+                    {(member.avatar && (typeof member.avatar === 'string' ? member.avatar : member.avatar.url)) ? (
+                      <img
+                        src={typeof member.avatar === 'string' ? member.avatar : member.avatar.url}
+                        alt=""
+                        className={`w-full h-full object-cover ${typeof member.avatar === 'object' && member.avatar.isSensitive ? 'blur-sm' : ''}`}
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).style.display = 'none';
+                        }}
+                      />
+                    ) : null}
+                    <div
+                      className="w-full h-full flex items-center justify-center text-[8px] font-bold text-text-on-primary uppercase"
+                      style={{ background: getAvatarGradient(member.fullName || member.id) }}
+                    >
+                      {getInitials(member.fullName).substring(0, 1)}
+                    </div>
+                  </>
                 )}
               </div>
             );
@@ -125,12 +131,15 @@ const AvatarInner: React.FC<AvatarProps> = ({
     );
   };
 
+  const avatarUrl = typeof src === 'string' ? src : src?.url;
+  const isCompositeGrid = isGroup && members.length > 0 && (!avatarUrl || avatarUrl === '/blank-avatar.png');
+
   return (
     <div
       className={`relative inline-flex flex-shrink-0 ${sizeClasses[size]} rounded-full ${className} ${onClick ? 'cursor-pointer' : ''}`}
       onClick={onClick}
     >
-      <div className={`w-full h-full relative rounded-full ${!isGroup ? 'overflow-hidden bg-bg-secondary' : 'bg-transparent'} ${size !== '2xs' && !isGroup ? 'border border-border-light' : ''} flex items-center justify-center`}>
+      <div className={`w-full h-full relative rounded-full ${!isCompositeGrid ? 'overflow-hidden' : ''} ${!isGroup ? 'bg-bg-secondary' : 'bg-transparent'} ${size !== '2xs' && !isGroup ? 'border border-border-light' : ''} flex items-center justify-center`}>
         {renderContent()}
       </div>
       {status && (
