@@ -73,6 +73,12 @@ service cloud.firestore {
         allow read: if isAuthenticated() && (isOwner(userId) || isOwner(blockedUid));
         allow write: if isOwner(userId);
       }
+
+      // Fan-out feed
+      match /feeds/{feedId} {
+        allow read: if isAuthenticated() && isOwner(userId);
+        allow write: if isOwner(userId) || isAdmin();
+      }
     }
 
     // Lời mời kết bạn

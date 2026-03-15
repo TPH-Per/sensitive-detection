@@ -309,6 +309,7 @@ const MessageBubbleInner: React.FC<MessageBubbleProps> = ({
                     <ReactionDisplay
                       reactionSummary={reactionSummary}
                       reactionCount={reactionCount}
+                      variant="xs"
                       onClick={() => setShowReactionDetails(true)}
                     />
                   )}
@@ -336,13 +337,16 @@ const MessageBubbleInner: React.FC<MessageBubbleProps> = ({
                           setShowReactionSelector(false);
                         }}
                       />
-                      <ReactionSelector
-                        onSelect={(emoji) => toggleReaction(conversationId, message.id, currentUserId, emoji)}
-                        onClose={() => setShowReactionSelector(false)}
-                        autoClose={false}
-                        className={`bottom-full mb-1 ${isMe ? 'right-0' : 'left-0'}`}
-                        currentReaction={myReaction}
-                      />
+                      <div className={`absolute bottom-full mb-1 ${isMe ? 'right-0 pb-1.5' : 'left-0 pb-1.5'} z-[var(--z-popover)]`}>
+                        <ReactionSelector
+                          onSelect={(emoji) => toggleReaction(conversationId, message.id, currentUserId, emoji)}
+                          onClose={() => setShowReactionSelector(false)}
+                          autoClose={false}
+                          className="relative shadow-dropdown animate-in fade-in zoom-in-95 duration-200"
+                          currentReaction={myReaction}
+                          size="xs"
+                        />
+                      </div>
                     </>
                   )}
                 </div>

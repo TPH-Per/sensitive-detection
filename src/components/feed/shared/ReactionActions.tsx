@@ -18,6 +18,7 @@ interface ReactionActionsProps {
   statsClassName?: string;
   actionClassName?: string;
   selectorClassName?: string;
+  selectorPosition?: 'top' | 'bottom';
 }
 
 export const ReactionActions: React.FC<ReactionActionsProps> = ({
@@ -33,6 +34,7 @@ export const ReactionActions: React.FC<ReactionActionsProps> = ({
   statsClassName = 'px-4 py-3 flex justify-between items-center border-b border-border-light/60',
   actionClassName = 'flex p-1 relative',
   selectorClassName = '',
+  selectorPosition = 'top',
 }) => {
   const [showReactions, setShowReactions] = useState(false);
 
@@ -50,9 +52,13 @@ export const ReactionActions: React.FC<ReactionActionsProps> = ({
             {reactionCount > 0 && (
               <button 
                 onClick={onViewReactions}
-                className="hover:underline transition-transform active:scale-95"
+                className="hover:opacity-80 transition-all active:scale-95"
               >
-                <ReactionDisplay reactionSummary={reactionSummary} reactionCount={reactionCount} />
+                <ReactionDisplay 
+                  reactionSummary={reactionSummary} 
+                  reactionCount={reactionCount} 
+                  variant="md"
+                />
               </button>
             )}
           </div>
@@ -76,13 +82,13 @@ export const ReactionActions: React.FC<ReactionActionsProps> = ({
           onMouseLeave={() => setShowReactions(false)}
         >
           {showReactions && (
-            <div className={`absolute bottom-full left-0 ml-2 pb-3 z-[100] ${selectorClassName}`}>
+            <div className={`absolute ${selectorPosition === 'top' ? 'bottom-full pb-3' : 'top-full pt-3'} left-0 ml-2 z-[100] ${selectorClassName}`}>
               <ReactionSelector 
                 onSelect={(type) => {
                   onReact(type);
                   setShowReactions(false);
                 }} 
-                className="relative shadow-2xl animate-in fade-in slide-in-from-bottom-2 duration-200"
+                className={`relative shadow-2xl animate-in fade-in ${selectorPosition === 'top' ? 'slide-in-from-bottom-2' : 'slide-in-from-top-2'} duration-200`}
               />
             </div>
           )}

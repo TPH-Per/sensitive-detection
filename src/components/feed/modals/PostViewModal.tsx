@@ -2,7 +2,7 @@ import React, { useState, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { X, ChevronLeft, ChevronRight, MoreHorizontal, Edit, Trash2, Flag } from 'lucide-react';
 import { UserAvatar, IconButton, Modal, Dropdown, DropdownItem, Skeleton, ReactionDetailsModal } from '../../ui';
-import { Post, User, ReportType, ReactionType } from '../../../../shared/types';
+import { Post, User, ReportType, ReactionType, PostType } from '../../../../shared/types';
 import { CommentSection } from '../comment/CommentSection';
 import { formatRelativeTime, formatDateTime } from '../../../utils/dateUtils';
 import { useReportStore } from '../../../store/reportStore';
@@ -233,12 +233,20 @@ export const PostViewModal: React.FC<PostViewModalProps> = ({
               onClick={handleProfileClick}
             />
             <div className="min-w-0 flex-1">
-              <h3
-                className="font-bold text-text-primary text-[15px] truncate cursor-pointer hover:underline transition-all duration-base"
-                onClick={handleProfileClick}
-              >
-                {author?.fullName || 'Unknown User'}
-              </h3>
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <h3
+                  className="font-bold text-text-primary text-[15px] cursor-pointer hover:underline transition-all duration-base"
+                  onClick={handleProfileClick}
+                >
+                  {author?.fullName || 'Unknown User'}
+                </h3>
+                {post.type === PostType.AVATAR_UPDATE && (
+                  <span className="text-[14px] text-text-secondary font-normal">vừa cập nhật ảnh đại diện mới.</span>
+                )}
+                {post.type === PostType.COVER_UPDATE && (
+                  <span className="text-[14px] text-text-secondary font-normal">vừa cập nhật ảnh bìa mới.</span>
+                )}
+              </div>
               <div className="flex items-center gap-2 text-[12px] text-text-tertiary mt-0.5">
                 <span title={formatDateTime(post.createdAt)}>
                   {formatRelativeTime(post.createdAt)}
@@ -323,11 +331,13 @@ export const PostViewModal: React.FC<PostViewModalProps> = ({
               )}
 
               {/* Noi dung van ban */}
-              <div className="px-5 md:px-6 py-4 pb-3 w-full overflow-hidden">
-                <p className="text-text-primary whitespace-pre-line break-words break-all text-[15px] md:text-[16px] leading-[1.6] w-full">
-                  <TruncatedText content={post.content} threshold={300} />
-                </p>
-              </div>
+              {(post.type === PostType.REGULAR || post.content) && post.type === PostType.REGULAR && (
+                <div className="px-5 md:px-6 py-4 pb-3 w-full overflow-hidden">
+                  <p className="text-text-primary whitespace-pre-line break-words break-all text-[15px] md:text-[16px] leading-[1.6] w-full">
+                    <TruncatedText content={post.content} threshold={300} />
+                  </p>
+                </div>
+              )}
 
               <ReactionActions
                 reactionSummary={filteredSummary}
@@ -339,6 +349,7 @@ export const PostViewModal: React.FC<PostViewModalProps> = ({
                 statsClassName="px-5 md:px-6 py-4 flex justify-between items-center border-b border-border-light/60"
                 actionClassName="flex px-2 py-1 border-b border-border-light relative"
                 selectorClassName="z-[var(--z-popover)]"
+                selectorPosition="bottom"
               />
             </div>
           }

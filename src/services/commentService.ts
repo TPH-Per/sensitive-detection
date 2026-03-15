@@ -124,13 +124,13 @@ export const commentService = {
         postId,
         authorId: userId,
         content,
+        parentId: parentId || null,
         status: CommentStatus.ACTIVE,
         replyCount: 0,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
       };
 
-      if (parentId) commentData.parentId = parentId;
       if (image) commentData.image = image;
 
       let docRefId = preGeneratedId;

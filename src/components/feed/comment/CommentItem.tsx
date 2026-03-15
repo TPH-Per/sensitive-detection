@@ -208,13 +208,15 @@ const CommentItemInner: React.FC<CommentItemProps> = ({
               <div className="relative group/reaction-btn"
                 onMouseLeave={() => setShowReactions(false)}>
                 {showReactions && (
-                  <ReactionSelector
-                    className="absolute bottom-full left-1/2 -translate-x-1/2 mb-0.5"
-                    size="sm"
-                    autoClose={false}
-                    onSelect={handleReact}
-                    onClose={() => setShowReactions(false)}
-                  />
+                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 pb-1.5 z-[100]">
+                    <ReactionSelector
+                      className="relative shadow-dropdown animate-in fade-in zoom-in-95 duration-200"
+                      size="xs"
+                      autoClose={false}
+                      onSelect={handleReact}
+                      onClose={() => setShowReactions(false)}
+                    />
+                  </div>
                 )}
                 <button
                   onMouseEnter={() => setShowReactions(true)}
@@ -229,7 +231,8 @@ const CommentItemInner: React.FC<CommentItemProps> = ({
                 <ReactionDisplay
                   reactionSummary={filteredSummary}
                   reactionCount={filteredCount}
-                  variant="minimal"
+                  variant="xs"
+                  className="bg-transparent border-none shadow-none px-0 py-0 hover:bg-transparent"
                   onClick={() => setShowReactionDetails(true)}
                 />
               )}
