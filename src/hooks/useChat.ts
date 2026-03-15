@@ -6,11 +6,13 @@ import { useContactStore } from '../store/contactStore';
 import { useUserCache } from '../store/userCacheStore';
 import { useLoadingStore } from '../store/loadingStore';
 import { friendService } from '../services/friendService';
-import { useChatActions } from './chat/useChatActions';
-import { useChatMessages } from './chat/useChatMessages';
-import { useChatBlock } from './chat/useChatBlock';
-import { useChatGroups } from './chat/useChatGroups';
-import { useConversationParticipants } from './chat/useConversationParticipants';
+import { 
+  useChatActions, 
+  useChatMessages, 
+  useChatBlock, 
+  useChatGroups, 
+  useConversationParticipants 
+} from './chat';
 
 const EMPTY_MESSAGES: Array<{ id: string; data: RtdbMessage }> = [];
 const EMPTY_TYPING: string[] = [];
@@ -148,11 +150,15 @@ export const useChat = () => {
   }, [selectedConversationId, currentUser, subscribeToMessages, subscribeToTyping, markAsDelivered]);
 
   useEffect(() => {
-    if (!selectedConversationId || !currentUser) return;
+    const selectedConvData = conversations.find(c => c.id === selectedConversationId)?.data;
+    const isGroup = selectedConvData?.isGroup || false;
     
-    const activeParticipantIds = Object.keys(conversations.find(c => c.id === selectedConversationId)?.data.members || {});
-    const activePartnerId = activeParticipantIds.find(id => id !== currentUser.id);
-    const isMessageRequest = activePartnerId ? !friendIds.includes(activePartnerId) : false;
+    let isMessageRequest = false;
+    if (!isGroup) {
+      const activeParticipantIds = Object.keys(selectedConvData?.members || {});
+      const activePartnerId = activeParticipantIds.find(id => id !== currentUser.id);
+      isMessageRequest = activePartnerId ? !friendIds.includes(activePartnerId) : false;
+    }
 
     if (isMessageRequest) return;
 

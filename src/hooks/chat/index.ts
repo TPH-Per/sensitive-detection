@@ -7,3 +7,4 @@ export { useChatScroll } from './useChatScroll';
 export { useMentions } from './useMentions';
 export { useConversationItem } from './useConversationItem';
 export { useConversationGroups } from './useConversationGroups';
+export { useConversationParticipants } from './useConversationParticipants';
