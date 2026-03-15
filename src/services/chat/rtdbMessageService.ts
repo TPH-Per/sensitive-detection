@@ -65,13 +65,13 @@ async function updateConversationAfterMessage(
         };
         updates[`conversations/${convId}/updatedAt`] = Date.now();
 
+        const now = Date.now();
         for (const memberId of memberIds) {
+            updates[`user_chats/${memberId}/${convId}/lastMsgTimestamp`] = now;
+            updates[`user_chats/${memberId}/${convId}/updatedAt`] = now;
             if (memberId !== senderId) {
                 updates[`user_chats/${memberId}/${convId}/unreadCount`] = increment(1);
-                updates[`user_chats/${memberId}/${convId}/lastMsgTimestamp`] = Date.now();
                 updates[`user_chats/${memberId}/${convId}/isArchived`] = false;
-            } else {
-                updates[`user_chats/${memberId}/${convId}/lastMsgTimestamp`] = Date.now();
             }
         }
 
@@ -585,7 +585,8 @@ export const rtdbMessageService = {
             }
 
             const userChatUpdates: Record<string, any> = {
-                [`user_chats/${uid}/${convId}/unreadCount`]: 0
+                [`user_chats/${uid}/${convId}/unreadCount`]: 0,
+                [`user_chats/${uid}/${convId}/updatedAt`]: Date.now()
             };
 
             if (lastMsgId) {

@@ -146,6 +146,7 @@ export interface UserSettings {
     showOnlineStatus: boolean;
     showReadReceipts: boolean;
     defaultPostVisibility: Visibility;
+    createdAt: Timestamp;
     updatedAt: Timestamp;
 }
 
@@ -153,7 +154,7 @@ export interface UserSettings {
 
 export interface User extends BaseEntity {
     fullName: string;
-    avatar: MediaObject;
+    avatar?: MediaObject;
     email: string;
     location?: string;
     gender?: Gender;
@@ -161,7 +162,7 @@ export interface User extends BaseEntity {
     status: UserStatus;
     role: UserRole;
     bio?: string;
-    cover: MediaObject;
+    cover?: MediaObject;
     updatedAt: Timestamp;
     deletedAt?: Timestamp;
     settings?: UserSettings;
@@ -171,7 +172,7 @@ export interface FriendRequest extends BaseEntity {
     senderId: string;
     receiverId: string;
     status: FriendRequestStatus;
-    updatedAt?: Timestamp;
+    updatedAt: Timestamp;
 }
 
 // ========== RTDB CHAT INTERFACES ==========
@@ -202,9 +203,11 @@ export interface RtdbUserChat {
     isMuted: boolean;
     isArchived: boolean;
     unreadCount: number;
-    lastReadMsgId: string | null;
+    lastReadMsgId?: string | null;
     lastMsgTimestamp: number;
-    clearedAt?: number;
+    clearedAt: number;
+    createdAt: number;
+    updatedAt: number;
 }
 
 export interface RtdbMessage {
@@ -222,12 +225,14 @@ export interface RtdbMessage {
     deliveredTo?: Record<string, number>;
     reactions?: Record<string, string>;
     createdAt: number;
-    updatedAt?: number;
+    updatedAt: number;
 }
 
 export interface RtdbPresence {
     isOnline: boolean;
     lastSeen: number;
+    createdAt: number;
+    updatedAt: number;
 }
 
 export interface RtdbCallSignaling {
@@ -240,6 +245,8 @@ export interface RtdbCallSignaling {
     zegoToken?: string;
     timestamp: number;
     isGroupCall?: boolean;
+    createdAt: number;
+    updatedAt: number;
 }
 
 // ========== POSTS & COMMENTS ==========
@@ -254,6 +261,14 @@ export interface Comment extends BaseEntity, SoftDeletableEntity {
     replyCount?: number;
     isEdited?: boolean;
     editedAt?: Timestamp;
+    updatedAt: Timestamp;
+}
+
+// ========== REACTION INTERFACES ==========
+
+export interface ReactionDoc {
+    type: ReactionType;
+    createdAt: Timestamp;
     updatedAt: Timestamp;
 }
 
@@ -278,6 +293,7 @@ export interface Notification extends BaseEntity {
     type: NotificationType;
     data: NotificationPayload;
     isRead: boolean;
+    updatedAt: Timestamp;
 }
 
 export interface Report extends BaseEntity {
@@ -289,7 +305,7 @@ export interface Report extends BaseEntity {
     description?: string;
     images?: MediaObject[];
     status: ReportStatus;
-    updatedAt?: Timestamp;
+    updatedAt: Timestamp;
     resolvedAt?: Timestamp;
     resolvedBy?: string;
     resolution?: string;
@@ -307,7 +323,7 @@ export interface BlockOptions {
 export interface BlockedUserEntry extends BlockOptions {
     blockedUid: string;
     createdAt: Timestamp;
-    updatedAt?: Timestamp;
+    updatedAt: Timestamp;
 }
 
 // Sub-collections interfaces
@@ -315,14 +331,17 @@ export interface UserFeedItem {
     postId: string;
     authorId: string;
     createdAt: Timestamp;
+    updatedAt: Timestamp;
 }
 
 export interface UserFriendItem {
     friendId: string;
     createdAt: Timestamp;
+    updatedAt: Timestamp;
 }
 
 export interface FCMTokenDoc {
     fcmTokens: string[];
+    createdAt: Timestamp;
     updatedAt: Timestamp;
 }

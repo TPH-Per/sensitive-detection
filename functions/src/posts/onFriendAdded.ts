@@ -37,7 +37,9 @@ export const onFriendAdded = onDocumentCreated(
                 const feedRef = db.collection('users').doc(userId).collection('feeds').doc(postId);
                 batch.set(feedRef, {
                     postId,
+                    authorId: friendId,
                     createdAt: postData.createdAt,
+                    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
                 });
 
                 batchCount++;

@@ -114,6 +114,7 @@ export const userService = {
         showOnlineStatus: true,
         showReadReceipts: true,
         defaultPostVisibility: Visibility.PUBLIC,
+        createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
       });
 
@@ -368,7 +369,8 @@ export const userService = {
           showOnlineStatus: data.showOnlineStatus ?? true,
           showReadReceipts: data.showReadReceipts ?? true,
           defaultPostVisibility: data.defaultPostVisibility || Visibility.PUBLIC,
-          updatedAt: data.updatedAt as Timestamp
+          createdAt: data.createdAt as Timestamp || Timestamp.now(),
+          updatedAt: data.updatedAt as Timestamp || Timestamp.now()
         } as UserSettings;
       }
 
@@ -377,6 +379,7 @@ export const userService = {
         showOnlineStatus: true,
         showReadReceipts: true,
         defaultPostVisibility: Visibility.PUBLIC,
+        createdAt: Timestamp.now(),
         updatedAt: Timestamp.now()
       };
     } catch (error) {

@@ -17,7 +17,7 @@ import {
   DocumentSnapshot,
 } from 'firebase/firestore';
 import { db } from '../firebase/config';
-import { Post, Visibility, ReactionType, PostStatus, MediaObject, PostType } from '../../shared/types'
+import { Post, Visibility, ReactionType, ReactionDoc, PostStatus, MediaObject, PostType } from '../../shared/types'
 import { batchGetUsers } from '../utils/batchUtils';
 import { userService } from './userService';
 import { PAGINATION, IMAGE_COMPRESSION } from '../constants';
@@ -393,9 +393,18 @@ export const postService = {
       if (reaction === 'REMOVE' || current === reaction) {
         await deleteDoc(reactionRef);
       } else {
-        await setDoc(reactionRef, { type: reaction, createdAt: serverTimestamp() });
+        const now = serverTimestamp();
+        const reactionData: Partial<ReactionDoc> = { 
+          type: reaction as ReactionType, 
+          updatedAt: now as Timestamp 
+        };
+        
+        if (!snap.exists()) {
+          reactionData.createdAt = now as Timestamp;
+        }
+        
+        await setDoc(reactionRef, reactionData, { merge: true });
       }
-      // CF onPostReactionWrite xử lý update Map reactions + notification
     } catch (error) {
       console.error("Lỗi react bài viết", error);
       throw error;

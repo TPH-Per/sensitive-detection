@@ -18,25 +18,31 @@ export const presenceService = {
         try {
             const { userService } = await import('./userService');
             const settings = await userService.getUserSettings(uid);
-
             const userPresenceRef = presenceRef(uid);
-
-            if (settings.showOnlineStatus) {
+            
+            const snap = await get(userPresenceRef);
+            const now = rtdbServerTimestamp();
+            
+            if (!snap.exists()) {
                 await set(userPresenceRef, {
-                    isOnline: true,
-                    lastSeen: rtdbServerTimestamp()
+                    isOnline: settings.showOnlineStatus,
+                    lastSeen: now,
+                    createdAt: now,
+                    updatedAt: now
                 });
             } else {
                 await update(userPresenceRef, {
-                    isOnline: false,
-                    lastSeen: rtdbServerTimestamp()
+                    isOnline: settings.showOnlineStatus,
+                    lastSeen: now,
+                    updatedAt: now
                 });
             }
 
             const disconnectRef = onDisconnect(userPresenceRef);
             await disconnectRef.update({
                 isOnline: false,
-                lastSeen: rtdbServerTimestamp()
+                lastSeen: rtdbServerTimestamp(),
+                updatedAt: rtdbServerTimestamp()
             });
         } catch (error) {
             console.error('Lỗi set online:', error);
@@ -52,7 +58,8 @@ export const presenceService = {
             const userPresenceRef = presenceRef(uid);
             await update(userPresenceRef, {
                 isOnline: false,
-                lastSeen: Date.now()
+                lastSeen: Date.now(),
+                updatedAt: rtdbServerTimestamp()
             });
         } catch (error) {
             console.error('Lỗi set offline:', error);

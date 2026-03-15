@@ -46,7 +46,7 @@ const UserAvatarInner: React.FC<UserAvatarProps> = ({
   }, [userId, name, cachedUser, fetchUsers]);
 
   const displayName = name || cachedUser?.fullName;
-  const avatarUrl = src || (userId === currentUser?.id ? currentUser?.avatar.url : cachedUser?.avatar.url);
+  const avatarUrl = src || (userId === currentUser?.id ? currentUser?.avatar?.url : cachedUser?.avatar?.url);
 
   const statusToDisplay = useMemo((): 'active' | 'banned' | undefined => {
     if (!showStatus || initialStatus === 'banned') return undefined;

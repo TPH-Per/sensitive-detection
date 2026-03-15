@@ -47,7 +47,7 @@ export const CreatePost: React.FC<CreatePostProps> & { Skeleton: React.FC } = ({
     <>
       <div className="bg-bg-primary rounded-xl p-3 sm:p-4 shadow-sm border border-border-light transition-theme mb-4">
         <div className="flex gap-3 mb-4">
-          <Avatar src={currentUser.avatar.url} name={currentUser.fullName} size="md" />
+          <Avatar src={currentUser.avatar?.url} name={currentUser.fullName} size="md" />
           <Button
             variant="secondary"
             onClick={() => setShowCreateModal(true)}

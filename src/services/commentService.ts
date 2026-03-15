@@ -20,7 +20,7 @@ import {
   onSnapshot
 } from 'firebase/firestore';
 import { db } from '../firebase/config';
-import { Comment, ReactionType, CommentStatus, MediaObject } from '../../shared/types'
+import { Comment, ReactionType, ReactionDoc, CommentStatus, MediaObject } from '../../shared/types'
 import { PAGINATION, IMAGE_COMPRESSION } from '../constants';
 import { batchGetUsers } from '../utils/batchUtils';
 import { compressImage } from '../utils/imageUtils';
@@ -211,7 +211,17 @@ export const commentService = {
       if (reaction === 'REMOVE' || current === reaction) {
         await deleteDoc(reactionRef);
       } else {
-        await setDoc(reactionRef, { type: reaction, createdAt: serverTimestamp() });
+        const now = serverTimestamp();
+        const reactionData: Partial<ReactionDoc> = { 
+          type: reaction as ReactionType, 
+          updatedAt: now as Timestamp 
+        };
+        
+        if (!snap.exists()) {
+          reactionData.createdAt = now as Timestamp;
+        }
+        
+        await setDoc(reactionRef, reactionData, { merge: true });
       }
     } catch (error) {
       console.error("Lỗi react comment:", error);

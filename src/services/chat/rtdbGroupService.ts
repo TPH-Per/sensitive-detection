@@ -45,6 +45,7 @@ export const rtdbGroupService = {
 
             memberIds.forEach(uid => {
                 updates[`user_chats/${uid}/${convId}/lastMsgTimestamp`] = now;
+                updates[`user_chats/${uid}/${convId}/updatedAt`] = now;
                 if (uid !== actorId) {
                     updates[`user_chats/${uid}/${convId}/unreadCount`] = increment(1);
                 }
@@ -98,6 +99,7 @@ export const rtdbGroupService = {
             await set(newConvRef, conversationData);
 
             const updates: Record<string, any> = {};
+            const now = Date.now();
             allMemberIds.forEach(uid => {
                 updates[`user_chats/${uid}/${convId}`] = {
                     isPinned: false,
@@ -105,8 +107,10 @@ export const rtdbGroupService = {
                     isArchived: false,
                     unreadCount: 0,
                     lastReadMsgId: null,
-                    lastMsgTimestamp: Date.now(),
-                    clearedAt: 0
+                    lastMsgTimestamp: now,
+                    clearedAt: 0,
+                    createdAt: now,
+                    updatedAt: now
                 } as RtdbUserChat;
             });
 
@@ -156,7 +160,9 @@ export const rtdbGroupService = {
                         unreadCount: 0,
                         lastReadMsgId: null,
                         lastMsgTimestamp: now,
-                        clearedAt: 0
+                        clearedAt: 0,
+                        createdAt: now,
+                        updatedAt: now
                     } as RtdbUserChat;
                 }
             });
@@ -235,6 +241,7 @@ export const rtdbGroupService = {
                 } else {
                     updates[`user_chats/${uid}/${convId}/lastMsgTimestamp`] = now;
                     updates[`user_chats/${uid}/${convId}/unreadCount`] = increment(1);
+                    updates[`user_chats/${uid}/${convId}/updatedAt`] = now;
                 }
             });
 

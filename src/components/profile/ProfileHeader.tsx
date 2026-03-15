@@ -211,7 +211,7 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                   <div className="p-1 bg-bg-primary rounded-full transition-theme">
                     <UserAvatar
                       userId={user.id}
-                      src={user.avatar.url}
+                      src={user.avatar?.url}
                       name={user.fullName}
                       size="2xl"
                       className="border-4 border-bg-primary shadow-lg"

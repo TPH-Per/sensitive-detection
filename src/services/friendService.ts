@@ -7,6 +7,7 @@ import {
   where,
   orderBy,
   deleteDoc,
+  updateDoc,
   addDoc,
   onSnapshot,
   writeBatch,
@@ -165,9 +166,12 @@ export const friendService = {
       const batch = writeBatch(db);
       const now = serverTimestamp();
 
-      batch.set(doc(db, 'users', senderId, 'friends', receiverId), { friendId: receiverId, createdAt: now });
-      batch.set(doc(db, 'users', receiverId, 'friends', senderId), { friendId: senderId, createdAt: now });
-      batch.delete(doc(db, 'friendRequests', requestId));
+      batch.set(doc(db, 'users', senderId, 'friends', receiverId), { friendId: receiverId, createdAt: now, updatedAt: now });
+      batch.set(doc(db, 'users', receiverId, 'friends', senderId), { friendId: senderId, createdAt: now, updatedAt: now });
+      batch.update(doc(db, 'friendRequests', requestId), { 
+        status: FriendRequestStatus.ACCEPTED, 
+        updatedAt: now 
+      });
 
       await batch.commit();
     } catch (error) {
@@ -179,7 +183,10 @@ export const friendService = {
   rejectFriendRequest: async (requestId: string): Promise<void> => {
     try {
       const requestRef = doc(db, 'friendRequests', requestId);
-      await deleteDoc(requestRef);
+      await updateDoc(requestRef, { 
+        status: FriendRequestStatus.REJECTED, 
+        updatedAt: serverTimestamp() 
+      });
     } catch (error) {
       console.error("Lỗi từ chối kết bạn", error);
       throw error;

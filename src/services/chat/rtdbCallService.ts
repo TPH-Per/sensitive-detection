@@ -35,7 +35,9 @@ export const rtdbCallService = {
                 status: 'ringing',
                 zegoToken,
                 timestamp: Date.now(),
-                isGroupCall
+                isGroupCall,
+                createdAt: Date.now(),
+                updatedAt: Date.now()
             };
 
             recipientIds.forEach(id => {
@@ -68,6 +70,7 @@ export const rtdbCallService = {
 
             if (!isGroupCall) {
                 updates[`call_signaling/${callerId}/status`] = status;
+                updates[`call_signaling/${callerId}/updatedAt`] = Date.now();
             }
             updates[`call_signaling/${calleeId}`] = null;
 

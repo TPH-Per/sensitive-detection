@@ -37,6 +37,7 @@ export const rejectReport = onCall(
       resolvedAt: FieldValue.serverTimestamp(),
       resolvedBy: adminId,
       resolution: 'Không phát hiện vi phạm',
+      updatedAt: FieldValue.serverTimestamp(),
     });
 
     await createNotification({

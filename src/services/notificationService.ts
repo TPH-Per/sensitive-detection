@@ -42,7 +42,10 @@ export const notificationService = {
   markAsRead: async (notificationId: string): Promise<void> => {
     try {
       const docRef = doc(db, 'notifications', notificationId);
-      await updateDoc(docRef, { isRead: true });
+      await updateDoc(docRef, { 
+        isRead: true, 
+        updatedAt: serverTimestamp() 
+      });
     } catch (error) {
       console.error("Lỗi đánh dấu đã đọc:", error);
     }
@@ -59,7 +62,10 @@ export const notificationService = {
       const snapshot = await getDocs(q);
       const batch = writeBatch(db);
       snapshot.docs.forEach(doc => {
-        batch.update(doc.ref, { isRead: true });
+        batch.update(doc.ref, { 
+          isRead: true, 
+          updatedAt: serverTimestamp() 
+        });
       });
       await batch.commit();
     } catch (error) {
@@ -111,7 +117,7 @@ export const notificationService = {
         if (token) {
           await setDoc(
             doc(db, 'users', userId, 'private', 'fcm'),
-            { fcmTokens: arrayUnion(token), updatedAt: serverTimestamp() },
+            { fcmTokens: arrayUnion(token), createdAt: serverTimestamp(), updatedAt: serverTimestamp() },
             { merge: true }
           );
           return token;

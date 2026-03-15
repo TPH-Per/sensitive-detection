@@ -11,6 +11,7 @@ export async function createNotification(data: NotificationData): Promise<string
     ...data,
     isRead: false,
     createdAt: FieldValue.serverTimestamp(),
+    updatedAt: FieldValue.serverTimestamp(),
   });
   return docRef.id;
 }

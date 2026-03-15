@@ -75,7 +75,7 @@ const PostItemInner: React.FC<PostItemProps> = ({
         <div className="flex gap-3">
           <UserAvatar
             userId={author?.id}
-            src={author?.avatar.url}
+            src={author?.avatar?.url}
             name={author?.fullName}
             size="md"
             initialStatus={author?.status}

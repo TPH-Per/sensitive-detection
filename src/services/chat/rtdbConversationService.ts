@@ -46,6 +46,7 @@ export const rtdbConversationService = {
                 updatedAt: Date.now()
             };
 
+            const now = Date.now();
             updates[`conversations/${convId}`] = conversationData;
             updates[`user_chats/${user1Id}/${convId}`] = {
                 isPinned: false,
@@ -53,8 +54,10 @@ export const rtdbConversationService = {
                 isArchived: false,
                 unreadCount: 0,
                 lastReadMsgId: null,
-                lastMsgTimestamp: Date.now(),
-                clearedAt: 0
+                lastMsgTimestamp: now,
+                clearedAt: 0,
+                createdAt: now,
+                updatedAt: now
             };
             updates[`user_chats/${user2Id}/${convId}`] = {
                 isPinned: false,
@@ -62,8 +65,10 @@ export const rtdbConversationService = {
                 isArchived: false,
                 unreadCount: 0,
                 lastReadMsgId: null,
-                lastMsgTimestamp: Date.now(),
-                clearedAt: 0
+                lastMsgTimestamp: now,
+                clearedAt: 0,
+                createdAt: now,
+                updatedAt: now
             };
 
             await update(ref(rtdb), updates);
@@ -172,7 +177,10 @@ export const rtdbConversationService = {
     togglePin: async (uid: string, convId: string, isPinned: boolean): Promise<void> => {
         try {
             const userChatRef = ref(rtdb, `user_chats/${uid}/${convId}`);
-            await update(userChatRef, { isPinned });
+            await update(userChatRef, { 
+                isPinned,
+                updatedAt: Date.now()
+            });
         } catch (error) {
             console.error('[rtdbConversationService] Lỗi togglePin:', error);
             throw error;
@@ -185,7 +193,10 @@ export const rtdbConversationService = {
     toggleMute: async (uid: string, convId: string, isMuted: boolean): Promise<void> => {
         try {
             const userChatRef = ref(rtdb, `user_chats/${uid}/${convId}`);
-            await update(userChatRef, { isMuted });
+            await update(userChatRef, { 
+                isMuted,
+                updatedAt: Date.now()
+            });
         } catch (error) {
             console.error('[rtdbConversationService] Lỗi toggleMute:', error);
             throw error;
@@ -198,7 +209,10 @@ export const rtdbConversationService = {
     toggleArchive: async (uid: string, convId: string, isArchived: boolean): Promise<void> => {
         try {
             const userChatRef = ref(rtdb, `user_chats/${uid}/${convId}`);
-            await update(userChatRef, { isArchived });
+            await update(userChatRef, { 
+                isArchived,
+                updatedAt: Date.now()
+            });
         } catch (error) {
             console.error('[rtdbConversationService] Lỗi toggleArchive:', error);
             throw error;
@@ -213,7 +227,8 @@ export const rtdbConversationService = {
             const userChatRef = ref(rtdb, `user_chats/${uid}/${convId}`);
             await update(userChatRef, {
                 clearedAt: Date.now(),
-                unreadCount: 0
+                unreadCount: 0,
+                updatedAt: Date.now()
             });
         } catch (error) {
             console.error('[rtdbConversationService] Lỗi deleteConversation:', error);
@@ -235,6 +250,7 @@ export const rtdbConversationService = {
                 updates.lastReadMsgId = lastReadMsgId;
             }
 
+            updates.updatedAt = Date.now();
             await update(userChatRef, updates);
         } catch (error) {
             console.error('[rtdbConversationService] Lỗi resetUnreadCount:', error);
@@ -257,7 +273,9 @@ export const rtdbConversationService = {
 
             for (const convId of Object.keys(userChats)) {
                 if (userChats[convId].unreadCount > 0) {
+                    const now = Date.now();
                     updates[`user_chats/${uid}/${convId}/unreadCount`] = 0;
+                    updates[`user_chats/${uid}/${convId}/updatedAt`] = now;
                 }
             }
 
@@ -277,7 +295,8 @@ export const rtdbConversationService = {
         try {
             const userChatRef = ref(rtdb, `user_chats/${uid}/${convId}`);
             await update(userChatRef, {
-                unreadCount: 1
+                unreadCount: 1,
+                updatedAt: Date.now()
             });
         } catch (error) {
             console.error('[rtdbConversationService] Lỗi markAsUnread:', error);

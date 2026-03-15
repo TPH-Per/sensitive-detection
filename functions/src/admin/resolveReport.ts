@@ -78,6 +78,7 @@ export const resolveReport = onCall(
       resolvedAt: FieldValue.serverTimestamp(),
       resolvedBy: adminId,
       resolution,
+      updatedAt: FieldValue.serverTimestamp(),
     });
 
     if (reportData.targetType === ReportType.POST && action === 'delete_content') {

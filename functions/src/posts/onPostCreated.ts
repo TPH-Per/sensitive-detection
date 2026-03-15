@@ -26,7 +26,9 @@ export const onPostCreated = onDocumentCreated(
             const batch = db.batch();
             const feedEntry = {
                 postId,
+                authorId,
                 createdAt: postData.createdAt || admin.firestore.FieldValue.serverTimestamp(),
+                updatedAt: admin.firestore.FieldValue.serverTimestamp(),
             };
 
             batch.set(
