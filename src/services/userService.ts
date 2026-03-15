@@ -223,7 +223,7 @@ export const userService = {
       snap.docs.forEach(d => {
         const data = d.data();
         result[d.id] = {
-          blockedUid: data.blockedUid,
+          blockedUserId: data.blockedUserId,
           blockMessages: data.blockMessages ?? false,
           blockCalls: data.blockCalls ?? false,
           blockViewMyActivity: data.blockViewMyActivity ?? false,
@@ -244,7 +244,7 @@ export const userService = {
       await setDoc(
         doc(db, 'users', userId, 'blockedUsers', blockedUserId),
         {
-          blockedUid: blockedUserId,
+          blockedUserId: blockedUserId,
           ...options,
           createdAt: serverTimestamp(),
           updatedAt: serverTimestamp(),
