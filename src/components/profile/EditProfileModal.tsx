@@ -156,7 +156,6 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
                 onChange={(val) => setValue('location', val, { shouldDirty: true })}
                 options={provinces}
                 placeholder="Chọn tỉnh/thành phố"
-                openUp
               />
             </div>
 

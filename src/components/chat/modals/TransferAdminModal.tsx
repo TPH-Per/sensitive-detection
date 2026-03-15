@@ -93,7 +93,6 @@ export const TransferAdminModal: React.FC<TransferAdminModalProps> = ({
             value={selectedId}
             onChange={setSelectedId}
             placeholder="Tìm chọn thành viên..."
-            openUp
           />
 
           {selectedMember && (

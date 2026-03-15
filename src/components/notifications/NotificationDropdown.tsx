@@ -1,4 +1,5 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useLayoutEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { useClickOutside } from '../../hooks/utils';
 import { Bell } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -7,25 +8,51 @@ import { NotificationList } from './NotificationList';
 import { useAuthStore } from '../../store/authStore';
 import { IconButton } from '../ui';
 
+const MENU_GAP = 8;
+const VIEWPORT_PADDING = 12;
+const MENU_WIDTH = 384; // w-96
+
 export const NotificationDropdown: React.FC = () => {
   const { user } = useAuthStore();
   const { unreadCount, markAllAsRead } = useNotificationStore();
   const [isOpen, setIsOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
+  const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
+
+  const triggerRef = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
-  useClickOutside(dropdownRef, () => setIsOpen(false));
+  const close = useCallback(() => setIsOpen(false), []);
+  useClickOutside([triggerRef, menuRef], close, isOpen);
 
-  const handleMarkAllRead = () => {
-    if (user) {
-      markAllAsRead(user.id);
-    }
-  };
+  const calcPos = useCallback(() => {
+    if (!triggerRef.current) return;
+    const rect = triggerRef.current.getBoundingClientRect();
+    const vw = window.innerWidth;
+
+    // Prefer right-aligned to trigger, clamp to viewport
+    let left = rect.right - MENU_WIDTH;
+    left = Math.max(VIEWPORT_PADDING, Math.min(left, vw - MENU_WIDTH - VIEWPORT_PADDING));
+
+    setPos({ top: rect.bottom + MENU_GAP, left });
+  }, []);
+
+  useLayoutEffect(() => {
+    if (!isOpen) return;
+    calcPos();
+
+    window.addEventListener('scroll', calcPos, true);
+    window.addEventListener('resize', calcPos);
+    return () => {
+      window.removeEventListener('scroll', calcPos, true);
+      window.removeEventListener('resize', calcPos);
+    };
+  }, [isOpen, calcPos]);
 
   return (
-    <div className="relative group" ref={dropdownRef}>
+    <div ref={triggerRef} className="relative">
       <IconButton
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={() => setIsOpen(prev => !prev)}
         icon={
           <div className="relative">
             <Bell size={20} />
@@ -34,18 +61,29 @@ export const NotificationDropdown: React.FC = () => {
             )}
           </div>
         }
-        variant={isOpen ? "secondary" : "ghost"}
+        variant={isOpen ? 'secondary' : 'ghost'}
         title="Thông báo"
-        className={isOpen ? "text-primary shadow-sm" : "text-text-secondary hover:text-primary"}
+        className={isOpen ? 'text-primary shadow-sm' : 'text-text-secondary hover:text-primary'}
       />
 
-      {isOpen && (
-        <div className="absolute right-0 top-full mt-2 w-80 md:w-96 bg-bg-primary rounded-xl shadow-xl border border-border-light z-[var(--z-dropdown)] overflow-hidden animate-in fade-in zoom-in duration-base">
-          <div className="flex items-center justify-between p-4 border-b border-border-light bg-bg-primary/50 backdrop-blur-md">
-            <h3 className="font-bold text-lg text-text-primary">Thông báo</h3>
+      {isOpen && createPortal(
+        <div
+          ref={menuRef}
+          className="fixed z-[var(--z-popover)] bg-bg-primary rounded-xl shadow-xl border border-border-light overflow-hidden animate-in fade-in zoom-in-95 duration-fast origin-top-right"
+          style={{
+            top: pos ? `${pos.top}px` : undefined,
+            left: pos ? `${pos.left}px` : undefined,
+            width: `${MENU_WIDTH}px`,
+            maxWidth: `calc(100vw - ${VIEWPORT_PADDING * 2}px)`,
+            visibility: pos ? 'visible' : 'hidden',
+          }}
+        >
+          <div className="flex items-center justify-between px-4 py-3 border-b border-border-light">
+            <h3 className="font-bold text-base text-text-primary">Thông báo</h3>
             {unreadCount > 0 && (
               <button
-                onClick={handleMarkAllRead}
+                type="button"
+                onClick={() => user && markAllAsRead(user.id)}
                 className="text-xs font-medium text-primary hover:underline"
               >
                 Đánh dấu tất cả đã đọc
@@ -53,23 +91,24 @@ export const NotificationDropdown: React.FC = () => {
             )}
           </div>
 
-
           <div className="p-2">
-            <NotificationList onItemClick={() => setIsOpen(false)} />
+            <NotificationList onItemClick={close} />
           </div>
 
-          <div className="p-3 border-t border-border-light text-center bg-bg-secondary/30">
+          <div className="px-4 py-3 border-t border-border-light text-center">
             <button
-              className="text-sm font-semibold text-text-secondary hover:text-primary transition-all duration-base"
+              type="button"
+              className="text-sm font-semibold text-text-secondary hover:text-primary transition-colors duration-fast"
               onClick={() => {
                 navigate('/notifications');
-                setIsOpen(false);
+                close();
               }}
             >
               Xem tất cả
             </button>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

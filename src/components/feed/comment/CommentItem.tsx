@@ -81,7 +81,7 @@ const CommentItemInner: React.FC<CommentItemProps> = ({
   }, [comment.authorId, onProfileClick, navigate]);
 
   const myReaction = useCommentStore(state => state.myCommentReactions[comment.id] as ReactionType | null);
-  
+
   const { filteredSummary, filteredCount } = useFilteredReactions(
     comment.id,
     'comment',
@@ -187,7 +187,6 @@ const CommentItemInner: React.FC<CommentItemProps> = ({
                     </button>
                   }
                   align="right"
-                  menuClassName="z-[var(--z-popover)]"
                 >
                   {comment.authorId === currentUser.id ? (
                     <>

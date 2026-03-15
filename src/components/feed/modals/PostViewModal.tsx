@@ -261,7 +261,6 @@ export const PostViewModal: React.FC<PostViewModalProps> = ({
             {isOwner ? (
               <Dropdown
                 trigger={<IconButton icon={<MoreHorizontal size={20} />} size="md" variant="ghost" />}
-                menuClassName="z-[var(--z-popover)]"
               >
                 <DropdownItem icon={<Edit size={18} />} label="Chỉnh sửa bài viết" onClick={() => onEdit?.(post.id)} />
                 <DropdownItem icon={<Trash2 size={18} />} label="Xóa bài viết" variant="danger" onClick={() => onDelete?.(post.id)} />
@@ -269,7 +268,6 @@ export const PostViewModal: React.FC<PostViewModalProps> = ({
             ) : (
               <Dropdown
                 trigger={<IconButton icon={<MoreHorizontal size={20} />} size="md" variant="ghost" />}
-                menuClassName="z-[var(--z-popover)]"
               >
                 <DropdownItem
                   icon={<Flag size={18} />}

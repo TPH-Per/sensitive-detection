@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useLayoutEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { useClickOutside } from '../../hooks/utils';
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, X } from 'lucide-react';
@@ -29,21 +29,40 @@ export const DatePicker: React.FC<DatePickerProps> = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [view, setView] = useState<'days' | 'months' | 'years'>('days');
-  const [openUp, setOpenUp] = useState(false);
+  const [pos, setPos] = useState<{ top?: number; bottom?: number; left: number; openUp: boolean } | null>(null);
   const [currentMonth, setCurrentMonth] = useState(value ? new Date(value) : new Date());
   const containerRef = useRef<HTMLDivElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (isOpen && containerRef.current) {
-      const rect = containerRef.current.getBoundingClientRect();
-      const spaceBelow = window.innerHeight - rect.bottom;
-      setOpenUp(spaceBelow < 350);
-    }
-    if (!isOpen) {
-      setView('days');
-    }
-  }, [isOpen]);
+  const CALENDAR_HEIGHT = 350;
+  const MENU_GAP = 8;
+  const VIEWPORT_PADDING = 12;
+
+  const calcPos = useCallback(() => {
+    if (!containerRef.current) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const spaceBelow = vh - rect.bottom - VIEWPORT_PADDING;
+    const spaceAbove = rect.top - VIEWPORT_PADDING;
+    const openUp = spaceBelow < CALENDAR_HEIGHT && spaceAbove > spaceBelow;
+    const left = Math.max(VIEWPORT_PADDING, Math.min(rect.left, vw - 288 - VIEWPORT_PADDING));
+    setPos(openUp
+      ? { bottom: vh - rect.top + MENU_GAP, left, openUp: true }
+      : { top: rect.bottom + MENU_GAP, left, openUp: false }
+    );
+  }, []);
+
+  useLayoutEffect(() => {
+    if (!isOpen) { setPos(null); setView('days'); return; }
+    calcPos();
+    window.addEventListener('scroll', calcPos, true);
+    window.addEventListener('resize', calcPos);
+    return () => {
+      window.removeEventListener('scroll', calcPos, true);
+      window.removeEventListener('resize', calcPos);
+    };
+  }, [isOpen, calcPos]);
 
   useClickOutside([containerRef, dropdownRef], () => setIsOpen(false), isOpen);
 
@@ -311,12 +330,14 @@ export const DatePicker: React.FC<DatePickerProps> = ({
           <div
             ref={dropdownRef}
             style={{
-              top: openUp ? 'auto' : `calc(${containerRef.current?.getBoundingClientRect().bottom ?? 0}px + 8px)`,
-              bottom: openUp ? `calc(${window.innerHeight - (containerRef.current?.getBoundingClientRect().top ?? 0)}px + 8px)` : 'auto',
-              left: `${containerRef.current?.getBoundingClientRect().left ?? 0}px`,
-              position: 'fixed'
+              top: pos?.top !== undefined ? `${pos.top}px` : undefined,
+              bottom: pos?.bottom !== undefined ? `${pos.bottom}px` : undefined,
+              left: pos ? `${pos.left}px` : undefined,
+              position: 'fixed',
+              transformOrigin: pos?.openUp ? 'bottom left' : 'top left',
+              visibility: pos ? 'visible' : 'hidden',
             }}
-            className="z-[var(--z-popover)] w-72 bg-bg-primary border border-border-light rounded-2xl shadow-xl overflow-hidden"
+            className="z-[var(--z-popover)] w-72 bg-bg-primary border border-border-light rounded-2xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-fast"
             onClick={(e) => e.stopPropagation()}
           >
             {renderHeader()}
