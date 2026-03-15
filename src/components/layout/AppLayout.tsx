@@ -249,17 +249,27 @@ export const AppLayout: React.FC = () => {
               <Settings size={20} />
             </NavLink>
 
-            <div className="group relative" onClick={() => navigate('/profile')}>
+            <NavLink
+              to="/profile"
+              className={({ isActive }) =>
+                `w-10 h-10 flex items-center justify-center rounded-full transition-all duration-base outline-none ${isActive
+                  ? 'ring-2 ring-primary ring-offset-1 ring-offset-bg-primary'
+                  : 'hover:ring-2 hover:ring-primary/20 focus-visible:ring-4 focus-visible:ring-primary/20 hover:ring-offset-1 hover:ring-offset-bg-primary'
+                }`
+              }
+              title="Trang cá nhân"
+            >
               {user && (
                 <UserAvatar
                   userId={user.id}
                   src={user.avatar.url}
                   size="sm"
-                  className="cursor-pointer ring-2 ring-transparent group-hover:ring-primary/30 transition-all duration-base"
+                  className="cursor-pointer"
+                  showBorder={false}
                   initialStatus={user.status}
                 />
               )}
-            </div>
+            </NavLink>
 
             <IconButton
               onClick={() => setShowLogoutConfirm(true)}

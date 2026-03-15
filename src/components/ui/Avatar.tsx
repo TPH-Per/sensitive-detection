@@ -10,6 +10,7 @@ interface AvatarProps {
   className?: string;
   isGroup?: boolean;
   members?: User[];
+  showBorder?: boolean;
   onClick?: () => void;
 }
 
@@ -36,6 +37,7 @@ const AvatarInner: React.FC<AvatarProps> = ({
   className = '',
   isGroup,
   members = [],
+  showBorder = true,
   onClick
 }) => {
   const renderContent = () => {
@@ -139,7 +141,7 @@ const AvatarInner: React.FC<AvatarProps> = ({
       className={`relative inline-flex flex-shrink-0 ${sizeClasses[size]} rounded-full ${className} ${onClick ? 'cursor-pointer' : ''}`}
       onClick={onClick}
     >
-      <div className={`w-full h-full relative rounded-full ${!isCompositeGrid ? 'overflow-hidden' : ''} ${!isGroup ? 'bg-bg-secondary' : 'bg-transparent'} ${size !== '2xs' && !isGroup ? 'border border-border-light' : ''} flex items-center justify-center`}>
+      <div className={`w-full h-full relative rounded-full ${!isCompositeGrid ? 'overflow-hidden' : ''} ${!isGroup ? 'bg-bg-secondary' : 'bg-transparent'} ${size !== '2xs' && !isGroup && showBorder ? 'border border-border-light' : ''} flex items-center justify-center`}>
         {renderContent()}
       </div>
       {status && (

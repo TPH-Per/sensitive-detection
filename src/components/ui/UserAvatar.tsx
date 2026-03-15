@@ -17,6 +17,7 @@ interface UserAvatarProps {
   isGroup?: boolean;
   members?: User[];
   showStatus?: boolean;
+  showBorder?: boolean;
   onClick?: () => void;
 }
 
@@ -30,6 +31,7 @@ const UserAvatarInner: React.FC<UserAvatarProps> = ({
   members,
   initialStatus,
   showStatus = true,
+  showBorder = true,
   onClick
 }) => {
   const presence = usePresence(isGroup ? undefined : userId, initialStatus);
@@ -65,6 +67,7 @@ const UserAvatarInner: React.FC<UserAvatarProps> = ({
       className={className}
       isGroup={isGroup}
       members={members}
+      showBorder={showBorder}
       onClick={onClick}
     />
   );
