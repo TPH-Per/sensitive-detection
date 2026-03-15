@@ -28,15 +28,16 @@ export const useFilteredReactions = (
     const unsubscribe = onSnapshot(collection(db, colPath), (snap) => {
       const map: Record<string, string> = {};
       snap.forEach(d => {
-        const reactorId = d.id;
-        if (isOwner || reactorId === currentUser.id || reactorId === authorId || friendIds.includes(reactorId)) {
-           map[reactorId] = d.data().type;
-        }
+        map[d.id] = d.data().type;
       });
       setReactionsMap(map);
       setIsLoaded(true);
     }, (error) => {
-      console.error("useFilteredReactions error:", error);
+      if (error.code === 'permission-denied') {
+        setReactionsMap({});
+      } else {
+        console.error("useFilteredReactions error:", error);
+      }
       setIsLoaded(true);
     });
 

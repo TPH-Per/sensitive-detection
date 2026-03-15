@@ -143,7 +143,6 @@ export const commentService = {
 
       return docRefId!;
     } catch (error) {
-      console.error("Lỗi thêm comment:", error);
       throw error;
     }
   },
