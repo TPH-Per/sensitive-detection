@@ -23,7 +23,7 @@ import { userService } from './userService';
 import { PAGINATION, IMAGE_COMPRESSION } from '../constants';
 import { compressImage, isImageFile } from '../utils/imageUtils';
 import { withRetry } from '../utils/retryUtils';
-import { uploadWithProgress, ProgressCallback, deleteStorageFiles } from '../utils/uploadUtils';
+import { uploadWithProgress, ProgressCallback, deleteStorageFiles, generateVideoThumbnail } from '../utils/uploadUtils';
 import { convertDoc, convertDocs } from '../utils/firebaseUtils';
 import { getSafeMillis } from '../utils/timestampHelpers';
 import {
@@ -469,7 +469,6 @@ export const postService = {
         } else if (isVideo) {
           // Trích xuất và upload thumbnail
           try {
-            const { generateVideoThumbnail } = await import('../utils/uploadUtils');
             const thumbFile = await generateVideoThumbnail(file);
             const thumbPath = `posts/${userId}/thumbnails/${createdAt}_${thumbFile.name}`;
             thumbnailUrl = await uploadWithProgress(thumbPath, thumbFile);

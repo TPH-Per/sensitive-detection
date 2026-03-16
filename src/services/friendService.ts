@@ -17,6 +17,7 @@ import { db } from '../firebase/config';
 import { FriendRequest, FriendRequestStatus, User } from '../../shared/types';
 import { convertDoc, convertDocs } from '../utils/firebaseUtils';
 import { batchGetUsers } from '../utils/batchUtils';
+import { rtdbConversationService } from './chat/rtdbConversationService';
 
 export const friendService = {
   // Kiểm tra yêu cầu kết bạn đang chờ
@@ -176,7 +177,6 @@ export const friendService = {
       await batch.commit();
 
       try {
-        const { rtdbConversationService } = await import('./chat/rtdbConversationService');
         await rtdbConversationService.initializeDirectConversation(senderId, receiverId, receiverId);
       } catch (chatError) {
         console.error("Lỗi khởi tạo hội thoại khi kết bạn", chatError);

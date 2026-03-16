@@ -13,6 +13,8 @@ import {
     validateVoiceFile,
     FileValidationError
 } from '../../utils/fileValidation';
+import { userService } from '../userService';
+import { rtdbConversationService } from './rtdbConversationService';
 
 type ProgressWithId = (messageId: string, progress: UploadProgress) => void;
 
@@ -56,7 +58,6 @@ async function updateConversationAfterMessage(
             if (!isDirect) return;
 
             const userIds = convId.replace('direct_', '').split('_');
-            const { rtdbConversationService } = await import('./rtdbConversationService');
             await rtdbConversationService.initializeDirectConversation(userIds[0], userIds[1], senderId);
             const newSnap = await get(convRef);
             if (!newSnap.exists()) return;
@@ -547,7 +548,6 @@ export const rtdbMessageService = {
      */
     markAsRead: async (convId: string, uid: string, lastMsgId?: string): Promise<void> => {
         try {
-            const { userService } = await import('../userService');
             const settings = await userService.getUserSettings(uid);
 
             const messagesRef = ref(rtdb, `messages/${convId}`);
