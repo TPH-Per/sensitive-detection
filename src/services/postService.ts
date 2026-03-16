@@ -119,16 +119,10 @@ export const postService = {
   /** Theo dõi bài viết Feed Fan-out thời gian thực */
   subscribeToFeedFanout: (
     userId: string,
-    callback: (action: 'initial' | 'add' | 'update' | 'remove', posts: Post[]) => void,
+    callback: (action: 'add' | 'update' | 'remove', posts: Post[]) => void,
     limitCount: number = PAGINATION.FEED_POSTS
   ) => {
-    if (!userId) {
-      callback('initial', []);
-      return () => { };
-    }
-
-    let isInitialLoad = true;
-    const postUnsubscribers = new Map<string, () => void>();
+    if (!userId) return () => { };
 
     const feedQuery = query(
       collection(db, 'users', userId, 'feeds'),
@@ -136,75 +130,33 @@ export const postService = {
       limit(limitCount)
     );
 
-    const unsubscribe = onSnapshot(feedQuery, async (snapshot) => {
-      if (isInitialLoad) {
-        isInitialLoad = false;
-        const result = await postService.getFeedFromFanout(userId, limitCount);
+    return onSnapshot(feedQuery, async (snapshot) => {
+      const addedIds = snapshot.docChanges()
+        .filter(c => c.type === 'added')
+        .map(c => c.doc.data().postId);
 
-        result.posts.forEach(p => {
-          const existingUnsub = postUnsubscribers.get(p.id);
-          if (existingUnsub) existingUnsub();
-
-          const postUnsub = onSnapshot(doc(db, 'posts', p.id), (postDoc) => {
-            if (postDoc.exists()) {
-              const updatedPost = postConverter(postDoc);
-              callback('update', [updatedPost]);
-            }
-          });
-          postUnsubscribers.set(p.id, postUnsub);
-        });
-
-        callback('initial', result.posts);
-        return;
+      if (addedIds.length > 0) {
+        const postsQuery = query(
+          collection(db, 'posts'),
+          where('__name__', 'in', addedIds)
+        );
+        const postsSnap = await getDocs(postsQuery);
+        const posts = convertDocs<Post>(postsSnap.docs)
+          .filter(p => p.status === PostStatus.ACTIVE);
+        
+        if (posts.length > 0) callback('add', posts);
       }
 
-      for (const change of snapshot.docChanges()) {
-        const feedData = change.doc.data();
-        const postId = feedData.postId;
+      const removedIds = snapshot.docChanges()
+        .filter(c => c.type === 'removed')
+        .map(c => c.doc.data().postId);
 
-        if (change.type === 'added') {
-          const postDoc = await getDoc(doc(db, 'posts', postId));
-          if (postDoc.exists() && postDoc.data().status === PostStatus.ACTIVE) {
-            const post = postConverter(postDoc);
-
-            // Kiểm tra xem tác giả có bị chặn ẩn hoạt động không
-            const blockedUsersMap = await userService.getBlockedUsers(userId);
-            if (blockedUsersMap[post.authorId]?.hideTheirActivity === true) {
-              continue;
-            }
-
-            const existingUnsub = postUnsubscribers.get(postId);
-            if (existingUnsub) existingUnsub();
-
-            const postUnsub = onSnapshot(doc(db, 'posts', postId), (updatedPostDoc) => {
-              if (updatedPostDoc.exists()) {
-                const updatedPost = postConverter(updatedPostDoc);
-                callback('update', [updatedPost]);
-              }
-            });
-            postUnsubscribers.set(postId, postUnsub);
-
-            callback('add', [post]);
-          }
-        } else if (change.type === 'removed') {
-          const postUnsub = postUnsubscribers.get(postId);
-          if (postUnsub) {
-            postUnsub();
-            postUnsubscribers.delete(postId);
-          }
-
-          callback('remove', [{ id: postId } as Post]);
-        }
+      if (removedIds.length > 0) {
+        callback('remove', removedIds.map(id => ({ id } as Post)));
       }
     }, (error) => {
-      console.error("Lỗi subscribe feed fan-out", error);
+      console.error("[postService] Lỗi subscribe feed:", error);
     });
-
-    return () => {
-      unsubscribe();
-      postUnsubscribers.forEach(unsub => unsub());
-      postUnsubscribers.clear();
-    };
   },
 
   /** Lấy danh sách bài viết của người dùng cụ thể */

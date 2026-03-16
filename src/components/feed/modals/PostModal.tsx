@@ -173,9 +173,6 @@ export const PostModal: React.FC<PostModalProps> = ({
 
   const onFormSubmit = async (data: PostFormValues) => {
     try {
-      // Đóng modal và gửi dữ liệu qua store
-      onClose();
-
       await onSubmit(
         data.content || '',
         data.media,
@@ -183,13 +180,13 @@ export const PostModal: React.FC<PostModalProps> = ({
         pendingFiles
       );
 
-      // Thu hồi bộ nhớ blob
       previews.forEach(p => URL.revokeObjectURL(p.url));
       setPendingFiles([]);
       setPreviews([]);
+      
+      onClose();
     } catch (error) {
-      console.error('Lỗi khởi tạo bài viết:', error);
-      toast.error(`Không thể bắt đầu tạo bài viết. Vui lòng thử lại.`);
+      console.error('[PostModal] Lỗi khi đăng bài:', error);
     }
   };
 

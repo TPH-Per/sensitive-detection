@@ -159,27 +159,24 @@ export const usePostStore = create<PostState>()(
           currentUserId,
           (action, changedPosts) => {
             set((state) => {
-              if (action === 'initial') {
-                return {};
-              }
-
               if (action === 'add') {
                 const existingIds = new Set(state.posts.map(p => p.id));
                 const newPosts = changedPosts.filter(p => !existingIds.has(p.id));
 
                 if (newPosts.length === 0) return {};
 
-                const uniquePosts = [...newPosts, ...state.posts];
-                const seenIds = new Set<string>();
-                const deduped = uniquePosts.filter(p => {
-                  if (seenIds.has(p.id)) return false;
-                  seenIds.add(p.id);
-                  return true;
-                }).sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis());
+                const allPosts = [...newPosts, ...state.posts]
+                  .sort((a, b) => {
+                    const timeA = a.createdAt?.toMillis() || Date.now();
+                    const timeB = b.createdAt?.toMillis() || Date.now();
+                    return timeB - timeA;
+                  });
 
-                return {
-                  posts: deduped
-                };
+                // Dedup lần cuối để chắc chắn
+                const seen = new Set<string>();
+                const deduped = allPosts.filter(p => seen.has(p.id) ? false : seen.add(p.id));
+
+                return { posts: deduped };
               }
 
               if (action === 'update') {
@@ -231,7 +228,7 @@ export const usePostStore = create<PostState>()(
           isSensitive: false,
         } as MediaObject)) : [];
 
-        const newPost: Post = {
+        const tempPost: Post = {
           id: postId,
           authorId: userId,
           type: PostType.REGULAR,
@@ -245,63 +242,60 @@ export const usePostStore = create<PostState>()(
         };
 
         set(state => ({
-          posts: [newPost, ...state.posts],
+          posts: [tempPost, ...state.posts],
           uploadingStates: { ...state.uploadingStates, [postId]: { progress: 0 } }
         }));
 
-        const processUpload = async () => {
-          try {
-            let finalMedia = [...media];
+        try {
+          let finalMedia = [...media];
 
-            if (pendingFiles && pendingFiles.length > 0) {
-              const uploadedMedia = await postService.uploadPostMedia(pendingFiles, userId, (progress) => {
-                set(state => ({
-                  uploadingStates: {
-                    ...state.uploadingStates,
-                    [postId]: { ...state.uploadingStates[postId], progress }
-                  }
-                }));
-              });
-              finalMedia = [...finalMedia, ...uploadedMedia];
-            }
-
-            await postService.createPost({
-              authorId: userId,
-              type: PostType.REGULAR,
-              content,
-              media: finalMedia,
-              visibility,
-              updatedAt: serverTimestamp() as any
-            }, postId);
-
-            set(state => {
-              const newUploadingStates = { ...state.uploadingStates };
-              delete newUploadingStates[postId];
-              return {
-                uploadingStates: newUploadingStates,
-                posts: state.posts.map(p =>
-                  p.id === postId ? { ...p, media: finalMedia } : p
-                )
-              };
+          if (pendingFiles && pendingFiles.length > 0) {
+            const uploadedMedia = await postService.uploadPostMedia(pendingFiles, userId, (progress) => {
+              set(state => ({
+                uploadingStates: {
+                  ...state.uploadingStates,
+                  [postId]: { ...state.uploadingStates[postId], progress }
+                }
+              }));
             });
-
-            toast.success(TOAST_MESSAGES.POST.CREATE_SUCCESS);
-          } catch (error) {
-            console.error("Lỗi đăng bài:", error);
-            const errorMessage = (error as any)?.message || 'Lỗi tải lên';
-            set(state => ({
-              uploadingStates: {
-                ...state.uploadingStates,
-                [postId]: { ...state.uploadingStates[postId], error: errorMessage }
-              }
-            }));
-            toast.error(TOAST_MESSAGES.POST.CREATE_FAILED(errorMessage));
-          } finally {
-            previewMedia.forEach(m => URL.revokeObjectURL(m.url));
+            finalMedia = [...finalMedia, ...uploadedMedia];
           }
-        };
 
-        processUpload();
+          await postService.createPost({
+            authorId: userId,
+            type: PostType.REGULAR,
+            content,
+            media: finalMedia,
+            visibility,
+            updatedAt: serverTimestamp() as any
+          }, postId);
+
+          set(state => {
+            const newStates = { ...state.uploadingStates };
+            delete newStates[postId];
+            return {
+              uploadingStates: newStates,
+              posts: state.posts.map(p => p.id === postId ? { ...p, media: finalMedia } : p)
+            };
+          });
+
+          toast.success(TOAST_MESSAGES.POST.CREATE_SUCCESS);
+        } catch (error) {
+          console.error("[postStore] Lỗi đăng bài:", error);
+          const message = (error as any)?.message || 'Lỗi không xác định';
+          
+          set(state => ({
+            posts: state.posts.filter(p => p.id !== postId),
+            uploadingStates: {
+              ...state.uploadingStates,
+              [postId]: { ...state.uploadingStates[postId], error: message }
+            }
+          }));
+          toast.error(TOAST_MESSAGES.POST.CREATE_FAILED(message));
+          throw error;
+        } finally {
+          previewMedia.forEach(m => URL.revokeObjectURL(m.url));
+        }
       },
 
       updatePost: async (postId: string, content: string, media: MediaObject[], visibility: Visibility, pendingFiles?: File[]) => {
