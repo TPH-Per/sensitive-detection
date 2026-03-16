@@ -142,7 +142,7 @@ export const ChatDetailsPanel: React.FC<ChatDetailsPanelProps> = ({
           />
         );
       case 'media':
-        return <ChatDetailsMedia messages={messages} />;
+        return <ChatDetailsMedia messages={messages} onMessageClick={onMessageClick} />;
       case 'search':
         return (
           <ChatDetailsSearch
@@ -212,7 +212,7 @@ export const ChatDetailsPanel: React.FC<ChatDetailsPanelProps> = ({
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto pb-safe">
+        <div className={`flex-1 min-h-0 flex flex-col ${activeTab === 'media' ? 'overflow-hidden' : 'overflow-y-auto pb-safe'}`}>
           {renderTabContent()}
         </div>
       </div>

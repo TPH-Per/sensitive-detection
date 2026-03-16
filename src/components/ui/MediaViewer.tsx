@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { ChevronLeft, ChevronRight, X, Play, Pause } from 'lucide-react';
 
 interface MediaItem {
@@ -121,71 +122,69 @@ export const MediaViewer: React.FC<MediaViewerProps> = ({
 
     const currentMedia = media[currentIndex];
 
-    return (
+    return createPortal(
         <div
-            className="fixed inset-0 z-[var(--z-overlay)] bg-black/95 backdrop-blur-sm flex items-center justify-center select-none animate-in fade-in duration-200"
+            className="fixed inset-0 z-[var(--z-overlay)] bg-black/95 backdrop-blur-sm flex flex-col select-none animate-in fade-in duration-200"
             onClick={onClose}
             onTouchStart={onTouchStart}
             onTouchMove={onTouchMove}
             onTouchEnd={onTouchEnd}
         >
-            {/* Controls */}
-            <div className="absolute top-4 right-4 z-[var(--z-dialog)]">
+            {/* Top bar — close + counter */}
+            <div className="flex-shrink-0 flex items-center justify-between px-4 py-3 z-[var(--z-dialog)]" onClick={e => e.stopPropagation()}>
+                {/* Counter (căn giữa) */}
+                <div className="flex-1 flex justify-center">
+                    {media.length > 1 && (
+                        <span className="text-white/90 font-medium text-base bg-black/40 px-4 py-1.5 rounded-full backdrop-blur-md border border-white/10">
+                            {currentIndex + 1} / {media.length}
+                        </span>
+                    )}
+                </div>
+                {/* Close button — absolute right để không đẩy counter lệch */}
                 <button
-                    className="p-3 bg-white/10 hover:bg-white/20 active:bg-white/30 text-white rounded-full transition-all duration-base backdrop-blur-md border border-white/5"
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        onClose();
-                    }}
+                    className="absolute right-4 p-3 bg-white/10 hover:bg-white/20 active:bg-white/30 text-white rounded-full transition-all duration-base backdrop-blur-md border border-white/5"
+                    onClick={(e) => { e.stopPropagation(); onClose(); }}
                 >
                     <X size={24} />
                 </button>
             </div>
 
-            {media.length > 1 && (
-                <>
+            {/* Media area — chiếm phần còn lại, không tràn lên top bar */}
+            <div className="flex-1 min-h-0 relative flex items-center justify-center px-4 pb-4 md:px-20">
+                {/* Prev / Next */}
+                {media.length > 1 && (
+                    <>
+                        <button
+                            className="hidden md:flex absolute left-4 top-1/2 -translate-y-1/2 p-3 bg-white/10 hover:bg-white/20 active:bg-white/30 text-white rounded-full backdrop-blur-md border border-white/5 z-[var(--z-dialog)] transition-all duration-base"
+                            onClick={handlePrev}
+                        >
+                            <ChevronLeft size={32} />
+                        </button>
+                        <button
+                            className="hidden md:flex absolute right-4 top-1/2 -translate-y-1/2 p-3 bg-white/10 hover:bg-white/20 active:bg-white/30 text-white rounded-full backdrop-blur-md border border-white/5 z-[var(--z-dialog)] transition-all duration-base"
+                            onClick={handleNext}
+                        >
+                            <ChevronRight size={32} />
+                        </button>
+                    </>
+                )}
+
+                {/* Video Play/Pause overlay */}
+                {currentMedia?.type === 'video' && (
                     <button
-                        className="hidden md:block absolute left-4 top-1/2 -translate-y-1/2 p-3 bg-white/10 hover:bg-white/20 active:bg-white/30 text-white rounded-full backdrop-blur-md border border-white/5 z-[var(--z-dialog)] transition-all duration-base"
-                        onClick={handlePrev}
+                        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 p-4 bg-white/20 hover:bg-white/30 active:bg-white/40 text-white rounded-full backdrop-blur-md border border-white/10 z-[var(--z-dialog)] transition-all duration-base"
+                        onClick={(e) => { e.stopPropagation(); toggleVideoPlayback(); }}
                     >
-                        <ChevronLeft size={32} />
+                        {isVideoPlaying ? <Pause size={32} /> : <Play size={32} />}
                     </button>
+                )}
 
-                    <button
-                        className="hidden md:block absolute right-4 top-1/2 -translate-y-1/2 p-3 bg-white/10 hover:bg-white/20 active:bg-white/30 text-white rounded-full backdrop-blur-md border border-white/5 z-[var(--z-dialog)] transition-all duration-base"
-                        onClick={handleNext}
-                    >
-                        <ChevronRight size={32} />
-                    </button>
-
-                    {/* Counter */}
-                    <div className="absolute top-6 left-1/2 -translate-x-1/2 text-white/90 font-medium text-lg bg-black/40 px-4 py-1.5 rounded-full backdrop-blur-md border border-white/10">
-                        {currentIndex + 1} / {media.length}
-                    </div>
-                </>
-            )}
-
-            {/* Video Play/Pause Button */}
-            {currentMedia?.type === 'video' && (
-                <button
-                    className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 p-4 bg-white/20 hover:bg-white/30 active:bg-white/40 text-white rounded-full backdrop-blur-md border border-white/10 z-[var(--z-dialog)] transition-all duration-base"
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        toggleVideoPlayback();
-                    }}
-                >
-                    {isVideoPlaying ? <Pause size={32} /> : <Play size={32} />}
-                </button>
-            )}
-
-            {/* Media Content */}
-            <div className="w-full h-full flex items-center justify-center p-4 md:px-28 md:py-10">
                 {currentMedia?.type === 'video' ? (
                     <video
                         ref={videoRef}
                         src={currentMedia.url}
                         poster={currentMedia.thumbnail}
-                        className="max-w-full max-h-full object-contain animate-in zoom-in-95 duration-200 shadow-2xl drop-shadow-2xl rounded-sm"
+                        className="max-w-full max-h-full object-contain animate-in zoom-in-95 duration-200 shadow-2xl rounded-sm"
                         onClick={(e) => e.stopPropagation()}
                         controls
                         playsInline
@@ -195,12 +194,13 @@ export const MediaViewer: React.FC<MediaViewerProps> = ({
                 ) : (
                     <img
                         src={currentMedia?.url}
-                        className="max-w-full max-h-full object-contain animate-in zoom-in-95 duration-200 shadow-2xl drop-shadow-2xl rounded-sm"
+                        className="max-w-full max-h-full object-contain animate-in zoom-in-95 duration-200 shadow-2xl rounded-sm"
                         onClick={(e) => e.stopPropagation()}
                         alt={`View ${currentIndex + 1}`}
                     />
                 )}
             </div>
-        </div>
+        </div>,
+        document.body
     );
 };
