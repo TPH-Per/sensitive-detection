@@ -52,10 +52,38 @@ export const useChat = () => {
   const sentRequests = useContactStore(state => state.sentRequests);
   const receivedRequests = useContactStore(state => state.receivedRequests);
 
-  const selectedConversation = useMemo(
-    () => conversations.find(c => c.id === selectedConversationId),
-    [conversations, selectedConversationId]
-  );
+  const selectedConversation = useMemo(() => {
+    const existing = conversations.find(c => c.id === selectedConversationId);
+    if (existing) return existing;
+
+    if (selectedConversationId && selectedConversationId.startsWith('direct_') && currentUser) {
+      const partnerId = selectedConversationId.replace('direct_', '').split('_').find(id => id !== currentUser.id);
+      if (partnerId) {
+        return {
+          id: selectedConversationId,
+          data: {
+            isGroup: false,
+            members: { [currentUser.id]: 'admin', [partnerId]: 'member' },
+            createdAt: Date.now(),
+            updatedAt: Date.now(),
+            typing: {},
+            lastMessage: null,
+            avatar: null,
+            name: null,
+            creatorId: currentUser.id
+          } as any,
+          userChat: {
+            isArchived: false,
+            isMuted: false,
+            isPinned: false,
+            unreadCount: 0,
+            updatedAt: Date.now()
+          } as any
+        };
+      }
+    }
+    return undefined;
+  }, [conversations, selectedConversationId, currentUser]);
 
   const filteredConversations = conversations;
 
@@ -73,7 +101,7 @@ export const useChat = () => {
 
   const participantIds = useMemo(() => {
     if (!selectedConversation) return [];
-    return Object.keys(selectedConversation.data.members);
+    return Object.keys(selectedConversation.data.members || {});
   }, [selectedConversation]);
 
   const participants = useConversationParticipants(participantIds);

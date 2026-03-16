@@ -47,25 +47,57 @@ async function updateConversationAfterMessage(
         const convRef = ref(rtdb, `conversations/${convId}`);
         const convSnap = await get(convRef);
 
-        if (!convSnap.exists()) return;
-
-        const conversation = convSnap.val() as RtdbConversation;
-        const memberIds = Object.keys(conversation.members || {});
-
         const updates: Record<string, any> = {};
+        const now = Date.now();
+
+        if (!convSnap.exists()) {
+            const isDirect = convId.startsWith('direct_');
+            if (!isDirect) return;
+
+            const userIds = convId.replace('direct_', '').split('_');
+            const [u1, u2] = userIds;
+            
+            updates[`conversations/${convId}`] = {
+                isGroup: false,
+                name: null,
+                avatar: null,
+                creatorId: senderId,
+                members: { [u1]: 'admin', [u2]: 'member' },
+                typing: {},
+                lastMessage: null,
+                createdAt: now,
+                updatedAt: now
+            } as RtdbConversation;
+
+            userIds.forEach(uid => {
+                updates[`user_chats/${uid}/${convId}`] = {
+                    isPinned: false,
+                    isMuted: false,
+                    isArchived: false,
+                    unreadCount: 0,
+                    lastReadMsgId: null,
+                    lastMsgTimestamp: now,
+                    clearedAt: 0,
+                    createdAt: now,
+                    updatedAt: now
+                };
+            });
+        }
+
+        const conversation = convSnap.exists() ? convSnap.val() as RtdbConversation : (updates[`conversations/${convId}`] as RtdbConversation);
+        const memberIds = Object.keys(conversation.members || {});
 
         updates[`conversations/${convId}/lastMessage`] = {
             senderId,
             content: displayContent,
             type: messageData.type,
-            timestamp: Date.now(),
+            timestamp: now,
             messageId: messageId || null,
             readBy: messageData.readBy || {},
             deliveredTo: messageData.deliveredTo || {}
         };
-        updates[`conversations/${convId}/updatedAt`] = Date.now();
+        updates[`conversations/${convId}/updatedAt`] = now;
 
-        const now = Date.now();
         for (const memberId of memberIds) {
             updates[`user_chats/${memberId}/${convId}/lastMsgTimestamp`] = now;
             updates[`user_chats/${memberId}/${convId}/updatedAt`] = now;

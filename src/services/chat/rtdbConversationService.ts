@@ -27,51 +27,7 @@ export const rtdbConversationService = {
                         console.error('Không thể cập nhật trạng thái user_chat:', e);
                     }
                 }
-
-                return convId;
             }
-
-            const conversationData: RtdbConversation = {
-                isGroup: false,
-                name: null,
-                avatar: null,
-                creatorId: user1Id,
-                members: {
-                    [user1Id]: 'admin',
-                    [user2Id]: 'member'
-                },
-                typing: {},
-                lastMessage: null,
-                createdAt: Date.now(),
-                updatedAt: Date.now()
-            };
-
-            const now = Date.now();
-            updates[`conversations/${convId}`] = conversationData;
-            updates[`user_chats/${user1Id}/${convId}`] = {
-                isPinned: false,
-                isMuted: false,
-                isArchived: false,
-                unreadCount: 0,
-                lastReadMsgId: null,
-                lastMsgTimestamp: now,
-                clearedAt: 0,
-                createdAt: now,
-                updatedAt: now
-            };
-            updates[`user_chats/${user2Id}/${convId}`] = {
-                isPinned: false,
-                isMuted: false,
-                isArchived: false,
-                unreadCount: 0,
-                lastReadMsgId: null,
-                lastMsgTimestamp: now,
-                clearedAt: 0,
-                createdAt: now,
-                updatedAt: now
-            };
-
-            await update(ref(rtdb), updates);
 
             return convId;
         } catch (error) {
