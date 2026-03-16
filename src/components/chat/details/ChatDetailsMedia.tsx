@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { RtdbMessage, MediaObject } from '../../../../shared/types';
 import { Image, Film, FileText, Download, ExternalLink } from 'lucide-react';
 import { LazyImage } from '../../ui';
+import { downloadFile } from '../../../utils';
 
 interface ChatDetailsMediaProps {
   messages: Array<{ id: string; data: RtdbMessage }>;
@@ -107,12 +108,11 @@ const ChatDetailsMediaInner: React.FC<ChatDetailsMediaProps> = ({ messages }) =>
         return (
           <div className="space-y-1 p-2">
             {mediaItems.files.map((item) => (
-              <a
+              <button
                 key={item.key}
-                href={item.media.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-3 p-3 rounded-xl hover:bg-bg-hover active:bg-bg-active transition-all duration-base"
+                type="button"
+                onClick={() => downloadFile(item.media.url, item.media.fileName || 'file')}
+                className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-bg-hover active:bg-bg-active transition-all duration-base text-left"
               >
                 <div className="w-10 h-10 bg-primary-light rounded-lg flex items-center justify-center flex-shrink-0">
                   <FileText size={20} className="text-primary" />
@@ -126,7 +126,7 @@ const ChatDetailsMediaInner: React.FC<ChatDetailsMediaProps> = ({ messages }) =>
                   </p>
                 </div>
                 <Download size={18} className="text-text-tertiary flex-shrink-0" />
-              </a>
+              </button>
             ))}
           </div>
         );
