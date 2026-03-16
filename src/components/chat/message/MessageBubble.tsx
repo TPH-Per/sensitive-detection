@@ -195,14 +195,9 @@ const MessageBubbleInner: React.FC<MessageBubbleProps> = ({
                   }`
                   : ''
                 }
-                ${message.data.type === 'call' && !message.data.isRecalled && onCall ? 'cursor-pointer hover:opacity-90 active:scale-[0.98] transition-all duration-base' : ''}
+                ${message.data.type === 'call' && !message.data.isRecalled ? 'break-all' : ''}
                 ${hasReactions ? 'min-w-[80px] pb-[12px]' : ''}
               `}
-              onClick={() => {
-                if (message.data.type === 'call' && !message.data.isRecalled && onCall) {
-                  onCall();
-                }
-              }}
             >
               {!message.data.isRecalled && message.data.replyToId && (() => {
                 const replyToMsg = allMessages.find(m => m.id === message.data.replyToId);
@@ -269,6 +264,7 @@ const MessageBubbleInner: React.FC<MessageBubbleProps> = ({
                       isPlaying={isPlaying}
                       onToggleVoice={handleToggleVoice}
                       onOpenImage={setSelectedImageIndex}
+                      onCall={onCall}
                     />
                   </div>
                 )}
@@ -292,6 +288,7 @@ const MessageBubbleInner: React.FC<MessageBubbleProps> = ({
                   isPlaying={isPlaying}
                   onToggleVoice={handleToggleVoice}
                   onOpenImage={setSelectedImageIndex}
+                  onCall={onCall}
                 />
               )}
 

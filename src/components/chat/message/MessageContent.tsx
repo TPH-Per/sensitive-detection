@@ -336,7 +336,7 @@ const MessageContentInner: React.FC<MessageContentProps> = ({
               <span>{durationStr}</span>
             </div>
           )}
-          {status === 'started' && (
+          {status === 'started' ? (
             <button
               onClick={() => {
                 const event = new CustomEvent('join-active-call', {
@@ -354,9 +354,24 @@ const MessageContentInner: React.FC<MessageContentProps> = ({
             >
               Tham gia
             </button>
+          ) : (
+            onCall && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onCall();
+                }}
+                className={`mt-2 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1.5 transition-all outline-none ${isMe
+                  ? 'bg-white/20 text-white hover:bg-white/30'
+                  : 'bg-primary/10 text-primary hover:bg-primary/20'
+                  }`}
+              >
+                {isVideo ? <Video size={12} /> : <Phone size={12} />}
+                <span>{isVideo ? 'Gọi video lại' : 'Gọi lại'}</span>
+              </button>
+            )
           )}
         </div>
-
       );
     }
 
