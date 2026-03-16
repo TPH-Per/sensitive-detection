@@ -1,8 +1,9 @@
 import React from 'react';
-import { FileText, Download, Image as ImageIcon, Play, Pause, Mic, PhoneIncoming, Phone, PhoneMissed, Video } from 'lucide-react';
+import { FileText, Download, Image as ImageIcon, Play, Pause, Mic, PhoneIncoming, Phone, PhoneMissed, Video, FileVideo } from 'lucide-react';
 
 import { RtdbMessage, MessageType } from '../../../../shared/types';
 import { IconButton, LazyVideo, LazyImage } from '../../ui';
+import { downloadFile } from '../../../utils';
 
 
 interface MessageContentProps {
@@ -162,12 +163,17 @@ const MessageContentInner: React.FC<MessageContentProps> = ({
       );
 
     case 'file':
-      const fileUrl = message.data.media?.[0]?.url || '';
-      const fileName = message.data.media?.[0]?.fileName || 'Tài liệu';
-      const fileSize = message.data.media?.[0]?.size
-        ? `${(message.data.media[0].size / 1024).toFixed(1)} KB`
+      const fileData = message.data.media?.[0];
+      const fileUrl = fileData?.url || '';
+      const fileName = fileData?.fileName || 'Tài liệu';
+      const fileMime = fileData?.mimeType || '';
+      const fileSize = fileData?.size
+        ? `${(fileData.size / 1024).toFixed(1)} KB`
         : 'N/A';
       const isFileUploading = isMe && uploadProgress[message.id] && !fileUrl;
+      
+      const isImageFile = fileMime.startsWith('image/');
+      const isVideoFile = fileMime.startsWith('video/');
 
       if (isFileUploading) {
         return (
@@ -196,25 +202,44 @@ const MessageContentInner: React.FC<MessageContentProps> = ({
       }
 
       return (
-        <div className={`flex items-center gap-3 p-3 rounded-lg border min-w-[220px] ${isMe ? 'bg-primary-light border-primary' : 'bg-bg-primary border-border-light'
-          }`}>
-          <div className={`p-2 rounded ${isMe ? 'bg-primary-light' : 'bg-secondary'}`}>
-            <FileText size={24} className={isMe ? 'text-primary' : 'text-text-secondary'} />
+        <div className={`flex flex-col gap-2 p-2 rounded-xl border max-w-[300px] ${isMe ? 'bg-primary-light/30 border-primary/20' : 'bg-bg-secondary border-border-light'}`}>
+          {(isImageFile || isVideoFile) && fileUrl && (
+            <div className="rounded-lg overflow-hidden cursor-pointer bg-black/5 aspect-video flex items-center justify-center" onClick={() => isImageFile ? onOpenImage(0) : null}>
+               {isImageFile ? (
+                 <LazyImage src={fileUrl} alt={fileName} className="w-full h-full object-cover" />
+               ) : (
+                 <div className="relative w-full h-full">
+                    <LazyVideo src={fileUrl} className="w-full h-full object-cover" />
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+                       <FileVideo size={32} className="text-white shadow-sm" />
+                    </div>
+                 </div>
+               )}
+            </div>
+          )}
+          
+          <div className="flex items-center gap-3 p-1">
+            <div className={`p-2 rounded-lg ${isMe ? 'bg-primary text-white' : 'bg-bg-tertiary text-text-secondary'}`}>
+              <FileText size={20} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="font-bold truncate text-[13px]">{fileName}</div>
+              <div className="text-[11px] opacity-60">{fileSize}</div>
+            </div>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                downloadFile(fileUrl, fileName);
+              }}
+              className={`p-2 rounded-full transition-all duration-base ${isMe ? 'hover:bg-primary/10 text-primary' : 'hover:bg-black/5 text-text-secondary'}`}
+              title="Tải về"
+            >
+              <Download size={18} />
+            </button>
           </div>
-          <div className="flex-1 min-w-0">
-            <div className="font-medium truncate text-sm">{fileName}</div>
-            <div className="text-xs opacity-70">{fileSize}</div>
-          </div>
-          <a
-            href={fileUrl}
-            download={fileName}
-            className="p-1 hover:bg-black/10 active:bg-black/20 rounded-full transition-all duration-base"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <Download size={18} />
-          </a>
+          
           {isMe && uploadProgress[message.id] && (
-            <div className="absolute inset-0 bg-bg-primary/80 flex flex-col items-center justify-center p-2 rounded-lg">
+            <div className="absolute inset-0 bg-bg-primary/80 flex flex-col items-center justify-center p-2 rounded-lg z-10">
               <div className="w-full bg-secondary h-1.5 rounded-full overflow-hidden mb-1">
                 <div
                   className="bg-primary h-full transition-all duration-slow"

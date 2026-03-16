@@ -5,7 +5,7 @@ import { IconButton } from '../../ui';
 interface ActionsMenuProps {
   isOpen: boolean;
   onToggle: () => void;
-  onAction: (type: 'image' | 'file' | 'voice') => void;
+  onAction: (type: 'media' | 'voice') => void;
   disabled?: boolean;
 }
 
@@ -34,16 +34,8 @@ export const ActionsMenu: React.FC<ActionsMenuProps> = ({
         <div className="absolute bottom-full left-0 mb-2 flex items-center gap-2 p-2 bg-bg-secondary rounded-xl shadow-lg border border-border-light animate-fade-in z-50">
           <IconButton
             type="button"
-            onClick={() => onAction('image')}
-            title="Hình ảnh & Video"
-            icon={<ImageIcon size={18} />}
-            size="md"
-          />
-
-          <IconButton
-            type="button"
-            onClick={() => onAction('file')}
-            title="Gửi file"
+            onClick={() => onAction('media')}
+            title="Đính kèm tệp"
             icon={<Paperclip size={18} />}
             size="md"
           />
