@@ -14,6 +14,7 @@ interface ChatBoxHeaderProps {
   onInfoClick?: () => void;
   onCall?: () => void;
   onVideoCall?: () => void;
+  canCall?: boolean;
 }
 
 const ChatBoxHeaderInner: React.FC<ChatBoxHeaderProps> = ({
@@ -27,6 +28,7 @@ const ChatBoxHeaderInner: React.FC<ChatBoxHeaderProps> = ({
   onInfoClick,
   onCall,
   onVideoCall,
+  canCall = true,
 }) => {
   return (
     <div className="flex-shrink-0 flex items-center justify-between px-3 md:px-4 h-16 border-b border-border-light bg-bg-primary transition-theme">
@@ -83,22 +85,26 @@ const ChatBoxHeaderInner: React.FC<ChatBoxHeaderProps> = ({
       </div>
 
       <div className="flex items-center gap-0.5 md:gap-1">
-        <IconButton
-          onClick={onCall}
-          title="Cuộc gọi âm thanh"
-          variant="ghost"
-          className="text-text-secondary"
-          icon={<Phone size={20} />}
-          size="md"
-        />
-        <IconButton
-          onClick={onVideoCall}
-          title="Cuộc gọi video"
-          variant="ghost"
-          className="text-text-secondary"
-          icon={<Video size={20} />}
-          size="md"
-        />
+        {canCall && (
+            <>
+                <IconButton
+                    onClick={onCall}
+                    title="Cuộc gọi âm thanh"
+                    variant="ghost"
+                    className="text-text-secondary"
+                    icon={<Phone size={20} />}
+                    size="md"
+                />
+                <IconButton
+                    onClick={onVideoCall}
+                    title="Cuộc gọi video"
+                    variant="ghost"
+                    className="text-text-secondary"
+                    icon={<Video size={20} />}
+                    size="md"
+                />
+            </>
+        )}
         <IconButton
           onClick={onInfoClick}
           title="Thông tin hội thoại"

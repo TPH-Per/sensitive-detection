@@ -37,7 +37,7 @@ export const rtdbConversationService = {
                 avatar: null,
                 creatorId: user1Id,
                 members: {
-                    [user1Id]: 'member',
+                    [user1Id]: 'admin',
                     [user2Id]: 'member'
                 },
                 typing: {},

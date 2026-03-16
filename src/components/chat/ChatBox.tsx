@@ -37,6 +37,7 @@ interface ChatBoxProps {
   onUnblock?: () => void;
   onCall?: (isVideo: boolean) => void;
   onVideoCall?: () => void;
+  canCall?: boolean;
 }
 
 export const ChatBox: React.FC<ChatBoxProps> = ({
@@ -67,6 +68,7 @@ export const ChatBox: React.FC<ChatBoxProps> = ({
   onUnblock,
   onCall,
   onVideoCall,
+  canCall = true,
 }) => {
   const {
     messagesEndRef,
@@ -146,6 +148,7 @@ export const ChatBox: React.FC<ChatBoxProps> = ({
         onInfoClick={onInfoClick}
         onCall={() => onCall && onCall(false)}
         onVideoCall={onVideoCall}
+        canCall={canCall}
       />
 
       {isMessageRequest && partner && onAddFriend && onBlock && (

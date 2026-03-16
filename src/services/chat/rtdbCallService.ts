@@ -1,5 +1,6 @@
 import { ref, set, get, update, remove, onValue, off } from 'firebase/database';
-import { rtdb } from '../../firebase/config';
+import { doc, getDoc } from 'firebase/firestore';
+import { rtdb, db } from '../../firebase/config';
 import { RtdbCallSignaling } from '../../../shared/types';
 
 export const rtdbCallService = {
@@ -19,6 +20,12 @@ export const rtdbCallService = {
         try {
             if (!isGroupCall && recipientIds.length === 1) {
                 const recipientId = recipientIds[0];
+
+                const friendDoc = await getDoc(doc(db, 'users', callerId, 'friends', recipientId));
+                if (!friendDoc.exists()) {
+                    return { success: false, reason: 'not_friend' };
+                }
+
                 const recipientSignal = await rtdbCallService.getCallSignaling(recipientId);
                 if (recipientSignal && (recipientSignal.status === 'ringing' || recipientSignal.status === 'accepted')) {
                     return { success: false, reason: 'busy' };

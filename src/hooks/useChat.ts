@@ -90,6 +90,16 @@ export const useChat = () => {
     return friendIds.includes(partnerId) ? FriendStatus.FRIEND : undefined;
   }, [partnerId, friendIds]);
 
+  const isFriend = useMemo(() => {
+    if (!partnerId) return false;
+    return friendIds.includes(partnerId);
+  }, [partnerId, friendIds]);
+
+  const canCall = useMemo(() => {
+    if (selectedConversation?.data.isGroup) return true;
+    return isFriend;
+  }, [selectedConversation?.data.isGroup, isFriend]);
+
   const partnerPendingRequestId = useMemo(() => {
     if (!partnerId) return undefined;
     const sent = sentRequests.find(r => r.receiverId === partnerId);
@@ -252,6 +262,8 @@ export const useChat = () => {
     handleUnblock: block.handleUnblock,
     friendRequestStatus,
     currentReceivedRequest,
+    isFriend,
+    canCall,
     sentRequests,
     receivedRequests,
 

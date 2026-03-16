@@ -93,6 +93,8 @@ const ChatPage: React.FC = () => {
     handleLoadMoreMessages,
     friendRequestStatus,
     currentReceivedRequest,
+    isFriend,
+    canCall,
     receivedRequests,
     participants,
   } = useChat();
@@ -398,6 +400,7 @@ const ChatPage: React.FC = () => {
               onUnblock={handleUnblock}
               onCall={(isVideo) => handleInitiateCall(isVideo ? 'video' : 'voice')}
               onVideoCall={() => handleInitiateCall('video')}
+              canCall={canCall}
             />
             <ChatInput
               key={selectedConversationId}
