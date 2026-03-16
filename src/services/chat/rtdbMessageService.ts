@@ -50,41 +50,21 @@ async function updateConversationAfterMessage(
         const updates: Record<string, any> = {};
         const now = Date.now();
 
+        let conversation: RtdbConversation;
         if (!convSnap.exists()) {
             const isDirect = convId.startsWith('direct_');
             if (!isDirect) return;
 
             const userIds = convId.replace('direct_', '').split('_');
-            const [u1, u2] = userIds;
-            
-            updates[`conversations/${convId}`] = {
-                isGroup: false,
-                name: null,
-                avatar: null,
-                creatorId: senderId,
-                members: { [u1]: 'admin', [u2]: 'member' },
-                typing: {},
-                lastMessage: null,
-                createdAt: now,
-                updatedAt: now
-            } as RtdbConversation;
-
-            userIds.forEach(uid => {
-                updates[`user_chats/${uid}/${convId}`] = {
-                    isPinned: false,
-                    isMuted: false,
-                    isArchived: false,
-                    unreadCount: 0,
-                    lastReadMsgId: null,
-                    lastMsgTimestamp: now,
-                    clearedAt: 0,
-                    createdAt: now,
-                    updatedAt: now
-                };
-            });
+            const { rtdbConversationService } = await import('./rtdbConversationService');
+            await rtdbConversationService.initializeDirectConversation(userIds[0], userIds[1], senderId);
+            const newSnap = await get(convRef);
+            if (!newSnap.exists()) return;
+            conversation = newSnap.val() as RtdbConversation;
+        } else {
+            conversation = convSnap.val() as RtdbConversation;
         }
 
-        const conversation = convSnap.exists() ? convSnap.val() as RtdbConversation : (updates[`conversations/${convId}`] as RtdbConversation);
         const memberIds = Object.keys(conversation.members || {});
 
         updates[`conversations/${convId}/lastMessage`] = {
@@ -173,8 +153,8 @@ async function createAndSendMediaMessage(
         updatedAt: createdAt
     };
 
-    await set(newMsgRef, messageData);
     await updateConversationAfterMessage(convId, senderId, messageData, options.displayContent, msgId);
+    await set(newMsgRef, messageData);
 
     const path = `chats/${convId}/${createdAt}_${file.name}`;
     let fileUrl = '';
@@ -252,8 +232,8 @@ async function createAndSendImageAlbumMessage(
         updatedAt: createdAt
     };
 
-    await set(newMsgRef, messageData);
     await updateConversationAfterMessage(convId, senderId, messageData, options.displayContent, msgId);
+    await set(newMsgRef, messageData);
 
     const bytesByIndex = new Array(files.length).fill(0);
     const totalBytesByIndex = new Array(files.length).fill(0);
@@ -351,8 +331,8 @@ export const rtdbMessageService = {
                 updatedAt: Date.now()
             };
 
-            await set(newMsgRef, messageData);
             await updateConversationAfterMessage(convId, senderId, messageData, content, msgId);
+            await set(newMsgRef, messageData);
 
             return msgId;
         } catch (error) {
@@ -808,8 +788,6 @@ export const rtdbMessageService = {
                 updatedAt: Date.now()
             };
 
-            await set(newMsgRef, messageData);
-
             let displayContent = srcMsg.content;
             if (srcMsg.type === MessageType.IMAGE) displayContent = '[Hình ảnh]';
             else if (srcMsg.type === MessageType.VIDEO) displayContent = '[Video]';
@@ -825,6 +803,7 @@ export const rtdbMessageService = {
             }
 
             await updateConversationAfterMessage(targetConvId, senderId, messageData, displayContent, msgId);
+            await set(newMsgRef, messageData);
 
             return msgId;
         } catch (error) {

@@ -174,6 +174,13 @@ export const friendService = {
       });
 
       await batch.commit();
+
+      try {
+        const { rtdbConversationService } = await import('./chat/rtdbConversationService');
+        await rtdbConversationService.initializeDirectConversation(senderId, receiverId, receiverId);
+      } catch (chatError) {
+        console.error("Lỗi khởi tạo hội thoại khi kết bạn", chatError);
+      }
     } catch (error) {
       console.error("Lỗi chấp nhận kết bạn", error);
       throw error;

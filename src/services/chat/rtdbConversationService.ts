@@ -4,6 +4,64 @@ import { RtdbConversation, RtdbUserChat } from '../../../shared/types';
 
 export const rtdbConversationService = {
     /**
+     * Khởi tạo hội thoại direct giữa 2 người dùng
+     */
+    initializeDirectConversation: async (user1Id: string, user2Id: string, creatorId: string): Promise<string> => {
+        try {
+            const sortedIds = [user1Id, user2Id].sort();
+            const convId = `direct_${sortedIds[0]}_${sortedIds[1]}`;
+            const now = Date.now();
+
+            const convRef = ref(rtdb, `conversations/${convId}`);
+            const convSnap = await get(convRef);
+
+            const updates: Record<string, any> = {};
+
+            if (!convSnap.exists()) {
+                updates[`conversations/${convId}`] = {
+                    isGroup: false,
+                    name: null,
+                    avatar: null,
+                    creatorId,
+                    members: { [user1Id]: 'admin', [user2Id]: 'member' },
+                    typing: {},
+                    lastMessage: null,
+                    createdAt: now,
+                    updatedAt: now
+                } as RtdbConversation;
+
+                [user1Id, user2Id].forEach(uid => {
+                    updates[`user_chats/${uid}/${convId}`] = {
+                        isPinned: false,
+                        isMuted: false,
+                        isArchived: false,
+                        unreadCount: 0,
+                        lastReadMsgId: null,
+                        lastMsgTimestamp: now,
+                        clearedAt: 0,
+                        createdAt: now,
+                        updatedAt: now
+                    } as RtdbUserChat;
+                });
+            } else {
+                updates[`user_chats/${user1Id}/${convId}/isArchived`] = false;
+                updates[`user_chats/${user2Id}/${convId}/isArchived`] = false;
+                updates[`user_chats/${user1Id}/${convId}/updatedAt`] = now;
+                updates[`user_chats/${user2Id}/${convId}/updatedAt`] = now;
+            }
+
+            if (Object.keys(updates).length > 0) {
+                await update(ref(rtdb), updates);
+            }
+
+            return convId;
+        } catch (error) {
+            console.error('[rtdbConversationService] Lỗi initializeDirectConversation:', error);
+            throw error;
+        }
+    },
+
+    /**
      * Tạo hoặc lấy conversation 1-1 giữa 2 user
      */
     getOrCreateDirect: async (user1Id: string, user2Id: string): Promise<string> => {
@@ -14,19 +72,15 @@ export const rtdbConversationService = {
             const convRef = ref(rtdb, `conversations/${convId}`);
             const convSnap = await get(convRef);
 
-            const updates: Record<string, any> = {};
-
             if (convSnap.exists()) {
+                const updates: Record<string, any> = {};
                 updates[`user_chats/${user1Id}/${convId}/isArchived`] = false;
                 updates[`user_chats/${user2Id}/${convId}/isArchived`] = false;
-
-                if (Object.keys(updates).length > 0) {
-                    try {
-                        await update(ref(rtdb), updates);
-                    } catch (e) {
-                        console.error('Không thể cập nhật trạng thái user_chat:', e);
-                    }
-                }
+                updates[`user_chats/${user1Id}/${convId}/clearedAt`] = 0;
+                updates[`user_chats/${user2Id}/${convId}/clearedAt`] = 0;
+                updates[`user_chats/${user1Id}/${convId}/updatedAt`] = Date.now();
+                updates[`user_chats/${user2Id}/${convId}/updatedAt`] = Date.now();
+                await update(ref(rtdb), updates);
             }
 
             return convId;
@@ -265,6 +319,10 @@ export const rtdbConversationService = {
      */
     setTyping: async (convId: string, uid: string, isTyping: boolean): Promise<void> => {
         try {
+            const convRef = ref(rtdb, `conversations/${convId}`);
+            const convSnap = await get(convRef);
+            if (!convSnap.exists()) return;
+
             const typingRef = ref(rtdb, `conversations/${convId}/typing/${uid}`);
             if (isTyping) {
                 await set(typingRef, Date.now());
@@ -272,7 +330,9 @@ export const rtdbConversationService = {
                 await remove(typingRef);
             }
         } catch (error) {
-            console.error('[rtdbConversationService] Lỗi setTyping:', error);
+            if (!(error as any).message?.includes('PERMISSION_DENIED')) {
+                console.error('[rtdbConversationService] Lỗi setTyping:', error);
+            }
         }
     },
 

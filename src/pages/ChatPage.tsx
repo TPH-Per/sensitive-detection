@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { MessageSquare } from 'lucide-react';
 import { BlockOptionsModal } from '../components/ui';
 import { useChat } from '../hooks';
@@ -112,6 +112,15 @@ const ChatPage: React.FC = () => {
     setIsChatVisible(true);
     return () => setIsChatVisible(false);
   }, [setIsChatVisible]);
+
+  const [searchParams] = useSearchParams();
+  const convIdFromUrl = searchParams.get('conv');
+
+  useEffect(() => {
+    if (convIdFromUrl && convIdFromUrl !== selectedConversationId) {
+      handleSelectConversation(convIdFromUrl);
+    }
+  }, [convIdFromUrl, selectedConversationId, handleSelectConversation]);
 
   useEffect(() => {
     const handleJoinActiveCallEvent = async (e: any) => {
