@@ -135,7 +135,6 @@ export const ChatDetailsMemberList: React.FC<ChatDetailsMemberListProps> = ({
                 <Dropdown
                   isOpen={menuOpenId === member.id}
                   onOpenChange={(open) => setMenuOpenId(open ? member.id : null)}
-                  disableTriggerScale
                   trigger={
                     <IconButton
                       className="opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all duration-base min-w-[44px]"

@@ -66,7 +66,7 @@ export const reportService = {
   },
 
   /** Tạo báo cáo */
-  createReport: async (data: Omit<Report, 'id' | 'status' | 'createdAt'>): Promise<string> => {
+  createReport: async (data: Omit<Report, 'id' | 'status' | 'createdAt' | 'updatedAt'>): Promise<string> => {
     try {
       const cleanData = Object.fromEntries(
         Object.entries(data).filter(([_, v]) => v !== undefined)

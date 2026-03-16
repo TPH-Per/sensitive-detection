@@ -6,6 +6,7 @@ import { useFriendIds } from './utils';
 import { useUserCache } from '../store/userCacheStore';
 import { usePostStore } from '../store/postStore';
 import { DocumentSnapshot } from 'firebase/firestore';
+import { getSafeMillis } from '../utils/timestampHelpers';
 
 interface UseUserPostsReturn {
   posts: Post[];
@@ -100,8 +101,8 @@ export const useUserPosts = (userId: string, currentUser: User): UseUserPostsRet
             if (index !== -1) {
               updatedPosts[index] = npm;
             } else {
-              const firstPostTime = updatedPosts[0]?.createdAt?.toMillis?.() || 0;
-              if (npm.createdAt?.toMillis?.() > firstPostTime) {
+              const firstPostTime = getSafeMillis(updatedPosts[0]?.createdAt);
+              if (getSafeMillis(npm.createdAt) > firstPostTime) {
                 updatedPosts.unshift(npm);
               }
             }

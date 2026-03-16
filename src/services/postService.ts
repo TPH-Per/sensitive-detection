@@ -25,6 +25,7 @@ import { compressImage, isImageFile } from '../utils/imageUtils';
 import { withRetry } from '../utils/retryUtils';
 import { uploadWithProgress, ProgressCallback, deleteStorageFiles } from '../utils/uploadUtils';
 import { convertDoc, convertDocs } from '../utils/firebaseUtils';
+import { getSafeMillis } from '../utils/timestampHelpers';
 import {
   validatePostContent,
   validateImageFile,
@@ -88,7 +89,7 @@ export const postService = {
         posts.push(...convertDocs<Post>(postsSnapshot.docs));
       }
 
-      posts.sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis());
+      posts.sort((a, b) => getSafeMillis(b.createdAt) - getSafeMillis(a.createdAt));
 
       const blockedUsersMap = await userService.getBlockedUsers(userId);
       const hiddenAuthorIds = Object.keys(blockedUsersMap).filter(

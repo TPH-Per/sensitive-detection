@@ -3,6 +3,7 @@ import { Comment, ReactionType, CommentStatus } from '../../shared/types';
 import { DocumentSnapshot, Timestamp } from 'firebase/firestore';
 import { commentService } from '../services/commentService';
 import { PAGINATION } from '../constants';
+import { getSafeMillis } from '../utils/timestampHelpers';
 
 type SortOrder = 'asc' | 'desc';
 
@@ -18,7 +19,7 @@ const mergeOptimisticComments = (
       const match = incoming.find(c =>
         c.authorId === e.authorId &&
         c.content === e.content &&
-        Math.abs(c.createdAt.toMillis() - e.createdAt.toMillis()) < 30000
+        Math.abs(getSafeMillis(c.createdAt) - getSafeMillis(e.createdAt)) < 30000
       );
       if (match) {
         optimisticMatches.add(match.id);
@@ -39,8 +40,8 @@ const mergeOptimisticComments = (
 
   const merged = [...updated, ...newItems].sort((a, b) =>
     sortOrder === 'desc'
-      ? b.createdAt.toMillis() - a.createdAt.toMillis()
-      : a.createdAt.toMillis() - b.createdAt.toMillis()
+      ? getSafeMillis(b.createdAt) - getSafeMillis(a.createdAt)
+      : getSafeMillis(a.createdAt) - getSafeMillis(b.createdAt)
   );
 
   return { merged, hasChanges: true };

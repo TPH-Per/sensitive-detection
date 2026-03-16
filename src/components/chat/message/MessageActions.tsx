@@ -36,7 +36,6 @@ export const MessageActions: React.FC<MessageActionsProps> = ({
       <Dropdown
         isOpen={showMenu}
         onOpenChange={setShowMenu}
-        disableTriggerScale
         align={isMe ? 'right' : 'left'}
         trigger={
           <IconButton

@@ -5,19 +5,12 @@ import { db } from '../firebase/config';
 import { toast } from './toastStore';
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import { PAGINATION, TOAST_MESSAGES } from '../constants';
+import { TOAST_MESSAGES, PAGINATION } from '../constants';
+import { getSafeMillis } from '../utils/timestampHelpers';
+import { convertDoc } from '../utils/firebaseUtils';
 import { useLoadingStore } from './loadingStore';
 
-function convertDocToPost(docSnap: DocumentSnapshot): Post {
-  const data = docSnap.data();
-  return {
-    ...data,
-    id: docSnap.id,
-    createdAt: data?.createdAt as Timestamp,
-    editedAt: data?.editedAt as Timestamp | undefined,
-    deletedAt: data?.deletedAt as Timestamp | undefined,
-  } as Post;
-}
+// Xóa convertDocToPost cũ vì đã có convertDoc từ utils
 
 interface PostState {
   posts: Post[];
@@ -167,8 +160,8 @@ export const usePostStore = create<PostState>()(
 
                 const allPosts = [...newPosts, ...state.posts]
                   .sort((a, b) => {
-                    const timeA = a.createdAt?.toMillis() || Date.now();
-                    const timeB = b.createdAt?.toMillis() || Date.now();
+                    const timeA = getSafeMillis(a.createdAt);
+                    const timeB = getSafeMillis(b.createdAt);
                     return timeB - timeA;
                   });
 
@@ -448,7 +441,7 @@ export const usePostStore = create<PostState>()(
         if (post) {
           const unsubscribe = onSnapshot(doc(db, 'posts', post.id), (postDoc) => {
             if (postDoc.exists()) {
-              const updatedPost = convertDocToPost(postDoc);
+              const updatedPost = convertDoc<Post>(postDoc);
               set(state => ({
                 selectedPost: state.selectedPost?.id === post.id ? updatedPost : state.selectedPost,
                 posts: state.posts.map(p => p.id === post.id ? updatedPost : p)

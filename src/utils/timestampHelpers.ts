@@ -44,10 +44,24 @@ export const isValidTimestamp = (value: any): value is Timestamp => {
 };
 
 /**
- * Compare two timestamps
+ * Lấy milliseconds an toàn từ nhiều định dạng (Timestamp, Date, number)
  */
-export const compareTimestamps = (a: Timestamp, b: Timestamp): number => {
-    return a.toMillis() - b.toMillis();
+export const getSafeMillis = (ts: any): number => {
+    if (!ts) return Date.now();
+    if (typeof ts === 'number') return ts;
+    if (ts instanceof Timestamp) return ts.toMillis();
+    if (ts instanceof Date) return ts.getTime();
+    if (typeof ts.toMillis === 'function') return ts.toMillis();
+    if (typeof ts.toDate === 'function') return ts.toDate().getTime();
+    if (ts.seconds !== undefined) return ts.seconds * 1000 + (ts.nanoseconds || 0) / 1000000;
+    return Date.now();
+};
+
+/**
+ * So sánh hai mốc thời gian an toàn
+ */
+export const compareTimestamps = (a: any, b: any): number => {
+    return getSafeMillis(a) - getSafeMillis(b);
 };
 
 /**

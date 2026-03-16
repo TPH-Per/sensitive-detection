@@ -201,7 +201,6 @@ const ConversationItemInner: React.FC<ConversationItemProps> = ({
         <Dropdown
           isOpen={isMenuOpen}
           onOpenChange={setIsMenuOpen}
-          disableTriggerScale
           trigger={
             <IconButton
               className={`opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all duration-base ${isMenuOpen ? 'opacity-100' : ''}`}
