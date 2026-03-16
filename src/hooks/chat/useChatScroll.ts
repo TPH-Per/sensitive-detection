@@ -36,19 +36,22 @@ export const useChatScroll = ({
     }
   }, [conversationId, isLoading, messages.length === 0]);
 
-  // Cuộn xuống cuối khi có tin nhắn mới (nếu đang ở gần cuối)
   useEffect(() => {
     if (messages.length > 0 && prevMessagesLength.current > 0) {
       if (messages.length > prevMessagesLength.current) {
         const lastMsg = messages[messages.length - 1];
         const prevLastMsg = messages[prevMessagesLength.current - 1];
-        const isNewMessage = !prevLastMsg || lastMsg.data.createdAt > prevLastMsg.data.createdAt;
+        
+        const isNewMessage = lastMsg.data.createdAt > prevLastMsg.data.createdAt;
 
-        if (isNewMessage && shouldAutoScroll) {
-          messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-        } else if (!isNewMessage && messagesContainerRef.current) {
+        if (isNewMessage) {
+          if (shouldAutoScroll) {
+            messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+          }
+        } else if (messagesContainerRef.current) {
           const currentScrollHeight = messagesContainerRef.current.scrollHeight;
-          messagesContainerRef.current.scrollTop = currentScrollHeight - scrollHeightBeforeLoad.current;
+          const heightDiff = currentScrollHeight - scrollHeightBeforeLoad.current;
+          messagesContainerRef.current.scrollTop = heightDiff;
         }
       }
     }
@@ -59,7 +62,7 @@ export const useChatScroll = ({
     if (!messagesContainerRef.current) return;
 
     const { scrollTop, scrollHeight, clientHeight } = messagesContainerRef.current;
-    const isAtBottom = scrollHeight - scrollTop - clientHeight < 100;
+    const isAtBottom = scrollHeight - scrollTop - clientHeight < 150;
     setShouldAutoScroll(isAtBottom);
 
     if (scrollTop < 50 && hasMoreMessages && !isLoadingMore && onLoadMore) {
@@ -74,7 +77,6 @@ export const useChatScroll = ({
     }
   }, [hasMoreMessages, isLoadingMore, onLoadMore]);
 
-  // Cleanup timeout on unmount
   useEffect(() => {
     return () => {
       if (loadMoreTimeoutRef.current) {

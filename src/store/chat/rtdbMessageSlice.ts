@@ -41,22 +41,36 @@ export const createRtdbMessageSlice: StateCreator<RtdbChatState, [], [], RtdbMes
     uploadProgress: {},
 
     subscribeToMessages: (conversationId: string) => {
-        set((state) => {
-            const newMessages = { ...state.messages };
-            delete newMessages[conversationId];
-            return { messages: newMessages };
-        });
+        set((state) => ({
+            hasMoreMessages: {
+                ...state.hasMoreMessages,
+                [conversationId]: true
+            }
+        }));
 
         const conversation = get().conversations.find(c => c.id === conversationId);
         const clearedAt = conversation?.userChat?.clearedAt || 0;
 
-        const unsubscribe = rtdbMessageService.subscribeToMessages(conversationId, LIMIT_PER_PAGE, (messages) => {
-            set((state) => ({
-                messages: {
-                    ...state.messages,
-                    [conversationId]: messages
-                }
-            }));
+        const unsubscribe = rtdbMessageService.subscribeToMessages(conversationId, LIMIT_PER_PAGE, (newIncomingMessages) => {
+            set((state) => {
+                const currentMessages = state.messages[conversationId] || [];
+                
+                const messageMap = new Map();
+                
+                currentMessages.forEach(m => messageMap.set(m.id, m));
+                
+                newIncomingMessages.forEach(m => messageMap.set(m.id, m));
+                
+                const mergedMessages = Array.from(messageMap.values())
+                    .sort((a, b) => a.data.createdAt - b.data.createdAt);
+
+                return {
+                    messages: {
+                        ...state.messages,
+                        [conversationId]: mergedMessages
+                    }
+                };
+            });
         }, clearedAt);
 
         return unsubscribe;
