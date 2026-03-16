@@ -80,7 +80,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           throw err;
         }
 
-        await presenceService.setOnline(firebaseUser.uid);
 
         set({
           user: userData,
@@ -166,8 +165,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
             userService.getBlockedUsers(firebaseUser.uid),
           ]);
           if (userData) {
-            await presenceService.setOnline(firebaseUser.uid);
-
             set({ user: userData, blockedUsers });
             useUserCache.getState().setUser(userData);
           }
@@ -235,7 +232,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
               return;
             }
 
-            await presenceService.setOnline(firebaseUser.uid);
 
             set({
               user: userData,

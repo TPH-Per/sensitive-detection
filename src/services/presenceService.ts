@@ -11,39 +11,38 @@ import { presenceRef, presencesRef } from '../firebase/rtdb';
 import { RtdbPresence } from '../../shared/types';
 
 export const presenceService = {
-    /**
-     * Set user online và cài đặt auto-disconnect
-     */
     setOnline: async (uid: string): Promise<void> => {
         try {
             const { userService } = await import('./userService');
             const settings = await userService.getUserSettings(uid);
             const userPresenceRef = presenceRef(uid);
+            const isOnlineStatus = settings.showOnlineStatus;
             
-            const snap = await get(userPresenceRef);
             const now = rtdbServerTimestamp();
             
-            if (!snap.exists()) {
-                await set(userPresenceRef, {
-                    isOnline: settings.showOnlineStatus,
-                    lastSeen: now,
-                    createdAt: now,
-                    updatedAt: now
-                });
+            const updateData: any = {
+                isOnline: isOnlineStatus,
+                updatedAt: now
+            };
+
+            if (isOnlineStatus) {
+                updateData.lastSeen = now;
             } else {
-                await update(userPresenceRef, {
-                    isOnline: settings.showOnlineStatus,
-                    lastSeen: now,
-                    updatedAt: now
-                });
+                updateData.lastSeen = null; 
             }
 
+            await update(userPresenceRef, updateData);
             const disconnectRef = onDisconnect(userPresenceRef);
-            await disconnectRef.update({
+            const disconnectData: any = {
                 isOnline: false,
-                lastSeen: rtdbServerTimestamp(),
                 updatedAt: rtdbServerTimestamp()
-            });
+            };
+
+            if (isOnlineStatus) {
+                disconnectData.lastSeen = rtdbServerTimestamp();
+            }
+
+            await disconnectRef.update(disconnectData);
         } catch (error) {
             console.error('Lỗi set online:', error);
             throw error;

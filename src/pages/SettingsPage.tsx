@@ -26,6 +26,7 @@ import { UserAvatar, ConfirmDialog, Button, Skeleton, BlockOptionsModal, Dropdow
 import { CONFIRM_MESSAGES } from '../constants';
 import ChangePasswordModal from '../components/settings/ChangePasswordModal';
 import { userService } from '../services/userService';
+import { presenceService } from '../services/presenceService';
 
 type SettingSection = 'appearance' | 'privacy' | 'security' | 'blocked';
 
@@ -253,6 +254,9 @@ const SettingsPage: React.FC = () => {
                     const newValue = !settings.showOnlineStatus;
                     setSettings({ ...settings, showOnlineStatus: newValue });
                     await userService.updateUserSettings(currentUser!.id, { showOnlineStatus: newValue });
+                    await presenceService.setOnline(currentUser!.id).catch(err => 
+                      console.error('Lỗi đồng bộ RTDB khi đổi settings:', err)
+                    );
                   }}
                 />
               }
