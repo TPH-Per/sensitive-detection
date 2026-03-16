@@ -10,6 +10,7 @@ import { User, Post, Visibility, MediaObject } from '../../../../shared/types';
 import { postSchema, PostFormValues } from '../../../utils/validation';
 import { insertTextAtCursor } from '../../../utils/uiUtils';
 import { useAutoResizeTextarea } from '../../../hooks/utils';
+import { userService } from '../../../services/userService';
 
 interface PostModalProps {
   isOpen: boolean;
@@ -66,7 +67,6 @@ export const PostModal: React.FC<PostModalProps> = ({
   useEffect(() => {
     const fetchSettings = async () => {
       try {
-        const { userService } = await import('../../../services/userService');
         const settings = await userService.getUserSettings(currentUser.id);
         if (settings) {
           setValue('visibility', settings.defaultPostVisibility);

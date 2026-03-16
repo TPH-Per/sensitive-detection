@@ -9,11 +9,11 @@ import {
 } from 'firebase/database';
 import { presenceRef, presencesRef } from '../firebase/rtdb';
 import { RtdbPresence } from '../../shared/types';
+import { userService } from './userService';
 
 export const presenceService = {
     setOnline: async (uid: string): Promise<void> => {
         try {
-            const { userService } = await import('./userService');
             const settings = await userService.getUserSettings(uid);
             const userPresenceRef = presenceRef(uid);
             const isOnlineStatus = settings.showOnlineStatus;
