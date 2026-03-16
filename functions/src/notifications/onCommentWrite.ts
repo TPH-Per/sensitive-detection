@@ -29,9 +29,12 @@ export const onCommentWrite = onDocumentWritten(
                 await batch.commit();
 
                 const senderName = await getSenderName(senderId);
-                const receiverId = parentId 
-                    ? (await db.collection('comments').doc(parentId).get()).data()?.authorId 
-                    : (await db.collection('posts').doc(postId).get()).data()?.authorId;
+                
+                let receiverId = after.replyToUserId;
+                if (!receiverId) {
+                    const postDoc = await db.collection('posts').doc(postId).get();
+                    receiverId = postDoc.data()?.authorId;
+                }
 
                 if (receiverId && receiverId !== senderId) {
                     const body = buildPushBody(NotificationType.COMMENT, senderName, { contentSnippet });

@@ -121,18 +121,20 @@ export const commentService = {
     userId: string,
     content: string,
     parentId: string | null = null,
+    replyToUserId?: string,
+    replyToId?: string,
     image?: MediaObject,
     preGeneratedId?: string
   ): Promise<string> => {
     try {
-      // Validate content
       validateCommentContent(content);
-
       const commentData: any = {
         postId,
         authorId: userId,
         content,
         parentId: parentId || null,
+        replyToUserId: replyToUserId || null,
+        replyToId: replyToId || null,
         status: CommentStatus.ACTIVE,
         replyCount: 0,
         createdAt: serverTimestamp(),
@@ -159,7 +161,7 @@ export const commentService = {
   },
 
   /** Xóa bình luận bài viết (soft-delete) */
-  deleteComment: async (commentId: string, userId: string) => {
+  deleteComment: async (commentId: string, userId: string, parentId: string | null = null) => {
     try {
       const commentRef = doc(db, 'comments', commentId);
       await updateDoc(commentRef, {
@@ -169,14 +171,33 @@ export const commentService = {
         updatedAt: serverTimestamp()
       });
 
+      // Xóa cascade nếu là comment gốc
+      if (!parentId) {
+        const repliesQuery = query(
+          collection(db, 'comments'),
+          where('parentId', '==', commentId),
+          where('status', '==', CommentStatus.ACTIVE)
+        );
+        const repliesSnapshot = await getDocs(repliesQuery);
+        const deletePromises = repliesSnapshot.docs.map(d =>
+          updateDoc(d.ref, {
+            status: CommentStatus.DELETED,
+            deletedAt: serverTimestamp(),
+            deletedBy: userId,
+            updatedAt: serverTimestamp()
+          })
+        );
+        await Promise.all(deletePromises);
+      }
+
       const notifQuery = query(
         collection(db, 'notifications'),
         where('data.commentId', '==', commentId)
       );
 
       const snapshot = await getDocs(notifQuery);
-      const deletePromises = snapshot.docs.map(doc => deleteDoc(doc.ref));
-      await Promise.all(deletePromises);
+      const deleteNotifPromises = snapshot.docs.map(doc => deleteDoc(doc.ref));
+      await Promise.all(deleteNotifPromises);
     } catch (error) {
       console.error("Lỗi xóa comment:", error);
       throw error;
@@ -189,8 +210,6 @@ export const commentService = {
       const commentRef = doc(db, 'comments', commentId);
       const updateData: any = {
         content,
-        isEdited: true,
-        editedAt: serverTimestamp(),
         updatedAt: serverTimestamp()
       };
       if (image !== undefined) updateData.image = image;

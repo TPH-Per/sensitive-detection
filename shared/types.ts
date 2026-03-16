@@ -259,12 +259,12 @@ export interface Comment extends BaseEntity, SoftDeletableEntity {
     postId: string;
     authorId: string;
     parentId?: string;
+    replyToUserId?: string;
+    replyToId?: string;
     content: string;
     status: CommentStatus;
     image?: MediaObject;
     replyCount?: number;
-    isEdited?: boolean;
-    editedAt?: Timestamp;
     updatedAt: Timestamp;
 }
 
@@ -284,8 +284,6 @@ export interface Post extends BaseEntity, SoftDeletableEntity {
     media?: MediaObject[];
     commentCount: number;
     visibility: Visibility;
-    isEdited?: boolean;
-    editedAt?: Timestamp;
     updatedAt: Timestamp;
 }
 

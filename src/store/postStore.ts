@@ -312,8 +312,7 @@ export const usePostStore = create<PostState>()(
                 content,
                 media: [...media, ...previewMedia],
                 visibility,
-                isEdited: true,
-                editedAt: Timestamp.now()
+                updatedAt: Timestamp.now()
               }
               : p
           ),

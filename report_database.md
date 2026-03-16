@@ -124,8 +124,6 @@ _Mô tả: Bảng trung tâm lưu diễn đàn bài viết/trạng thái (Status
 | `visibility` | String Enum | **Required** | `"public"`, `"friends"`, `"private"` |
 | `commentCount` | Number | **Required** | Số lượng bình luận. Mặc định `0` |
 | `media` | Array<MediaObject> | _Optional_ | Danh sách hình ảnh/video |
-| `isEdited` | Boolean | _Optional_ | Đã chỉnh sửa hay chưa |
-| `editedAt` | Timestamp | _Optional_ | Thời điểm chỉnh sửa cuối |
 | `createdAt` | Timestamp | **Required** | Thời điểm tạo |
 | `updatedAt` | Timestamp | **Required** | Thời điểm cập nhật |
 | `deletedAt` | Timestamp | _Optional_ | Thời điểm xóa |
@@ -151,11 +149,11 @@ _Mô tả: Chứa mọi bình luận của bài viết. Áp dụng cấu trúc p
 | `authorId` | String | **Required** | ID tác giả |
 | `content` | String | **Required** | Nội dung bình luận |
 | `status` | String Enum | **Required** | `"active"`, `"deleted"` |
-| `parentId` | String | _Optional_ | ID bình luận cha (nếu là reply) |
+| `parentId` | String | _Optional_ | ID bình luận gốc duy nhất (nếu là reply) |
+| `replyToUserId` | String | _Optional_ | ID người nhận phản hồi (A -> B) |
+| `replyToId` | String | _Optional_ | ID comment được phản hồi cụ thể |
 | `image` | MediaObject | _Optional_ | Hình ảnh đính kèm |
 | `replyCount` | Number | **Required** | Số lượng phản hồi. Mặc định `0` |
-| `isEdited` | Boolean | _Optional_ | Đã chỉnh sửa hay chưa |
-| `editedAt` | Timestamp | _Optional_ | Thời điểm chỉnh sửa |
 | `createdAt` | Timestamp | **Required** | Thời điểm tạo |
 | `updatedAt` | Timestamp | **Required** | Thời điểm cập nhật |
 | `deletedAt` | Timestamp | _Optional_ | Thời điểm xóa |

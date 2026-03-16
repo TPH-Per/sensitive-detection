@@ -117,10 +117,11 @@ service cloud.firestore {
     match /comments/{commentId} {
       allow read: if isNotBanned();
       allow create: if isNotBanned() && request.resource.data.authorId == request.auth.uid;
+      
       allow update: if isNotBanned() && (
         isAdmin() ||
         resource.data.authorId == request.auth.uid ||
-        changed().hasOnly(['replyCount', 'updatedAt'])
+        changed().hasOnly(['replyCount', 'updatedAt', 'replyToUserId', 'replyToId'])
       );
       allow delete: if isAdmin() || resource.data.authorId == request.auth.uid || 
         get(/databases/$(database)/documents/posts/$(resource.data.postId)).data.authorId == request.auth.uid;

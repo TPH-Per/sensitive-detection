@@ -310,8 +310,6 @@ export const postService = {
         content,
         media,
         visibility,
-        isEdited: true,
-        editedAt: serverTimestamp(),
         updatedAt: serverTimestamp()
       });
     } catch (error) {
@@ -408,12 +406,7 @@ export const postService = {
         return null;
       }
 
-      return {
-        ...data,
-        id: postSnap.id,
-        createdAt: data.createdAt as Timestamp,
-        editedAt: data.editedAt as Timestamp | undefined,
-      } as Post;
+      return convertDoc<Post>(postSnap);
     } catch (error) {
       console.error("Lỗi lấy chi tiết bài viết", error);
       return null;
@@ -433,7 +426,6 @@ export const postService = {
         ...data,
         id: postSnap.id,
         createdAt: data.createdAt as Timestamp,
-        editedAt: data.editedAt as Timestamp | undefined,
       } as Post;
     } catch (error) {
       console.error("Lỗi lấy chi tiết bài viết", error);

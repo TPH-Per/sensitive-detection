@@ -181,14 +181,19 @@ export const CommentSection: React.FC<CommentSectionProps> = ({
   const handleCommentSubmit = useCallback(async (content: string, image?: MediaObject) => {
     try {
       if (inputMode === 'edit' && editingComment) {
-        await updateComment(postId, editingComment.id, content, editingComment.parentId, image);
+        await updateComment(postId, editingComment.id, content, editingComment.parentId, editingComment.replyToUserId, editingComment.replyToId, image);
       } else {
         const parentId = replyingTo ? (replyingTo.parentId || replyingTo.id) : null;
+        const replyToUserId = replyingTo ? replyingTo.authorId : undefined;
+        const replyToId = replyingTo ? replyingTo.id : undefined;
+        
         await createComment(
           postId,
           currentUser.id,
           content,
           parentId,
+          replyToUserId,
+          replyToId,
           image
         );
       }

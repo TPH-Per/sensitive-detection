@@ -119,18 +119,18 @@ const CommentItemInner: React.FC<CommentItemProps> = ({
                       Tác giả
                     </span>
                   )}
-                  {isReply && comment.parentId && users[comment.parentId] && (comment.parentId !== rootAuthorId || comment.parentId === comment.authorId) && (
+                  {isReply && comment.replyToUserId && users[comment.replyToUserId] && (
                     <>
                       <ChevronRight size={12} className="text-text-tertiary flex-shrink-0 mx-0.5" />
                       <h4
                         className="font-bold text-[13px] text-text-primary whitespace-nowrap truncate cursor-pointer hover:underline"
                         onClick={() => {
                           onProfileClick?.();
-                          const parentUser = users[comment.parentId!];
-                          if (parentUser) navigate(`/profile/${parentUser.id}`);
+                          const targetUser = users[comment.replyToUserId!];
+                          if (targetUser) navigate(`/profile/${targetUser.id}`);
                         }}
                       >
-                        {users[comment.parentId!]?.fullName}
+                        {users[comment.replyToUserId!]?.fullName}
                       </h4>
                     </>
                   )}

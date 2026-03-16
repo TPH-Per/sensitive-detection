@@ -64,8 +64,8 @@ interface CommentState {
   fetchReplies: (postId: string, parentId: string, blockedUserIds?: string[], loadMore?: boolean) => Promise<void>;
   subscribeToComments: (postId: string, blockedUserIds?: string[]) => () => void;
   subscribeToReplies: (postId: string, parentId: string, blockedUserIds?: string[]) => () => void;
-  createComment: (postId: string, userId: string, content: string, parentId?: string | null, image?: any) => Promise<string>;
-  updateComment: (postId: string, commentId: string, content: string, parentId?: string | null, image?: any) => Promise<void>;
+  createComment: (postId: string, userId: string, content: string, parentId?: string | null, replyToUserId?: string, replyToId?: string, image?: any) => Promise<string>;
+  updateComment: (postId: string, commentId: string, content: string, parentId?: string | null, replyToUserId?: string, replyToId?: string, image?: any) => Promise<void>;
   deleteComment: (postId: string, commentId: string, userId: string, parentId?: string | null) => Promise<void>;
   reactToComment: (postId: string, commentId: string, userId: string, reaction: ReactionType | 'REMOVE', parentId?: string | null) => Promise<void>;
 
@@ -74,7 +74,7 @@ interface CommentState {
   setReplies: (postId: string, parentId: string, replies: Comment[], lastDoc: DocumentSnapshot | null, hasMore: boolean) => void;
   addReplies: (postId: string, parentId: string, replies: Comment[], lastDoc: DocumentSnapshot | null, hasMore: boolean) => void;
   clearComments: (postId: string) => void;
-  updateCommentInStore: (postId: string, commentId: string, content: string, parentId?: string | null, image?: any) => void;
+  updateCommentInStore: (postId: string, commentId: string, content: string, parentId?: string | null, replyToUserId?: string, replyToId?: string, image?: any) => void;
   isLoadingPost: (postId: string) => boolean;
   reset: () => void;
 }
@@ -291,7 +291,7 @@ export const useCommentStore = create<CommentState>((set, get) => ({
     );
   },
 
-  createComment: async (postId: string, userId: string, content: string, parentId?: string, image?: any) => {
+  createComment: async (postId: string, userId: string, content: string, parentId?: string, replyToUserId?: string, replyToId?: string, image?: any) => {
     const realId = commentService.generateCommentId();
     const optimisticComment: Comment = {
       id: realId,
@@ -299,6 +299,8 @@ export const useCommentStore = create<CommentState>((set, get) => ({
       authorId: userId,
       content,
       parentId: parentId || undefined,
+      replyToUserId: replyToUserId || undefined,
+      replyToId: replyToId || undefined,
       image: image || undefined,
       createdAt: Timestamp.now(),
       replyCount: 0,
@@ -334,7 +336,7 @@ export const useCommentStore = create<CommentState>((set, get) => ({
     }
 
     try {
-      await commentService.createComment(postId, userId, content, parentId || null, image, realId);
+      await commentService.createComment(postId, userId, content, parentId || null, replyToUserId, replyToId, image, realId);
 
       return realId;
     } catch (error) {
@@ -344,10 +346,13 @@ export const useCommentStore = create<CommentState>((set, get) => ({
     }
   },
 
-  updateComment: async (postId: string, commentId: string, content: string, parentId?: string, image?: any) => {
+  updateComment: async (postId: string, commentId: string, content: string, parentId?: string, replyToUserId?: string, replyToId?: string, image?: any) => {
     try {
       await commentService.updateComment(commentId, content, image);
-      get().updateCommentInStore(postId, commentId, content, parentId, image);
+      const comment = parentId 
+        ? get().replies[postId]?.[parentId]?.find(r => r.id === commentId)
+        : get().rootComments[postId]?.find(c => c.id === commentId);
+      get().updateCommentInStore(postId, commentId, content, parentId, comment?.replyToUserId, comment?.replyToId, image);
     } catch (error) {
       console.error('Lỗi cập nhật bình luận:', error);
       throw error;
@@ -387,7 +392,7 @@ export const useCommentStore = create<CommentState>((set, get) => ({
     });
 
     try {
-      await commentService.deleteComment(commentId, userId);
+      await commentService.deleteComment(commentId, userId, parentId || null);
     } catch (error) {
       set(previousState);
       console.error('Lỗi xóa bình luận:', error);
@@ -489,12 +494,11 @@ export const useCommentStore = create<CommentState>((set, get) => ({
     };
   }),
 
-  updateCommentInStore: (postId, commentId, content, parentId, imageUrl) => set((state) => {
+  updateCommentInStore: (postId, commentId, content, parentId, replyToUserId, replyToId, imageUrl) => set((state) => {
     const updateObj = (c: Comment) => ({
       ...c,
       content,
-      isEdited: true,
-      editedAt: Timestamp.now(),
+      updatedAt: Timestamp.now(),
       ...(imageUrl !== undefined && { image: imageUrl })
     });
 
