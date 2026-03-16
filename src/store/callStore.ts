@@ -1,8 +1,24 @@
 import { create } from 'zustand';
+import { RtdbCallSignaling } from '../../shared/types';
 
 export type CallPhase = 'idle' | 'outgoing' | 'in-call';
 
-interface CallState {
+type SignalingActions = {
+  startCall: (
+    recipientIds: string[],
+    callerId: string,
+    callerName: string,
+    callerAvatar: string,
+    callType: 'voice' | 'video',
+    conversationId: string,
+    isGroupCall?: boolean,
+  ) => Promise<{ success: boolean; reason?: string }>;
+  acceptCall: (signal: RtdbCallSignaling) => Promise<void>;
+  rejectCall: (signal: RtdbCallSignaling) => Promise<void>;
+  endCall: (otherUserIds?: string[]) => Promise<void>;
+};
+
+interface CallState extends SignalingActions {
   callPhase: CallPhase;
   callType: 'voice' | 'video';
   activeRoomId: string | null;
@@ -10,13 +26,7 @@ interface CallState {
   isGroupCall: boolean;
   isCaller: boolean;
   callStartTime: number | null;
-
   callConversationId: string | null;
-
-  startCall: ((recipientIds: string[], callerId: string, callerName: string, callerAvatar: string, callType: 'voice' | 'video', roomId: string, isGroupCall: boolean) => Promise<{ success: boolean; reason?: string } | void>) | null;
-  acceptCall: ((signal: any) => Promise<void>) | null;
-  rejectCall: ((signal: any) => Promise<void>) | null;
-  endCall: ((recipientIds: string[]) => Promise<void>) | null;
 
   setCallPhase: (phase: CallPhase) => void;
   setCallType: (type: 'voice' | 'video') => void;
@@ -26,50 +36,47 @@ interface CallState {
   setIsCaller: (v: boolean) => void;
   setCallStartTime: (t: number | null) => void;
   setCallConversationId: (id: string | null) => void;
-  
-  setSignalingActions: (actions: {
-    startCall: any;
-    acceptCall: any;
-    rejectCall: any;
-    endCall: any;
-  }) => void;
+  setSignalingActions: (actions: SignalingActions) => void;
   resetCall: () => void;
 }
+
+const noopAsync = async () => { };
 
 const initialState = {
   callPhase: 'idle' as CallPhase,
   callType: 'voice' as 'voice' | 'video',
   activeRoomId: null,
-  otherUserIds: [],
+  otherUserIds: [] as string[],
   isGroupCall: false,
   isCaller: false,
   callStartTime: null,
   callConversationId: null,
-
-  startCall: null,
-  acceptCall: null,
-  rejectCall: null,
-  endCall: null,
+  startCall: noopAsync as any,
+  acceptCall: noopAsync as any,
+  rejectCall: noopAsync as any,
+  endCall: noopAsync as any,
 };
 
 export const useCallStore = create<CallState>((set) => ({
   ...initialState,
 
-  setCallPhase: (phase) => set({ callPhase: phase }),
-  setCallType: (type) => set({ callType: type }),
-  setActiveRoomId: (id) => set({ activeRoomId: id }),
-  setOtherUserIds: (ids) => set({ otherUserIds: ids }),
-  setIsGroupCall: (v) => set({ isGroupCall: v }),
-  setIsCaller: (v) => set({ isCaller: v }),
-  setCallStartTime: (t) => set({ callStartTime: t }),
-  setCallConversationId: (id) => set({ callConversationId: id }),
+  setCallPhase: (callPhase) => set({ callPhase }),
+  setCallType: (callType) => set({ callType }),
+  setActiveRoomId: (activeRoomId) => set({ activeRoomId }),
+  setOtherUserIds: (otherUserIds) => set({ otherUserIds }),
+  setIsGroupCall: (isGroupCall) => set({ isGroupCall }),
+  setIsCaller: (isCaller) => set({ isCaller }),
+  setCallStartTime: (callStartTime) => set({ callStartTime }),
+  setCallConversationId: (callConversationId) => set({ callConversationId }),
 
-  setSignalingActions: (actions) => set({ ...actions }),
-  resetCall: () => set((state) => ({
-    ...initialState,
-    startCall: state.startCall,
-    acceptCall: state.acceptCall,
-    rejectCall: state.rejectCall,
-    endCall: state.endCall,
-  })),
+  setSignalingActions: (actions) => set(actions),
+
+  resetCall: () =>
+    set((state) => ({
+      ...initialState,
+      startCall: state.startCall,
+      acceptCall: state.acceptCall,
+      rejectCall: state.rejectCall,
+      endCall: state.endCall,
+    })),
 }));

@@ -4,219 +4,140 @@ import { rtdb, db } from '../../firebase/config';
 import { RtdbCallSignaling } from '../../../shared/types';
 
 export const rtdbCallService = {
-    /**
-     * Khởi tạo cuộc gọi (Hỗ trợ 1-1 và Group)
-     */
     initiateCall: async (
         callerId: string,
         recipientIds: string[],
         convId: string,
         callType: 'video' | 'voice',
-        zegoToken: string,
         callerName: string,
         callerAvatar: string,
-        isGroupCall?: boolean
+        isGroupCall = false,
     ): Promise<{ success: boolean; reason?: string }> => {
-        try {
-            if (!isGroupCall && recipientIds.length === 1) {
-                const recipientId = recipientIds[0];
+        if (!isGroupCall && recipientIds.length === 1) {
+            const recipientId = recipientIds[0];
 
-                const friendDoc = await getDoc(doc(db, 'users', callerId, 'friends', recipientId));
-                if (!friendDoc.exists()) {
-                    return { success: false, reason: 'not_friend' };
-                }
-
-                const recipientSignal = await rtdbCallService.getCallSignaling(recipientId);
-                if (recipientSignal && (recipientSignal.status === 'ringing' || recipientSignal.status === 'accepted')) {
-                    return { success: false, reason: 'busy' };
-                }
+            const friendDoc = await getDoc(doc(db, 'users', callerId, 'friends', recipientId));
+            if (!friendDoc.exists()) {
+                return { success: false, reason: 'not_friend' };
             }
 
-            const updates: Record<string, any> = {};
-            const signalingData: RtdbCallSignaling = {
-                callerId,
-                callerName,
-                callerAvatar,
-                conversationId: convId,
-                callType,
-                status: 'ringing',
-                zegoToken,
-                timestamp: Date.now(),
-                isGroupCall,
-                createdAt: Date.now(),
-                updatedAt: Date.now()
-            };
-
-            recipientIds.forEach(id => {
-                updates[`call_signaling/${id}`] = signalingData;
-            });
-
-            if (!isGroupCall) {
-                updates[`call_signaling/${callerId}`] = signalingData;
+            const existing = await rtdbCallService.getCallSignaling(recipientId);
+            if (existing?.status === 'ringing' || existing?.status === 'accepted') {
+                return { success: false, reason: 'busy' };
             }
-            
-            await update(ref(rtdb), updates);
-            return { success: true };
-        } catch (error) {
-            console.error('[rtdbCallService] Lỗi initiateCall:', error);
-            throw error;
         }
+
+        const now = Date.now();
+        const signalingData: RtdbCallSignaling = {
+            callerId,
+            callerName,
+            callerAvatar,
+            conversationId: convId,
+            callType,
+            status: 'ringing',
+            isGroupCall,
+            timestamp: now,
+            createdAt: now,
+            updatedAt: now,
+        };
+
+        const updates: Record<string, RtdbCallSignaling | null> = {};
+        recipientIds.forEach((id) => {
+            updates[`call_signaling/${id}`] = signalingData;
+        });
+
+        if (!isGroupCall) {
+            updates[`call_signaling/${callerId}`] = signalingData;
+        }
+
+        await update(ref(rtdb), updates);
+        return { success: true };
     },
 
-    /**
-     * Phản hồi cuộc gọi (Chấp nhận/Từ chối)
-     */
     answerCall: async (
-        calleeId: string, 
-        callerId: string, 
+        calleeId: string,
+        callerId: string,
         status: 'accepted' | 'rejected',
-        isGroupCall?: boolean
+        isGroupCall = false,
     ): Promise<void> => {
-        try {
-            const updates: Record<string, any> = {};
+        const updates: Record<string, any> = {
+            [`call_signaling/${calleeId}`]: null,
+        };
 
-            if (!isGroupCall) {
-                updates[`call_signaling/${callerId}/status`] = status;
-                updates[`call_signaling/${callerId}/updatedAt`] = Date.now();
-            }
-            updates[`call_signaling/${calleeId}`] = null;
-
-            await update(ref(rtdb), updates);
-        } catch (error) {
-            console.error('[rtdbCallService] Lỗi answerCall:', error);
-            throw error;
+        if (!isGroupCall) {
+            updates[`call_signaling/${callerId}/status`] = status;
+            updates[`call_signaling/${callerId}/updatedAt`] = Date.now();
         }
+
+        await update(ref(rtdb), updates);
     },
 
     /**
-     * Lắng nghe tín hiệu cuộc gọi đến
      */
     subscribeToIncomingCall: (
         uid: string,
-        callback: (callData: RtdbCallSignaling | null) => void
-    ) => {
+        callback: (data: RtdbCallSignaling | null) => void,
+    ): (() => void) => {
         const signalingRef = ref(rtdb, `call_signaling/${uid}`);
-
         const handler = (snapshot: any) => {
-            if (snapshot.exists()) {
-                callback(snapshot.val() as RtdbCallSignaling);
-            } else {
-                callback(null);
-            }
+            callback(snapshot.exists() ? (snapshot.val() as RtdbCallSignaling) : null);
         };
-
         onValue(signalingRef, handler);
-
-        return () => {
-            off(signalingRef, 'value', handler);
-        };
+        return () => off(signalingRef, 'value', handler);
     },
 
-    /**
-     * Xóa tín hiệu gọi cho một người dùng (khi kết thúc/hủy)
-     */
     clearSignaling: async (uid: string): Promise<void> => {
-        try {
-            const signalingRef = ref(rtdb, `call_signaling/${uid}`);
-            await remove(signalingRef);
-        } catch (error) {
-            console.error('[rtdbCallService] Lỗi clearSignaling:', error);
-            throw error;
-        }
+        await remove(ref(rtdb, `call_signaling/${uid}`));
     },
 
-    /**
-     * Xóa tín hiệu cho nhiều người dùng (dùng cho caller khi hủy cuộc gọi group)
-     */
     clearSignalingForUsers: async (uids: string[]): Promise<void> => {
-        try {
-            const updates: Record<string, null> = {};
-            uids.forEach(id => {
-                updates[`call_signaling/${id}`] = null;
-            });
-            await update(ref(rtdb), updates);
-        } catch (error) {
-            console.error('[rtdbCallService] Lỗi clearSignalingForUsers:', error);
-            throw error;
-        }
+        if (uids.length === 0) return;
+        const updates: Record<string, null> = {};
+        uids.forEach((id) => {
+            updates[`call_signaling/${id}`] = null;
+        });
+        await update(ref(rtdb), updates);
     },
 
-    /**
-     * Lấy thông tin signaling hiện tại
-     */
     getCallSignaling: async (uid: string): Promise<RtdbCallSignaling | null> => {
-        try {
-            const signalingRef = ref(rtdb, `call_signaling/${uid}`);
-            const snapshot = await get(signalingRef);
+        const snapshot = await get(ref(rtdb, `call_signaling/${uid}`));
+        return snapshot.exists() ? (snapshot.val() as RtdbCallSignaling) : null;
+    },
 
-            if (snapshot.exists()) {
-                return snapshot.val() as RtdbCallSignaling;
-            }
+    startActiveCall: async (
+        convId: string,
+        callerId: string,
+        callType: 'voice' | 'video',
+        messageId: string,
+    ): Promise<void> => {
+        await set(ref(rtdb, `conversations/${convId}/activeCall`), {
+            callerId,
+            callType,
+            messageId,
+            startedAt: Date.now(),
+            participants: { [callerId]: true },
+        });
+    },
 
-            return null;
-        } catch (error) {
-            console.error('[rtdbCallService] Lỗi getCallSignaling:', error);
-            throw error;
+    updateCallParticipant: async (
+        convId: string,
+        userId: string,
+        isJoining: boolean,
+    ): Promise<void> => {
+        const participantRef = ref(rtdb, `conversations/${convId}/activeCall/participants/${userId}`);
+        if (isJoining) {
+            await set(participantRef, true);
+        } else {
+            await remove(participantRef);
         }
     },
 
-    /**
-     * Đánh dấu cuộc gọi đang diễn ra trong hội thoại
-     */
-    startActiveCall: async (convId: string, callerId: string, callType: 'voice' | 'video', messageId: string): Promise<void> => {
-        try {
-            const activeCallRef = ref(rtdb, `conversations/${convId}/activeCall`);
-            await set(activeCallRef, {
-                callerId,
-                callType,
-                messageId,
-                startedAt: Date.now(),
-                participants: { [callerId]: true }
-            });
-        } catch (error) {
-            console.error('[rtdbCallService] Lỗi startActiveCall:', error);
-        }
-    },
-
-    /**
-     * Cập nhật người tham gia cuộc gọi đang diễn ra
-     */
-    updateCallParticipant: async (convId: string, userId: string, isJoining: boolean): Promise<void> => {
-        try {
-            const participantRef = ref(rtdb, `conversations/${convId}/activeCall/participants/${userId}`);
-            if (isJoining) {
-                await set(participantRef, true);
-            } else {
-                await remove(participantRef);
-            }
-        } catch (error) {
-            console.error('[rtdbCallService] Lỗi updateCallParticipant:', error);
-        }
-    },
-
-    /**
-     * Lấy thông tin cuộc gọi đang diễn ra
-     */
     getActiveCall: async (convId: string): Promise<any> => {
-        try {
-            const activeCallRef = ref(rtdb, `conversations/${convId}/activeCall`);
-            const snap = await get(activeCallRef);
-            return snap.val();
-        } catch (error) {
-            console.error('[rtdbCallService] Lỗi getActiveCall:', error);
-            return null;
-        }
+        const snapshot = await get(ref(rtdb, `conversations/${convId}/activeCall`));
+        return snapshot.val();
     },
 
-    /**
-     * Kết thúc cuộc gọi đang diễn ra
-     */
     endActiveCall: async (convId: string): Promise<void> => {
-        try {
-            const activeCallRef = ref(rtdb, `conversations/${convId}/activeCall`);
-            await remove(activeCallRef);
-        } catch (error) {
-            console.error('[rtdbCallService] Lỗi endActiveCall:', error);
-        }
-    }
+        await remove(ref(rtdb, `conversations/${convId}/activeCall`));
+    },
 };

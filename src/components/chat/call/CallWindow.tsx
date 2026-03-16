@@ -1,20 +1,18 @@
-import React, { useEffect, useRef } from "react";
-import { ZegoUIKitPrebuilt } from "@zegocloud/zego-uikit-prebuilt";
-import { httpsCallable } from "firebase/functions";
-import { functions } from "../../../firebase/config";
-import { useUserCache } from "../../../store/userCacheStore";
-import { useCallSounds } from "../../../hooks/chat/useCallSounds";
-import { rtdbCallService } from "../../../services/chat/rtdbCallService";
-import { useRtdbChatStore } from "../../../store";
-
-const ZEGO_APP_ID = Number(import.meta.env.VITE_ZEGO_APP_ID);
+import React, { useEffect, useRef } from 'react';
+import { ZegoUIKitPrebuilt } from '@zegocloud/zego-uikit-prebuilt';
+import { httpsCallable } from 'firebase/functions';
+import { functions } from '../../../firebase/config';
+import { useUserCache } from '../../../store/userCacheStore';
+import { useCallSounds } from '../../../hooks/chat/useCallSounds';
+import { rtdbCallService } from '../../../services/chat/rtdbCallService';
+import { useRtdbChatStore } from '../../../store';
 
 interface CallWindowProps {
   roomId: string;
   userId: string;
   userName: string;
   userAvatar?: string;
-  callType: "voice" | "video";
+  callType: 'voice' | 'video';
   isGroupCall?: boolean;
   onClose: () => void;
 }
@@ -25,13 +23,14 @@ export const CallWindow: React.FC<CallWindowProps> = ({
   userName,
   userAvatar,
   callType,
-  isGroupCall,
+  isGroupCall = false,
   onClose,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const zegoRef = useRef<ZegoUIKitPrebuilt | null>(null);
   const onCloseRef = useRef(onClose);
   const { playSound } = useCallSounds();
+  const updateCallMessage = useRtdbChatStore((s) => s.updateCallMessage);
 
   useEffect(() => {
     onCloseRef.current = onClose;
@@ -40,7 +39,7 @@ export const CallWindow: React.FC<CallWindowProps> = ({
   useEffect(() => {
     if (!containerRef.current) return;
 
-    let cancelled = false;
+    let destroyed = false;
 
     const init = async () => {
       const getToken = httpsCallable<
@@ -49,17 +48,28 @@ export const CallWindow: React.FC<CallWindowProps> = ({
       >(functions, 'generateZegoToken');
 
       const { data } = await getToken({ roomId, userId, userName });
-      if (cancelled || !containerRef.current) return;
+      if (destroyed || !containerRef.current) return;
 
-      const zp = ZegoUIKitPrebuilt.create(data.token);
+      const appId = Number(import.meta.env.VITE_ZEGO_APP_ID);
+      const kitToken = ZegoUIKitPrebuilt.generateKitTokenForProduction(
+        appId,
+        data.token,
+        roomId,
+        userId,
+        userName,
+      );
+
+      const zp = ZegoUIKitPrebuilt.create(kitToken);
       zegoRef.current = zp;
 
-      const activeUsers = new Set<string>();
+      const activeParticipants = new Set<string>();
 
       zp.joinRoom({
         container: containerRef.current,
         scenario: {
-          mode: isGroupCall ? ZegoUIKitPrebuilt.GroupCall : ZegoUIKitPrebuilt.OneONoneCall,
+          mode: isGroupCall
+            ? ZegoUIKitPrebuilt.GroupCall
+            : ZegoUIKitPrebuilt.OneONoneCall,
         },
         turnOnCameraWhenJoining: callType === 'video',
         showPreJoinView: false,
@@ -67,54 +77,64 @@ export const CallWindow: React.FC<CallWindowProps> = ({
         showUserList: false,
         showLeavingView: false,
         console: ZegoUIKitPrebuilt.ConsoleNone,
+
         onUserAvatarSetter: (userList: any[]) => {
           const usersMap = useUserCache.getState().users;
           userList.forEach((u) => {
-            if (u.userID === userId && userAvatar && u.setUserAvatar) {
+            if (!u.setUserAvatar) return;
+            if (u.userID === userId && userAvatar) {
               u.setUserAvatar(userAvatar);
-            } else if (u.setUserAvatar) {
-              const cachedUser = usersMap[u.userID];
-              if (cachedUser?.avatar) u.setUserAvatar(cachedUser.avatar);
+            } else {
+              const cached = usersMap[u.userID];
+              if (cached?.avatar?.url) u.setUserAvatar(cached.avatar.url);
             }
           });
         },
-        onLeaveRoom: () => {
-          rtdbCallService.updateCallParticipant(roomId, userId, false).then(async () => {
-             const activeCall = await rtdbCallService.getActiveCall(roomId);
-             if (!activeCall || !activeCall.participants || Object.keys(activeCall.participants).length === 0) {
-               if (activeCall && activeCall.messageId) {
-                 const duration = Math.max(0, Math.floor((Date.now() - activeCall.startedAt) / 1000));
-                 const { updateCallMessage } = useRtdbChatStore.getState();
-                 await updateCallMessage(roomId, activeCall.messageId, { 
-                   callType, 
-                   status: 'ended', 
-                   duration 
-                 });
-                 await rtdbCallService.endActiveCall(roomId);
-               }
-             }
-          });
 
-          zegoRef.current = null;
-          onCloseRef.current();
-        },
         onUserJoin: (users: any[]) => {
-          users.forEach((u) => activeUsers.add(u.userID));
+          users.forEach((u) => activeParticipants.add(u.userID));
           if (isGroupCall) playSound('action');
         },
-        onUserLeave: (users: any[]) => {
-          users.forEach((u) => activeUsers.delete(u.userID));
-          if (isGroupCall) playSound('action');
 
-          if (!isGroupCall && activeUsers.size === 0) {
-              setTimeout(() => {
-                if (zegoRef.current) {
-                  try { zegoRef.current.destroy(); } catch (e) { console.error(e); }
-                  zegoRef.current = null;
-                }
-                onCloseRef.current();
-              }, 500);
+        onUserLeave: (users: any[]) => {
+          users.forEach((u) => activeParticipants.delete(u.userID));
+          if (isGroupCall) {
+            playSound('action');
+            return;
           }
+          if (activeParticipants.size === 0) {
+            setTimeout(() => {
+              destroyZego();
+              onCloseRef.current();
+            }, 500);
+          }
+        },
+
+        onLeaveRoom: async () => {
+          await rtdbCallService.updateCallParticipant(roomId, userId, false);
+
+          const activeCall = await rtdbCallService.getActiveCall(roomId);
+          if (activeCall?.messageId) {
+            const remaining = activeCall.participants
+              ? Object.keys(activeCall.participants).filter((id) => id !== userId)
+              : [];
+
+            if (remaining.length === 0) {
+              const duration = Math.max(
+                0,
+                Math.floor((Date.now() - activeCall.startedAt) / 1000),
+              );
+              await updateCallMessage(roomId, activeCall.messageId, {
+                callType,
+                status: 'ended',
+                duration,
+              });
+              await rtdbCallService.endActiveCall(roomId);
+            }
+          }
+
+          destroyZego();
+          onCloseRef.current();
         },
       });
 
@@ -124,24 +144,31 @@ export const CallWindow: React.FC<CallWindowProps> = ({
     init().catch(console.error);
 
     return () => {
-      cancelled = true;
-      if (zegoRef.current) {
-        try { zegoRef.current.destroy(); } catch (e) { console.error(e); }
-        zegoRef.current = null;
-      }
+      destroyed = true;
+      destroyZego();
     };
-  }, [roomId, userId, userName, callType]);
+  }, [roomId, userId, userName, callType, isGroupCall]);
+
+  function destroyZego() {
+    if (zegoRef.current) {
+      try {
+        zegoRef.current.destroy();
+      } catch {
+      }
+      zegoRef.current = null;
+    }
+  }
 
   return (
     <div
       ref={containerRef}
       style={{
-        position: "fixed",
+        position: 'fixed',
         inset: 0,
         zIndex: 50,
-        width: "100%",
-        height: "100%",
-        background: "#000",
+        width: '100%',
+        height: '100%',
+        background: '#000',
       }}
     />
   );

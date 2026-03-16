@@ -245,10 +245,9 @@ export interface RtdbCallSignaling {
     callerAvatar: string;
     conversationId: string;
     callType: 'voice' | 'video';
-    status: 'ringing' | 'accepted' | 'rejected' | 'ended';
-    zegoToken?: string;
-    timestamp: number;
+    status: 'ringing' | 'accepted' | 'rejected';
     isGroupCall?: boolean;
+    timestamp: number;
     createdAt: number;
     updatedAt: number;
 }

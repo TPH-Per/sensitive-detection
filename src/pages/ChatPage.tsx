@@ -124,19 +124,19 @@ const ChatPage: React.FC = () => {
 
   useEffect(() => {
     const handleJoinActiveCallEvent = async (e: any) => {
-        const { senderId, msgId } = e.detail;
-        if (!selectedConversationId) return;
+      const { senderId, msgId } = e.detail;
+      if (!selectedConversationId) return;
 
-        const activeCall = await rtdbCallService.getActiveCall(selectedConversationId);
-        if (activeCall) {
-            setCallType(activeCall.callType);
-            setActiveRoomId(selectedConversationId);
-            setCallConversationId(selectedConversationId);
-            setIsGroupCall(selectedConversation?.data.isGroup || false);
-            setIsCaller(false);
-            setCallPhase('in-call');
-            setCallStartTime(activeCall.startedAt);
-        }
+      const activeCall = await rtdbCallService.getActiveCall(selectedConversationId);
+      if (activeCall) {
+        setCallType(activeCall.callType);
+        setActiveRoomId(selectedConversationId);
+        setCallConversationId(selectedConversationId);
+        setIsGroupCall(selectedConversation?.data.isGroup || false);
+        setIsCaller(false);
+        setCallPhase('in-call');
+        setCallStartTime(activeCall.startedAt);
+      }
     };
 
     window.addEventListener('join-active-call', handleJoinActiveCallEvent);
@@ -156,7 +156,6 @@ const ChatPage: React.FC = () => {
   const {
     callPhase,
     callType,
-    activeRoomId,
     otherUserIds,
     isGroupCall,
     isCaller,
@@ -197,27 +196,26 @@ const ChatPage: React.FC = () => {
     if (isGroup) {
       const groupMembersIds = Object.keys(selectedConversation?.data.members || {}).filter(id => id !== currentUser.id);
       if (groupMembersIds.length === 0) return;
-      if (startCall) {
-        setIsCaller(true);
-        setOtherUserIds(groupMembersIds);
-        setCallPhase('in-call');
-        setCallStartTime(Date.now());
-        
-        const msgId = await sendCallMessage(selectedConversationId, currentUser.id, { callType: type, status: 'started' });
-        await rtdbCallService.startActiveCall(selectedConversationId, currentUser.id, type, msgId);
 
-        await startCall(
-          groupMembersIds,
-          currentUser.id,
-          currentUser.fullName,
-          currentUser.avatar.url,
-          type,
-          selectedConversationId,
-          true
-        );
-      }
+      setIsCaller(true);
+      setOtherUserIds(groupMembersIds);
+      setCallPhase('in-call');
+      setCallStartTime(Date.now());
+
+      const msgId = await sendCallMessage(selectedConversationId, currentUser.id, { callType: type, status: 'started' });
+      await rtdbCallService.startActiveCall(selectedConversationId, currentUser.id, type, msgId);
+
+      await startCall(
+        groupMembersIds,
+        currentUser.id,
+        currentUser.fullName,
+        currentUser.avatar.url,
+        type,
+        selectedConversationId,
+        true
+      );
     } else {
-      if (!partner || !startCall) return;
+      if (!partner) return;
 
       if (isCallBlockedByMe) {
         import('../store/toastStore').then(({ toast }) => toast.error('Bạn đã chặn cuộc gọi với người dùng này.'));
@@ -231,7 +229,7 @@ const ChatPage: React.FC = () => {
       setIsCaller(true);
       setOtherUserIds([partner.id]);
       setCallPhase('outgoing');
-      
+
       const msgId = await sendCallMessage(selectedConversationId, currentUser.id, { callType: type, status: 'started' });
       await rtdbCallService.startActiveCall(selectedConversationId, currentUser.id, type, msgId);
 
@@ -248,7 +246,6 @@ const ChatPage: React.FC = () => {
       if (result && !result.success) {
         if (result.reason === 'busy') {
           playSound('busy');
-          // Update message to missed immediately if busy
           await updateCallMessage(selectedConversationId, msgId, { callType: type, status: 'missed' });
           await rtdbCallService.endActiveCall(selectedConversationId);
           resetCall();
@@ -258,10 +255,10 @@ const ChatPage: React.FC = () => {
   };
 
   const handleCancelOutgoingCall = async () => {
-    if (endCall) await endCall(otherUserIds);
+    await endCall(otherUserIds);
     if (isCaller && callConversationId) {
       const activeCall = await rtdbCallService.getActiveCall(callConversationId);
-      if (activeCall && activeCall.messageId) {
+      if (activeCall?.messageId) {
         await updateCallMessage(callConversationId, activeCall.messageId, { callType, status: 'missed' });
         await rtdbCallService.endActiveCall(callConversationId);
       }
@@ -270,33 +267,14 @@ const ChatPage: React.FC = () => {
   };
 
   const handleMissedCallTimeout = async () => {
-    if (endCall) await endCall(otherUserIds);
+    await endCall(otherUserIds);
     playSound('busy');
     if (isCaller && callConversationId) {
       const activeCall = await rtdbCallService.getActiveCall(callConversationId);
-      if (activeCall && activeCall.messageId) {
+      if (activeCall?.messageId) {
         await updateCallMessage(callConversationId, activeCall.messageId, { callType, status: 'missed' });
         await rtdbCallService.endActiveCall(callConversationId);
       }
-    }
-    resetCall();
-  };
-
-  const handleEndCall = async () => {
-    if (endCall) {
-      if (!isGroupCall) {
-        await endCall(otherUserIds);
-      } else {
-        await endCall([]);
-      }
-    }
-    if (!isGroupCall && isCaller && callConversationId) {
-        const activeCall = await rtdbCallService.getActiveCall(callConversationId);
-        if (activeCall && activeCall.messageId) {
-            const duration = callStartTime ? Math.max(0, Math.floor((Date.now() - callStartTime) / 1000)) : 0;
-            await updateCallMessage(callConversationId, activeCall.messageId, { callType, status: 'ended', duration });
-            await rtdbCallService.endActiveCall(callConversationId);
-        }
     }
     resetCall();
   };

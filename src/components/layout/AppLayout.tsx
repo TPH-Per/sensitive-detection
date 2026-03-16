@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { MessageCircle, Users, LayoutGrid, Settings, LogOut, User as UserIcon, Moon, Sun, Bell, Flag, Menu, Shield } from 'lucide-react';
+import { MessageCircle, Users, LayoutGrid, Settings, LogOut, Moon, Sun, Bell, Menu, Shield } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 import { useThemeStore } from '../../store/themeStore';
 import { useRtdbChatStore } from '../../store';
 import { useContactStore } from '../../store/contactStore';
 import { useLoadingStore } from '../../store/loadingStore';
-import { Avatar, UserAvatar, ConfirmDialog, Button, IconButton, ScreenLoader } from '../ui';
-import { Post, Visibility, ReactionType } from '../../../shared/types';
+import { UserAvatar, ConfirmDialog, IconButton, ScreenLoader } from '../ui';
+import { ReactionType } from '../../../shared/types';
 import { PostViewModal } from '../feed';
 import { usePostStore } from '../../store/postStore';
 import { usePostNavigation } from '../../hooks/usePostNavigation';
@@ -17,17 +17,15 @@ import { NotificationDropdown } from '../notifications/NotificationDropdown';
 import { useUnreadCount } from '../../hooks/utils/useUnreadCount';
 import { useLogout } from '../../hooks/utils/useLogout';
 import { useCallStore } from '../../store/callStore';
-import { useCallSignaling } from '../../hooks/chat/useCallSignaling';
-import { useCallSounds } from '../../hooks/chat/useCallSounds';
+import { useGlobalCall } from '../../hooks/chat/useGlobalCall';
 import { IncomingCallDialog } from '../chat/call/IncomingCallDialog';
 import { CallWindow } from '../chat/call/CallWindow';
 import { CONFIRM_MESSAGES } from '../../constants';
-import { rtdbCallService } from '../../services/chat/rtdbCallService';
 
 export const AppLayout: React.FC = () => {
   const { user } = useAuthStore();
   const { mode, toggleTheme } = useThemeStore();
-  const { subscribeToConversations, selectedConversationId, sendCallMessage, updateCallMessage } = useRtdbChatStore();
+  const { subscribeToConversations, selectedConversationId } = useRtdbChatStore();
   const { receivedRequests, subscribeToRequests, subscribeToFriends } = useContactStore();
   const { initialize: initNotifications, unreadCount: unreadNotifications } = useNotificationStore();
 
@@ -48,89 +46,19 @@ export const AppLayout: React.FC = () => {
   const isChatRoom = location.pathname === '/' && !!selectedConversationId;
 
   // Global Call State
+  const { callPhase, activeRoomId, callType, isGroupCall, otherUserIds, resetCall } = useCallStore();
+
   const {
-    callPhase,
-    setCallPhase,
-    callType,
-    setCallType,
-    activeRoomId,
-    setActiveRoomId,
-    otherUserIds,
-    setOtherUserIds,
-    isGroupCall,
-    setIsGroupCall,
-    isCaller,
-    setIsCaller,
-    callStartTime,
-    setCallStartTime,
-    callConversationId,
-    setSignalingActions,
-    resetCall
-  } = useCallStore();
-
-  const { playSound } = useCallSounds();
-
-  const { incomingCall, startCall, acceptCall, rejectCall, endCall } = useCallSignaling(
-    user?.id || '',
-    {
-      onCallAccepted: (signal) => {
-        if (!signal.isGroupCall) {
-          setActiveRoomId(signal.conversationId);
-          setCallType(signal.callType);
-          setCallPhase('in-call');
-          setCallStartTime(Date.now());
-          playSound('connected');
-        }
-      },
-      onCallRejected: async () => {
-        if (isCaller && callConversationId && user?.id) {
-            const activeCall = await rtdbCallService.getActiveCall(callConversationId);
-            if (activeCall && activeCall.messageId) {
-                await updateCallMessage(callConversationId, activeCall.messageId, { callType, status: 'rejected' });
-                await rtdbCallService.endActiveCall(callConversationId);
-            }
-        }
-        playSound('busy');
-        resetCall();
-      },
-      onCallEnded: async () => {
-        if (isCaller && callConversationId && user?.id && callPhase === 'in-call') {
-            const activeCall = await rtdbCallService.getActiveCall(callConversationId);
-            if (activeCall && activeCall.messageId && !isGroupCall) {
-                const duration = callStartTime ? Math.max(0, Math.floor((Date.now() - callStartTime) / 1000)) : 0;
-                await updateCallMessage(callConversationId, activeCall.messageId, { callType, status: 'ended', duration });
-                await rtdbCallService.endActiveCall(callConversationId);
-            }
-        }
-        if (callPhase === 'in-call') {
-          playSound('ended');
-        }
-        resetCall();
-      },
-    }
-  );
+    incomingCall,
+    endCall,
+    syncActions,
+    handleAcceptIncoming,
+    handleRejectIncoming,
+  } = useGlobalCall(user?.id || '');
 
   useEffect(() => {
-    setSignalingActions({ startCall, acceptCall, rejectCall, endCall });
-  }, [setSignalingActions, startCall, acceptCall, rejectCall, endCall]);
-
-  const handleAcceptIncoming = async () => {
-    if (!incomingCall) return;
-    await acceptCall(incomingCall);
-    setCallType(incomingCall.callType);
-    setActiveRoomId(incomingCall.conversationId);
-    setOtherUserIds([incomingCall.callerId]);
-    setIsGroupCall(incomingCall.isGroupCall || false);
-    setIsCaller(false);
-    setCallPhase('in-call');
-    setCallStartTime(Date.now());
-  };
-
-  const handleRejectIncoming = async () => {
-    if (!incomingCall) return;
-    await rejectCall(incomingCall);
-    resetCall();
-  };
+    syncActions();
+  }, [syncActions]);
 
   useEffect(() => {
     if (!user) return;
@@ -409,9 +337,7 @@ export const AppLayout: React.FC = () => {
           isGroupCall={isGroupCall}
           callType={callType}
           onClose={() => {
-            if (endCall) {
-              endCall(otherUserIds);
-            }
+            endCall(otherUserIds);
             resetCall();
           }}
         />
