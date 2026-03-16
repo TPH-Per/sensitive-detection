@@ -68,6 +68,17 @@ const CommentItemInner: React.FC<CommentItemProps> = ({
 
   const author = users[comment.authorId];
   const commentReplies = replies[comment.id] || [];
+  
+  const filteredReplies = React.useMemo(() => 
+    commentReplies.filter(r => 
+      r.authorId === currentUser.id || 
+      r.authorId === postOwnerId || 
+      friendIds.includes(r.authorId)
+    ), [commentReplies, currentUser.id, postOwnerId, friendIds]
+  );
+
+  const hiddenRepliesCount = commentReplies.length - filteredReplies.length;
+
   const hasMoreR = hasMoreReply[comment.id];
   const isLoadingR = isLoadingReplyMap[comment.id];
   const isEditing = activeInputId === comment.id && inputMode === 'edit';
@@ -255,9 +266,9 @@ const CommentItemInner: React.FC<CommentItemProps> = ({
             </div>
           )}
 
-          {!isReply && ((comment.replyCount || 0) > 0 || commentReplies.length > 0) && (
+          {!isReply && ((comment.replyCount || 0) > 0 || filteredReplies.length > 0) && (
             <div className="mt-2 pl-2 border-l-2 border-border-light ml-2">
-              {commentReplies.length === 0 ? (
+              {filteredReplies.length === 0 ? (
                 (comment.replyCount || 0) > 0 && (
                   <button onClick={() => loadReplies(comment.id)} className="flex items-center gap-1.5 text-text-secondary hover:text-primary text-[12px] font-bold py-1 px-2">
                     <ChevronDown size={14} className="stroke-[3px]" /> Xem {comment.replyCount} trả lời
@@ -265,8 +276,13 @@ const CommentItemInner: React.FC<CommentItemProps> = ({
                 )
               ) : (
                 <>
+                  {hiddenRepliesCount > 0 && (
+                    <div className="px-2 py-1 mb-1 bg-bg-secondary/30 rounded text-[10px] text-text-tertiary italic">
+                      {hiddenRepliesCount} phản hồi bị ẩn do quyền riêng tư.
+                    </div>
+                  )}
                   <div className="space-y-1">
-                    {commentReplies.map(reply => (
+                    {filteredReplies.map(reply => (
                       <CommentItem
                         key={reply.id}
                         comment={reply}
@@ -300,7 +316,7 @@ const CommentItemInner: React.FC<CommentItemProps> = ({
                       className="text-primary hover:underline text-[10px] font-bold ml-10 mt-2 tracking-wider transition-all"
                       disabled={isLoadingR}
                     >
-                      {isLoadingR ? 'Đang tải...' : `Xem thêm ${Math.max(0, (comment.replyCount || 0) - commentReplies.length)} trả lời`}
+                      {isLoadingR ? 'Đang tải...' : `Xem thêm trả lời...`}
                     </button>
                   )}
                 </>

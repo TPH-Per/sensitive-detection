@@ -164,6 +164,7 @@ export const commentService = {
   deleteComment: async (commentId: string, userId: string, parentId: string | null = null) => {
     try {
       const commentRef = doc(db, 'comments', commentId);
+      
       await updateDoc(commentRef, {
         status: CommentStatus.DELETED,
         deletedAt: serverTimestamp(),
@@ -171,7 +172,6 @@ export const commentService = {
         updatedAt: serverTimestamp()
       });
 
-      // Xóa cascade nếu là comment gốc
       if (!parentId) {
         const repliesQuery = query(
           collection(db, 'comments'),
@@ -179,25 +179,19 @@ export const commentService = {
           where('status', '==', CommentStatus.ACTIVE)
         );
         const repliesSnapshot = await getDocs(repliesQuery);
-        const deletePromises = repliesSnapshot.docs.map(d =>
-          updateDoc(d.ref, {
-            status: CommentStatus.DELETED,
-            deletedAt: serverTimestamp(),
-            deletedBy: userId,
-            updatedAt: serverTimestamp()
-          })
-        );
-        await Promise.all(deletePromises);
+        
+        if (!repliesSnapshot.empty) {
+          const deletePromises = repliesSnapshot.docs.map(d =>
+            updateDoc(d.ref, {
+              status: CommentStatus.DELETED,
+              deletedAt: serverTimestamp(),
+              deletedBy: userId,
+              updatedAt: serverTimestamp()
+            }).catch(err => console.error(`Lỗi xóa reply ${d.id}:`, err))
+          );
+          await Promise.all(deletePromises);
+        }
       }
-
-      const notifQuery = query(
-        collection(db, 'notifications'),
-        where('data.commentId', '==', commentId)
-      );
-
-      const snapshot = await getDocs(notifQuery);
-      const deleteNotifPromises = snapshot.docs.map(doc => deleteDoc(doc.ref));
-      await Promise.all(deleteNotifPromises);
     } catch (error) {
       console.error("Lỗi xóa comment:", error);
       throw error;
@@ -334,21 +328,19 @@ export const commentService = {
       }
 
       const changes = snapshot.docChanges();
-      const changeUserIds = [...new Set(changes.map(c => c.doc.data().authorId))];
-      const changeUsersMap = await batchGetUsers(changeUserIds);
+      
+      const changeDocs = changes
+        .map(change => ({ change, comment: commentConverter(change.doc) }))
+        .filter(({ comment }) => !blockedUserIds.includes(comment.authorId) && usersMap[comment.authorId]?.status !== 'banned');
 
-      for (const change of changes) {
-        const comment = commentConverter(change.doc);
-        if (blockedUserIds.includes(comment.authorId) || changeUsersMap[comment.authorId]?.status === 'banned') continue;
+      const added = changeDocs.filter(d => d.change.type === 'added').map(d => d.comment);
+      const modified = changeDocs.filter(d => d.change.type === 'modified').map(d => d.comment);
+      const removed = changeDocs.filter(d => d.change.type === 'removed').map(d => d.comment);
 
-        if (change.type === 'added') {
-          callback('add', [comment]);
-        } else if (change.type === 'modified') {
-          callback('update', [comment]);
-        } else if (change.type === 'removed') {
-          callback('remove', [comment]);
-        }
-      }
+      if (added.length > 0) callback('add', added);
+      if (modified.length > 0) callback('update', modified);
+      if (removed.length > 0) callback('remove', removed);
+
     }, (error) => console.error("Lỗi subscribe comments:", error));
   },
 

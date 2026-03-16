@@ -121,6 +121,10 @@ service cloud.firestore {
       allow update: if isNotBanned() && (
         isAdmin() ||
         resource.data.authorId == request.auth.uid ||
+        (request.resource.data.status == 'deleted' && (
+          get(/databases/$(database)/documents/posts/$(resource.data.postId)).data.authorId == request.auth.uid ||
+          (resource.data.parentId != null && get(/databases/$(database)/documents/comments/$(resource.data.parentId)).data.authorId == request.auth.uid)
+        )) ||
         changed().hasOnly(['replyCount', 'updatedAt', 'replyToUserId', 'replyToId'])
       );
       allow delete: if isAdmin() || resource.data.authorId == request.auth.uid || 
@@ -141,7 +145,7 @@ service cloud.firestore {
     match /notifications/{notificationId} {
       allow read: if isOwner(resource.data.receiverId);
       allow update: if isOwner(resource.data.receiverId) && changed().hasOnly(['isRead', 'updatedAt']);
-      allow delete: if isOwner(resource.data.receiverId) || isAdmin();
+      allow delete: if isOwner(resource.data.receiverId) || isAdmin() || resource.data.actorId == request.auth.uid;
     }
 
     // Báo cáo vi phạm

@@ -228,6 +228,30 @@ export const CommentSection: React.FC<CommentSectionProps> = ({
     }
   }, [currentUser.id]);
 
+  const hiddenInfo = useMemo(() => {
+    if (isLoading && currentRootComments.length === 0) return { root: 0, total: 0 };
+    
+    const rootHidden = currentRootComments.length - filteredRootComments.length;
+    
+    let replyHidden = 0;
+    const postReplies = replies[postId] || {};
+    
+    filteredRootComments.forEach(root => {
+      const allReplies = postReplies[root.id] || [];
+      const visibleReplies = allReplies.filter(r => 
+        r.authorId === currentUser.id || 
+        r.authorId === postOwnerId || 
+        friendIds.includes(r.authorId)
+      );
+      replyHidden += (allReplies.length - visibleReplies.length);
+    });
+
+    return {
+      root: rootHidden,
+      total: rootHidden + replyHidden
+    };
+  }, [currentRootComments, filteredRootComments, replies, postId, currentUser.id, postOwnerId, friendIds, isLoading]);
+
   return (
     <div className={`flex flex-col min-h-0 transition-all duration-base ${className} ${!header ? 'border-t border-border-light bg-bg-secondary/20' : 'h-full bg-bg-primary'}`}>
       <div className="flex-1 overflow-y-auto custom-scrollbar">
@@ -239,20 +263,21 @@ export const CommentSection: React.FC<CommentSectionProps> = ({
           ) : filteredRootComments.length === 0 ? (
             <div className="text-center py-10 px-6">
               <p className="text-text-secondary text-sm italic">
-                {totalCommentCount > 0
-                  ? `Có ${totalCommentCount} bình luận. Bạn chỉ xem được bình luận của bạn bè.`
+                {hiddenInfo.total > 0
+                  ? `Có ${hiddenInfo.total} bình luận bị ẩn. Bạn chỉ xem được bình luận của bạn bè.`
                   : 'Hãy là người đầu tiên bình luận!'}
               </p>
             </div>
           ) : (
             <div className="flex flex-col">
-              {totalCommentCount > filteredRootComments.length && filteredRootComments.length > 0 && (
-                <div className="text-center py-3 px-6 mb-2 border-b border-border-light/30">
-                  <p className="text-text-tertiary text-[13px] italic">
-                    Còn {totalCommentCount - filteredRootComments.length} bình luận khác. Bạn chỉ xem được bình luận của bạn bè.
+              {hiddenInfo.root > 0 && (
+                <div className="text-center py-3 px-6 mb-2 border-b border-border-light/30 bg-bg-secondary/10">
+                  <p className="text-text-tertiary text-[12px] italic">
+                    Có {hiddenInfo.root} bình luận. Bạn chỉ xem được bình luận của bạn bè.
                   </p>
                 </div>
               )}
+
               {filteredRootComments.map(comment => (
                 <div key={comment.id} ref={el => { commentRefs.current[comment.id] = el; }}>
                   <CommentItem
@@ -270,7 +295,7 @@ export const CommentSection: React.FC<CommentSectionProps> = ({
                     handleReplyClick={handleReplyClick}
                     handleEditClick={handleEditClick}
                     handleCommentSubmit={handleCommentSubmit}
-                    handleDeleteClick={() => setCommentToDelete(comment)}
+                    handleDeleteClick={setCommentToDelete}
                     handleUploadMedia={handleUploadMedia}
                     loadReplies={loadReplies}
                     resetInput={resetInput}

@@ -12,33 +12,22 @@ const mergeOptimisticComments = (
   incoming: Comment[],
   sortOrder: SortOrder
 ): { merged: Comment[]; hasChanges: boolean } => {
-  const optimisticMatches = new Set<string>();
+  const mergedIds = new Set(incoming.map(c => c.id));
+  
+  const filteredExisting = existing.filter(e => !mergedIds.has(e.id));
+  
+  const isAllNewInExisting = incoming.every(c => existing.some(e => e.id === c.id));
+  const isCountSame = existing.length === incoming.length;
 
-  const updated = existing.map(e => {
-    if (e.id.startsWith('temp-')) {
-      const match = incoming.find(c =>
-        c.authorId === e.authorId &&
-        c.content === e.content &&
-        Math.abs(getSafeMillis(c.createdAt) - getSafeMillis(e.createdAt)) < 30000
-      );
-      if (match) {
-        optimisticMatches.add(match.id);
-        return match;
-      }
-    }
-    return e;
-  });
-
-  const newItems = incoming.filter(c =>
-    !optimisticMatches.has(c.id) &&
-    !existing.some(e => e.id === c.id)
-  );
-
-  if (newItems.length === 0 && optimisticMatches.size === 0) {
-    return { merged: existing, hasChanges: false };
+  if (isAllNewInExisting && isCountSame && incoming.length > 0) {
+    const hasDataChanges = incoming.some(c => {
+      const e = existing.find(ex => ex.id === c.id);
+      return e && (e.content !== c.content || e.replyCount !== c.replyCount || e.status !== c.status);
+    });
+    if (!hasDataChanges) return { merged: existing, hasChanges: false };
   }
 
-  const merged = [...updated, ...newItems].sort((a, b) =>
+  const merged = [...filteredExisting, ...incoming].sort((a, b) =>
     sortOrder === 'desc'
       ? getSafeMillis(b.createdAt) - getSafeMillis(a.createdAt)
       : getSafeMillis(a.createdAt) - getSafeMillis(b.createdAt)
@@ -113,7 +102,6 @@ export const useCommentStore = create<CommentState>((set, get) => ({
       const lastDoc = loadMore ? lastRootDoc[postId] : undefined;
       const result = await commentService.getRootComments(postId, blockedUserIds, PAGINATION.COMMENTS, lastDoc || undefined);
 
-      // Load myReactions for comments
       const commentIds = result.comments.map(c => c.id);
       const currentUserId = get().myCommentReactions ? Object.keys(get().myCommentReactions)[0]?.split('-')[0] : '';
       if (commentIds.length > 0 && currentUserId) {
@@ -144,7 +132,6 @@ export const useCommentStore = create<CommentState>((set, get) => ({
       const lastDoc = loadMore ? lastReplyDoc[postId]?.[parentId] : undefined;
       const result = await commentService.getReplies(postId, parentId, blockedUserIds, PAGINATION.REPLIES, lastDoc || undefined);
 
-      // Load myReactions for replies
       const commentIds = result.replies.map(c => c.id);
       const currentUserId = get().myCommentReactions ? Object.keys(get().myCommentReactions)[0]?.split('-')[0] : '';
       if (commentIds.length > 0 && currentUserId) {
@@ -184,7 +171,7 @@ export const useCommentStore = create<CommentState>((set, get) => ({
           if (action === 'add') {
             const existing = state.rootComments[postId] || [];
             const { merged, hasChanges } = mergeOptimisticComments(existing, comments, 'desc');
-            if (!hasChanges) return {};
+            if (!hasChanges) return state;
             return { rootComments: { ...state.rootComments, [postId]: merged } };
           }
 

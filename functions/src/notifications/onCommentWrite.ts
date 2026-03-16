@@ -67,8 +67,19 @@ export const onCommentWrite = onDocumentWritten(
                     batch.update(db.collection('comments').doc(parentId), { replyCount: FieldValue.increment(-1) });
                 }
                 batch.update(db.collection('posts').doc(postId), { commentCount: FieldValue.increment(-1) });
+
+                const notifsSnapshot = await db.collection('notifications')
+                    .where('data.commentId', '==', commentId)
+                    .get();
+                
+                if (!notifsSnapshot.empty) {
+                    notifsSnapshot.docs.forEach(doc => {
+                        batch.delete(doc.ref);
+                    });
+                }
+
                 await batch.commit();
-                console.log(`[onCommentWrite/Delete] Đã giảm counter cho bình luận ${commentId}`);
+                console.log(`[onCommentWrite/Delete] Đã dọn dẹp thông báo và counter cho ${commentId}`);
             } catch (error) {
                 console.error('[onCommentWrite/Delete] Lỗi:', error);
             }
