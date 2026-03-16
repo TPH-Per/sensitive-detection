@@ -372,7 +372,7 @@ const ChatPage: React.FC = () => {
       </div>
 
       {/* Nội dung khung chat */}
-      <div className={`flex-1 flex flex-col ${selectedConversationId ? 'flex' : 'hidden md:flex'}`}>
+      <div className={`flex-1 flex flex-col min-w-0 ${selectedConversationId ? 'flex' : 'hidden md:flex'}`}>
         {selectedConversation ? (
           <>
             <ChatBox

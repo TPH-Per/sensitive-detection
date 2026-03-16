@@ -175,7 +175,7 @@ export const ChatBox: React.FC<ChatBoxProps> = ({
       <div
         ref={messagesContainerRef}
         onScroll={handleScroll}
-        className="flex-1 overflow-y-auto p-0 bg-secondary custom-scrollbar"
+        className="flex-1 overflow-y-auto overflow-x-hidden p-0 bg-secondary custom-scrollbar"
       >
         {isLoading ? (
           <ChatBoxSkeleton />

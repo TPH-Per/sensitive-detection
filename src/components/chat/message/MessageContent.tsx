@@ -51,7 +51,7 @@ const MessageContentInner: React.FC<MessageContentProps> = ({
         if (isAlbum) {
           const placeholderCount = Math.min(4, mediaCount);
           return (
-            <div className="relative rounded-xl overflow-hidden grid gap-0.5 grid-cols-2 border border-border-light shadow-sm bg-bg-secondary w-full max-w-[320px]">
+            <div className="relative rounded-xl overflow-hidden grid gap-0.5 grid-cols-2 border border-border-light shadow-sm bg-bg-secondary w-full max-w-full">
               {Array.from({ length: placeholderCount }).map((_, index) => (
                 <div
                   key={`${message.id}-ph-${index}`}
@@ -177,7 +177,7 @@ const MessageContentInner: React.FC<MessageContentProps> = ({
 
       if (isFileUploading) {
         return (
-          <div className={`relative flex items-center gap-3 p-3 rounded-lg border min-w-[220px] ${isMe ? 'bg-primary-light border-primary' : 'bg-bg-primary border-border-light'
+          <div className={`relative flex items-center gap-3 p-3 rounded-lg border w-full max-w-xs ${isMe ? 'bg-primary-light border-primary' : 'bg-bg-primary border-border-light'
             }`}>
             <div className={`p-2 rounded ${isMe ? 'bg-primary-light' : 'bg-secondary'}`}>
               <FileText size={24} className={isMe ? 'text-primary' : 'text-text-secondary'} />
