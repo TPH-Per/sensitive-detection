@@ -105,6 +105,13 @@ export const userService = {
         cover: { url: '', fileName: '', mimeType: '', size: 0, isSensitive: false },
         status: UserStatus.ACTIVE,
         role: UserRole.USER,
+        settings: {
+          showOnlineStatus: true,
+          showReadReceipts: true,
+          defaultPostVisibility: Visibility.PUBLIC,
+          createdAt: serverTimestamp() as any,
+          updatedAt: serverTimestamp() as any
+        },
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
       });
@@ -394,10 +401,22 @@ export const userService = {
   updateUserSettings: async (userId: string, settings: Partial<UserSettings>): Promise<void> => {
     try {
       const settingsRef = doc(db, 'users', userId, 'private', 'settings');
-      await setDoc(settingsRef, {
+      const userRef = doc(db, 'users', userId);
+      
+      const batch = writeBatch(db);
+      batch.set(settingsRef, {
         ...settings,
         updatedAt: serverTimestamp()
       }, { merge: true });
+      
+      batch.set(userRef, {
+        settings: {
+          ...settings,
+          updatedAt: serverTimestamp()
+        }
+      }, { merge: true });
+
+      await batch.commit();
     } catch (error) {
       console.error("[userService] Lỗi updateUserSettings:", error);
       throw error;

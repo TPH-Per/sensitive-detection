@@ -14,7 +14,7 @@ import {
   MediaViewer,
   ReactionDetailsModal
 } from '../../ui';
-import { useRtdbChatStore } from '../../../store';
+import { useRtdbChatStore, useAuthStore } from '../../../store';
 import { TIME_LIMITS } from '../../../constants/appConfig';
 import { formatTimeOnly } from '../../../utils/dateUtils';
 import { scrollToMessage } from '../../../utils';
@@ -73,6 +73,7 @@ const MessageBubbleInner: React.FC<MessageBubbleProps> = ({
   const [showReactionSelector, setShowReactionSelector] = useState(false);
   const [showReactionDetails, setShowReactionDetails] = useState(false);
   const { toggleReaction, uploadProgress } = useRtdbChatStore();
+  const { settings } = useAuthStore();
   const [isPlaying, setIsPlaying] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
@@ -378,15 +379,13 @@ const MessageBubbleInner: React.FC<MessageBubbleProps> = ({
           )}
           {isMe && (isLastMessage || lastReadByUsers.length > 0) && (
             <div className="flex flex-col items-end mt-0.5">
-              {/* Hiển thị "Đã gửi/Đã nhận" nếu là tin nhắn cuối cùng và chưa ai đọc */}
-              {isLastMessage && lastReadByUsers.length === 0 && (
-                <div className={`mt-0.5 select-none ${isDelivered ? 'text-primary' : 'text-text-tertiary'}`}>
-                  {isDelivered ? <CheckCheck size={14} strokeWidth={2.5} /> : <Check size={14} strokeWidth={2.5} />}
+              {(isLastMessage && (lastReadByUsers.length === 0 || !settings?.showReadReceipts)) && (
+                <div className="mt-0.5 select-none text-text-tertiary">
+                  {(lastReadByUsers.length > 0 || isDelivered) ? <CheckCheck size={14} strokeWidth={2.5} /> : <Check size={14} strokeWidth={2.5} />}
                 </div>
               )}
 
-              {/* Danh sách avatar người đã đọc tin nhắn này (đây là tin cuối cùng họ xem) */}
-              {lastReadByUsers.length > 0 && (
+              {lastReadByUsers.length > 0 && !!settings?.showReadReceipts && (
                 <div
                   className="flex items-center gap-1 mt-1 cursor-pointer"
                   onClick={() => isGroup && setShowReaders(!showReaders)}

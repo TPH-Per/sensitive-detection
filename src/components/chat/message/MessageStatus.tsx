@@ -2,6 +2,7 @@ import React from 'react';
 import { Check, CheckCheck } from 'lucide-react';
 import { User } from '../../../../shared/types';
 import { Avatar } from '../../ui';
+import { useAuthStore } from '../../../store';
 
 interface MessageStatusProps {
   isRead: boolean;
@@ -16,9 +17,13 @@ export const MessageStatus: React.FC<MessageStatusProps> = ({
   readers,
   isMine
 }) => {
+  const { settings } = useAuthStore();
+  
   if (!isMine) return null;
 
-  if (isRead) {
+  const shouldShowReaders = isRead && !!settings?.showReadReceipts;
+
+  if (shouldShowReaders) {
     return (
       <div className="flex items-center gap-1">
         <div className="flex -space-x-1">
@@ -41,8 +46,8 @@ export const MessageStatus: React.FC<MessageStatusProps> = ({
   }
 
   return (
-    <div className={isDelivered ? "text-primary" : "text-text-tertiary"}>
-      {isDelivered ? (
+    <div className="text-text-tertiary">
+      {isDelivered || isRead ? (
         <CheckCheck size={14} strokeWidth={2.5} />
       ) : (
         <Check size={14} strokeWidth={2.5} />

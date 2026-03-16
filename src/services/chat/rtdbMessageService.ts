@@ -551,13 +551,14 @@ export const rtdbMessageService = {
             const settings = await userService.getUserSettings(uid);
 
             const messagesRef = ref(rtdb, `messages/${convId}`);
-            const snapshot = await get(messagesRef);
+            const lastMessagesQuery = query(messagesRef, orderByChild('createdAt'), limitToLast(50));
+            const snapshot = await get(lastMessagesQuery);
 
             if (!snapshot.exists()) return;
 
             const updates: Record<string, any> = {};
             let hasUpdates = false;
-            let lastMessageId: string | null = null;
+            let lastMessageIdInSnapshot: string | null = null;
             let lastMessageTimestamp = 0;
 
             snapshot.forEach((childSnap) => {
@@ -566,7 +567,7 @@ export const rtdbMessageService = {
 
                 if (msgData.createdAt > lastMessageTimestamp) {
                     lastMessageTimestamp = msgData.createdAt;
-                    lastMessageId = msgId;
+                    lastMessageIdInSnapshot = msgId;
                 }
 
                 if (msgData.senderId !== uid && !msgData.readBy?.[uid]) {
@@ -582,16 +583,17 @@ export const rtdbMessageService = {
                 await update(ref(rtdb), updates);
             }
 
-            if (lastMessageId) {
-                const convRef = ref(rtdb, `conversations/${convId}`);
-                const convSnap = await get(convRef);
-
-                if (convSnap.exists()) {
-                    const conv = convSnap.val() as RtdbConversation;
-                    if (conv.lastMessage && conv.lastMessage.messageId === lastMessageId) {
-                        updates[`conversations/${convId}/lastMessage/readBy/${uid}`] = Date.now();
-                        updates[`conversations/${convId}/lastMessage/deliveredTo/${uid}`] = Date.now();
-                        await update(ref(rtdb), updates);
+            const lastMsgPath = `conversations/${convId}/lastMessage`;
+            const lastMsgSnap = await get(ref(rtdb, lastMsgPath));
+            
+            if (lastMsgSnap.exists()) {
+                const lastMsg = lastMsgSnap.val();
+                if (lastMsg.senderId !== uid && !lastMsg.readBy?.[uid]) {
+                    if (settings.showReadReceipts) {
+                        const lastMsgUpdates: Record<string, any> = {};
+                        lastMsgUpdates[`${lastMsgPath}/readBy/${uid}`] = Date.now();
+                        lastMsgUpdates[`${lastMsgPath}/deliveredTo/${uid}`] = Date.now();
+                        await update(ref(rtdb), lastMsgUpdates);
                     }
                 }
             }
@@ -618,13 +620,14 @@ export const rtdbMessageService = {
     markAsDelivered: async (convId: string, uid: string): Promise<void> => {
         try {
             const messagesRef = ref(rtdb, `messages/${convId}`);
-            const snapshot = await get(messagesRef);
+            const lastMessagesQuery = query(messagesRef, orderByChild('createdAt'), limitToLast(20));
+            const snapshot = await get(lastMessagesQuery);
 
             if (!snapshot.exists()) return;
 
             const updates: Record<string, any> = {};
             let hasUpdates = false;
-            let lastMessageId: string | null = null;
+            let lastMessageIdInSnapshot: string | null = null;
             let lastMessageTimestamp = 0;
 
             snapshot.forEach((childSnap) => {
@@ -633,7 +636,7 @@ export const rtdbMessageService = {
 
                 if (msgData.createdAt > lastMessageTimestamp) {
                     lastMessageTimestamp = msgData.createdAt;
-                    lastMessageId = msgId;
+                    lastMessageIdInSnapshot = msgId;
                 }
 
                 if (msgData.senderId !== uid && !msgData.deliveredTo?.[uid]) {
@@ -646,16 +649,15 @@ export const rtdbMessageService = {
                 await update(ref(rtdb), updates);
             }
 
-            if (lastMessageId) {
-                const convRef = ref(rtdb, `conversations/${convId}`);
-                const convSnap = await get(convRef);
-
-                if (convSnap.exists()) {
-                    const conv = convSnap.val() as RtdbConversation;
-                    if (conv.lastMessage && conv.lastMessage.messageId === lastMessageId) {
-                        updates[`conversations/${convId}/lastMessage/deliveredTo/${uid}`] = Date.now();
-                        await update(ref(rtdb), updates);
-                    }
+            const lastMsgPath = `conversations/${convId}/lastMessage`;
+            const lastMsgSnap = await get(ref(rtdb, lastMsgPath));
+            
+            if (lastMsgSnap.exists()) {
+                const lastMsg = lastMsgSnap.val();
+                if (lastMsg.senderId !== uid && !lastMsg.deliveredTo?.[uid]) {
+                    await update(ref(rtdb, lastMsgPath), {
+                        [`deliveredTo/${uid}`]: Date.now()
+                    });
                 }
             }
         } catch (error) {

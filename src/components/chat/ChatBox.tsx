@@ -8,6 +8,7 @@ import { useChatScroll } from '../../hooks/chat/useChatScroll';
 import { ChatBoxHeader } from './ChatBoxHeader';
 import { MessageList } from './MessageList';
 import { TypingIndicator } from './TypingIndicator';
+import { useAuthStore } from '../../store';
 
 interface ChatBoxProps {
   conversation: { id: string; data: RtdbConversation; userChat: RtdbUserChat };
@@ -96,27 +97,27 @@ export const ChatBox: React.FC<ChatBoxProps> = ({
     !isBlockedByMe && !isBlocked
     , [conversation.data.isGroup, partner, currentUserFriendIds, isBlockedByMe, isBlocked]);
 
+  const { settings } = useAuthStore();
+
   const lastReadByMap = useMemo(() => {
     const map: Record<string, User[]> = {};
     const reversed = [...messages].reverse();
     const participantIds = Object.keys(conversation.data.members);
+    
+    if (settings?.showReadReceipts === false) return map;
 
-    if (!conversation.data.isGroup && messages.length > 0) {
-      const partnerId = participantIds.find(id => id !== currentUserId);
-      const isFriend = partnerId && currentUserFriendIds.includes(partnerId);
-      if (partnerId && isFriend) {
-        const lastReadMsg = reversed.find(m => m.data.readBy?.[partnerId]);
-        if (lastReadMsg) {
-          map[lastReadMsg.id] = [usersMap[partnerId]].filter(Boolean);
-        }
-      }
-    } else if (conversation.data.isGroup) {
+    if (conversation.data.isGroup) {
       participantIds.forEach(uid => {
         if (uid === currentUserId) return;
+        
+        // Chỉ hiển thị nếu người dùng bật "Thông báo đã xem" trong hồ sơ công khai
+        const user = usersMap[uid];
+        if (user?.settings?.showReadReceipts === false) return;
+
         const lastReadMsg = reversed.find(m => m.data.readBy?.[uid]);
         if (lastReadMsg) {
           if (!map[lastReadMsg.id]) map[lastReadMsg.id] = [];
-          if (usersMap[uid]) map[lastReadMsg.id].push(usersMap[uid]);
+          if (user) map[lastReadMsg.id].push(user);
         }
       });
 
@@ -131,9 +132,19 @@ export const ChatBox: React.FC<ChatBoxProps> = ({
           });
         }
       });
+    } else if (messages.length > 0) {
+      const partnerId = participantIds.find(id => id !== currentUserId);
+      const partner = partnerId ? usersMap[partnerId] : null;
+
+      if (partnerId && partner && partner.settings?.showReadReceipts !== false) {
+        const lastReadMsg = reversed.find(m => m.data.readBy?.[partnerId]);
+        if (lastReadMsg) {
+          map[lastReadMsg.id] = [partner];
+        }
+      }
     }
     return map;
-  }, [messages, conversation, usersMap, currentUserId, currentUserFriendIds]);
+  }, [messages, conversation, usersMap, currentUserId, settings?.showReadReceipts]);
 
   return (
     <div className="relative flex-1 flex flex-col min-h-0 bg-secondary transition-theme">

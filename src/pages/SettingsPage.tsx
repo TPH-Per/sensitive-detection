@@ -104,13 +104,12 @@ interface BlockedUserWithOptions {
 
 const SettingsPage: React.FC = () => {
   const navigate = useNavigate();
-  const { user: currentUser } = useAuthStore();
+  const { user: currentUser, settings, updateSettings } = useAuthStore();
   const { mode, toggleTheme } = useThemeStore();
   const { users: userCache, fetchUsers } = useUserCache();
 
   const [activeSection, setActiveSection] = useState<SettingSection>('appearance');
   const [blockedList, setBlockedList] = useState<BlockedUserWithOptions[]>([]);
-  const [settings, setSettings] = useState<UserSettings | null>(null);
   const setLoading = useLoadingStore(state => state.setLoading);
   const isLoading = useLoadingStore(state => state.loadingStates['settings']);
   const [unblockUserId, setUnblockUserId] = useState<string | null>(null);
@@ -119,16 +118,6 @@ const SettingsPage: React.FC = () => {
 
   const isAdmin = !!currentUser;
   const MENU_ITEMS = BASE_MENU_ITEMS.filter(item => !item.adminOnly || isAdmin);
-
-  const loadSettings = useCallback(async () => {
-    if (!currentUser) return;
-    try {
-      const data = await userService.getUserSettings(currentUser.id);
-      setSettings(data);
-    } catch (error) {
-      console.error("Lỗi load settings", error);
-    }
-  }, [currentUser?.id]);
 
   const loadBlockedUsers = useCallback(async () => {
     if (!currentUser) return;
@@ -154,9 +143,8 @@ const SettingsPage: React.FC = () => {
   }, [currentUser?.id, fetchUsers]);
 
   useEffect(() => {
-    loadSettings();
     loadBlockedUsers();
-  }, [loadSettings, loadBlockedUsers]);
+  }, [loadBlockedUsers]);
 
   // Cập nhật lại khi userCache thay đổi
   useEffect(() => {
@@ -252,7 +240,7 @@ const SettingsPage: React.FC = () => {
                   enabled={settings.showOnlineStatus}
                   onToggle={async () => {
                     const newValue = !settings.showOnlineStatus;
-                    setSettings({ ...settings, showOnlineStatus: newValue });
+                    updateSettings({ showOnlineStatus: newValue });
                     await userService.updateUserSettings(currentUser!.id, { showOnlineStatus: newValue });
                     await presenceService.setOnline(currentUser!.id).catch(err => 
                       console.error('Lỗi đồng bộ RTDB khi đổi settings:', err)
@@ -270,7 +258,7 @@ const SettingsPage: React.FC = () => {
                   enabled={settings.showReadReceipts}
                   onToggle={async () => {
                     const newValue = !settings.showReadReceipts;
-                    setSettings({ ...settings, showReadReceipts: newValue });
+                    updateSettings({ showReadReceipts: newValue });
                     await userService.updateUserSettings(currentUser!.id, { showReadReceipts: newValue });
                   }}
                 />
@@ -310,7 +298,7 @@ const SettingsPage: React.FC = () => {
                   icon={<Globe size={16} />}
                   label="Công khai"
                   onClick={async () => {
-                    setSettings({ ...settings, defaultPostVisibility: Visibility.PUBLIC });
+                    updateSettings({ defaultPostVisibility: Visibility.PUBLIC });
                     await userService.updateUserSettings(currentUser!.id, { defaultPostVisibility: Visibility.PUBLIC });
                   }}
                 />
@@ -318,7 +306,7 @@ const SettingsPage: React.FC = () => {
                   icon={<Users size={16} />}
                   label="Bạn bè"
                   onClick={async () => {
-                    setSettings({ ...settings, defaultPostVisibility: Visibility.FRIENDS });
+                    updateSettings({ defaultPostVisibility: Visibility.FRIENDS });
                     await userService.updateUserSettings(currentUser!.id, { defaultPostVisibility: Visibility.FRIENDS });
                   }}
                 />
@@ -326,7 +314,7 @@ const SettingsPage: React.FC = () => {
                   icon={<Lock size={16} />}
                   label="Chỉ mình tôi"
                   onClick={async () => {
-                    setSettings({ ...settings, defaultPostVisibility: Visibility.PRIVATE });
+                    updateSettings({ defaultPostVisibility: Visibility.PRIVATE });
                     await userService.updateUserSettings(currentUser!.id, { defaultPostVisibility: Visibility.PRIVATE });
                   }}
                 />

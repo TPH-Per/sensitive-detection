@@ -1,9 +1,18 @@
 import { create } from "zustand";
 import { onAuthStateChanged } from "firebase/auth";
-import { auth } from "../firebase/config";
-import { User, BlockOptions } from "../../shared/types";
+import { onSnapshot, doc, Timestamp } from 'firebase/firestore';
+import { auth, db } from "../firebase/config";
+import { User, BlockOptions, UserSettings, Visibility } from "../../shared/types";
 import { userService } from "../services/userService";
 import { authService } from "../services/authService";
+
+const DEFAULT_SETTINGS: UserSettings = {
+  showOnlineStatus: true,
+  showReadReceipts: true,
+  defaultPostVisibility: Visibility.PUBLIC,
+  createdAt: Timestamp.now(),
+  updatedAt: Timestamp.now(),
+};
 import { useUserCache } from "./userCacheStore";
 import { useRtdbChatStore } from "./rtdbChatStore";
 import { usePostStore } from "./postStore";
@@ -17,6 +26,7 @@ import { presenceService } from "../services/presenceService";
 
 interface AuthState {
   user: User | null;
+  settings: UserSettings;
   blockedUsers: Record<string, BlockOptions>;
   isPendingVerification: boolean;
   isInitialized: boolean;
@@ -30,6 +40,7 @@ interface AuthState {
   initialize: () => () => void;
   updateUserProfile: (updates: Partial<User>) => void;
   updateAvatar: (avatar: any) => void;
+  updateSettings: (settings: Partial<UserSettings>) => void;
   updateBlockEntry: (action: "add" | "remove", targetUserId: string, options?: BlockOptions) => void;
 }
 
@@ -53,6 +64,7 @@ const clearAllStores = () => {
 
 export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
+  settings: DEFAULT_SETTINGS,
   blockedUsers: {},
   isPendingVerification: false,
   isInitialized: false,
@@ -71,25 +83,29 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         throw err;
       }
 
-      const userData = await userService.getUserById(firebaseUser.uid);
-      if (userData) {
-        if (userData.status === 'banned') {
-          await authService.logout();
-          const err = new Error("Account banned") as Error & { code?: string };
-          err.code = 'auth/user-disabled';
-          throw err;
+        const [userData, userSettings] = await Promise.all([
+          userService.getUserById(firebaseUser.uid),
+          userService.getUserSettings(firebaseUser.uid)
+        ]);
+
+        if (userData) {
+          if (userData.status === 'banned') {
+            await authService.logout();
+            const err = new Error("Account banned") as Error & { code?: string };
+            err.code = 'auth/user-disabled';
+            throw err;
+          }
+
+          set({
+            user: userData,
+            settings: userSettings,
+            isPendingVerification: false,
+            isInitialized: true,
+          });
+          useUserCache.getState().setUser(userData);
+        } else {
+          set({ isPendingVerification: false });
         }
-
-
-        set({
-          user: userData,
-          isPendingVerification: false,
-          isInitialized: true,
-        });
-        useUserCache.getState().setUser(userData);
-      } else {
-        set({ isPendingVerification: false });
-      }
     } catch (error) {
       set({ isPendingVerification: false });
       throw error;
@@ -160,12 +176,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         set({ isPendingVerification: false });
 
         try {
-          const [userData, blockedUsers] = await Promise.all([
+          const [userData, blockedUsers, userSettings] = await Promise.all([
             userService.getUserById(firebaseUser.uid),
             userService.getBlockedUsers(firebaseUser.uid),
+            userService.getUserSettings(firebaseUser.uid)
           ]);
           if (userData) {
-            set({ user: userData, blockedUsers });
+            set({ user: userData, blockedUsers, settings: userSettings });
             useUserCache.getState().setUser(userData);
           }
         } catch (error) {
@@ -191,6 +208,26 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     useUserCache.getState().setUser(updatedUser);
   },
 
+  updateSettings: (settingsUpdates) => {
+    const { settings, user } = get();
+    if (!settings) return;
+    const newSettings = { ...settings, ...settingsUpdates };
+    set({ settings: newSettings });
+
+    if (user) {
+      const updatedUser = { 
+        ...user, 
+        settings: {
+          ...user.settings,
+          ...newSettings,
+          updatedAt: Timestamp.now()
+        } as UserSettings
+      };
+      set({ user: updatedUser });
+      useUserCache.getState().setUser(updatedUser);
+    }
+  },
+
   updateBlockEntry: (action, targetUserId, options?) => {
     const current = get().blockedUsers;
     if (action === "add" && options) {
@@ -204,11 +241,16 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   initialize: () => {
     let userUnsubscribe: (() => void) | null = null;
+    let settingsUnsubscribe: (() => void) | null = null;
 
     const authUnsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (userUnsubscribe) {
         userUnsubscribe();
         userUnsubscribe = null;
+      }
+      if (settingsUnsubscribe) {
+        settingsUnsubscribe();
+        settingsUnsubscribe = null;
       }
 
       if (firebaseUser) {
@@ -219,9 +261,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         }
 
         try {
-          const [userData, blockedUsers] = await Promise.all([
+          const [userData, blockedUsers, userSettings] = await Promise.all([
             userService.getUserById(firebaseUser.uid),
             userService.getBlockedUsers(firebaseUser.uid),
+            userService.getUserSettings(firebaseUser.uid)
           ]);
 
           if (userData) {
@@ -235,6 +278,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
             set({
               user: userData,
+              settings: userSettings,
               blockedUsers,
               isPendingVerification: false,
               isInitialized: true,
@@ -255,6 +299,17 @@ export const useAuthStore = create<AuthState>((set, get) => ({
                 useUserCache.getState().setUser(updatedUser);
               },
             );
+
+            settingsUnsubscribe = onSnapshot(
+              doc(db, 'users', firebaseUser.uid, 'private', 'settings'),
+              (snapshot) => {
+                if (snapshot.exists()) {
+                  set({ settings: snapshot.data() as UserSettings });
+                } else {
+                  set({ settings: DEFAULT_SETTINGS });
+                }
+              }
+            );
           } else {
             set({ user: null, isInitialized: true });
             useLoadingStore.getState().setLoading("auth", false);
@@ -273,6 +328,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     return () => {
       authUnsubscribe();
       if (userUnsubscribe) userUnsubscribe();
+      if (settingsUnsubscribe) settingsUnsubscribe();
     };
   },
 }));
