@@ -111,30 +111,33 @@ export const CallWindow: React.FC<CallWindowProps> = ({
         },
 
         onLeaveRoom: async () => {
-          await rtdbCallService.updateCallParticipant(roomId, userId, false);
+          try {
+            await rtdbCallService.updateCallParticipant(roomId, userId, false);
 
-          const activeCall = await rtdbCallService.getActiveCall(roomId);
-          if (activeCall?.messageId) {
-            const remaining = activeCall.participants
-              ? Object.keys(activeCall.participants).filter((id) => id !== userId)
-              : [];
+            const activeCall = await rtdbCallService.getActiveCall(roomId);
+            if (activeCall?.messageId) {
+              const participants = activeCall.participants || {};
+              const remainingIds = Object.keys(participants);
 
-            if (remaining.length === 0) {
-              const duration = Math.max(
-                0,
-                Math.floor((Date.now() - activeCall.startedAt) / 1000),
-              );
-              await updateCallMessage(roomId, activeCall.messageId, {
-                callType,
-                status: 'ended',
-                duration,
-              });
-              await rtdbCallService.endActiveCall(roomId);
+              if (remainingIds.length === 0 || (remainingIds.length === 1 && remainingIds[0] === userId)) {
+                const duration = Math.max(
+                  0,
+                  Math.floor((Date.now() - activeCall.startedAt) / 1000),
+                );
+                await updateCallMessage(roomId, activeCall.messageId, {
+                  callType,
+                  status: 'ended',
+                  duration,
+                });
+                await rtdbCallService.endActiveCall(roomId);
+              }
             }
+          } catch (error) {
+            console.error('[CallWindow] Lỗi khi rời phòng:', error);
+          } finally {
+            destroyZego();
+            onCloseRef.current();
           }
-
-          destroyZego();
-          onCloseRef.current();
         },
       });
 

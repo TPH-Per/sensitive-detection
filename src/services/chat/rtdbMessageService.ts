@@ -935,8 +935,18 @@ export const rtdbMessageService = {
                 const conv = convSnap.val() as RtdbConversation;
                 if (conv.lastMessage && conv.lastMessage.messageId === msgId) {
                     let displayContent = newContent;
-                    if (payload && payload.callType) {
-                        displayContent = payload.callType === 'video' ? '[Cuộc gọi video]' : '[Cuộc gọi thoại]';
+                    if (payload && payload.callType && payload.status) {
+                        const isVideo = payload.callType === 'video';
+                        const status = payload.status;
+                        if (status === 'missed') {
+                            displayContent = isVideo ? '[Cuộc gọi video nhỡ]' : '[Cuộc gọi thoại nhỡ]';
+                        } else if (status === 'rejected') {
+                            displayContent = isVideo ? '[Cuộc gọi video bị từ chối]' : '[Cuộc gọi thoại bị từ chối]';
+                        } else if (status === 'ended') {
+                            displayContent = isVideo ? '[Cuộc gọi video đã kết thúc]' : '[Cuộc gọi thoại đã kết thúc]';
+                        } else {
+                            displayContent = isVideo ? '[Cuộc gọi video]' : '[Cuộc gọi thoại]';
+                        }
                     }
                     await update(convRef, {
                         'lastMessage/content': displayContent,

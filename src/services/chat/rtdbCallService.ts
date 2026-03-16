@@ -42,10 +42,10 @@ export const rtdbCallService = {
         };
 
         const updates: Record<string, RtdbCallSignaling | null> = {};
+
         recipientIds.forEach((id) => {
             updates[`call_signaling/${id}`] = signalingData;
         });
-
         if (!isGroupCall) {
             updates[`call_signaling/${callerId}`] = signalingData;
         }
@@ -57,7 +57,7 @@ export const rtdbCallService = {
     answerCall: async (
         calleeId: string,
         callerId: string,
-        status: 'accepted' | 'rejected',
+        status: 'accepted' | 'rejected' | 'ended',
         isGroupCall = false,
     ): Promise<void> => {
         const updates: Record<string, any> = {
@@ -72,8 +72,6 @@ export const rtdbCallService = {
         await update(ref(rtdb), updates);
     },
 
-    /**
-     */
     subscribeToIncomingCall: (
         uid: string,
         callback: (data: RtdbCallSignaling | null) => void,
@@ -132,9 +130,15 @@ export const rtdbCallService = {
         }
     },
 
-    getActiveCall: async (convId: string): Promise<any> => {
+    getActiveCall: async (convId: string): Promise<{
+        callerId: string;
+        callType: 'voice' | 'video';
+        messageId: string;
+        startedAt: number;
+        participants?: Record<string, boolean>;
+    } | null> => {
         const snapshot = await get(ref(rtdb, `conversations/${convId}/activeCall`));
-        return snapshot.val();
+        return snapshot.exists() ? snapshot.val() : null;
     },
 
     endActiveCall: async (convId: string): Promise<void> => {

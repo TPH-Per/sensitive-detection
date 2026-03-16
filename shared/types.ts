@@ -245,7 +245,7 @@ export interface RtdbCallSignaling {
     callerAvatar: string;
     conversationId: string;
     callType: 'voice' | 'video';
-    status: 'ringing' | 'accepted' | 'rejected';
+    status: 'ringing' | 'accepted' | 'rejected' | 'ended';
     isGroupCall?: boolean;
     timestamp: number;
     createdAt: number;

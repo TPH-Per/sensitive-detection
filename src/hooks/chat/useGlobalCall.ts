@@ -14,7 +14,6 @@ export function useGlobalCall(userId: string) {
         isCaller,
         callStartTime,
         callConversationId,
-        otherUserIds,
         setCallPhase,
         setCallType,
         setActiveRoomId,
@@ -29,6 +28,9 @@ export function useGlobalCall(userId: string) {
     const { playSound } = useCallSounds();
     const updateCallMessage = useRtdbChatStore((s) => s.updateCallMessage);
 
+    /**
+     * Caller nhận được tín hiệu accepted từ callee (chỉ 1-1)
+     */
     const handleCallAccepted = useCallback(
         async (signal: RtdbCallSignaling) => {
             if (signal.isGroupCall) return;
@@ -41,6 +43,9 @@ export function useGlobalCall(userId: string) {
         [setActiveRoomId, setCallType, setCallPhase, setCallStartTime, playSound],
     );
 
+    /**
+     * Caller nhận được tín hiệu rejected từ callee (chỉ 1-1)
+     */
     const handleCallRejected = useCallback(async () => {
         if (isCaller && callConversationId) {
             const activeCall = await rtdbCallService.getActiveCall(callConversationId);
@@ -56,34 +61,36 @@ export function useGlobalCall(userId: string) {
         resetCall();
     }, [isCaller, callConversationId, callType, updateCallMessage, playSound, resetCall]);
 
+    /**
+     * Caller hủy hoặc callee bị mất kết nối (chỉ 1-1)
+     */
     const handleCallEnded = useCallback(async () => {
-        if (isCaller && callConversationId && callPhase === 'in-call' && !isGroupCall) {
-            const activeCall = await rtdbCallService.getActiveCall(callConversationId);
-            if (activeCall?.messageId) {
-                const duration = callStartTime
-                    ? Math.max(0, Math.floor((Date.now() - callStartTime) / 1000))
-                    : 0;
-                await updateCallMessage(callConversationId, activeCall.messageId, {
-                    callType,
-                    status: 'ended',
-                    duration,
-                });
-                await rtdbCallService.endActiveCall(callConversationId);
+        try {
+            if (callConversationId && callPhase === 'in-call') {
+                const activeCall = await rtdbCallService.getActiveCall(callConversationId);
+                if (activeCall?.messageId) {
+                    const duration = callStartTime
+                        ? Math.max(0, Math.floor((Date.now() - callStartTime) / 1000))
+                        : 0;
+                    
+                    await updateCallMessage(callConversationId, activeCall.messageId, {
+                        callType,
+                        status: 'ended',
+                        duration,
+                    });
+                    
+                    if (isCaller || !activeCall.participants || Object.keys(activeCall.participants).length <= 1) {
+                        await rtdbCallService.endActiveCall(callConversationId);
+                    }
+                }
             }
+        } catch (error) {
+            console.error('[useGlobalCall] Lỗi khi kết thúc cuộc gọi:', error);
+        } finally {
+            if (callPhase === 'in-call') playSound('ended');
+            resetCall();
         }
-        if (callPhase === 'in-call') playSound('ended');
-        resetCall();
-    }, [
-        isCaller,
-        callConversationId,
-        callPhase,
-        isGroupCall,
-        callStartTime,
-        callType,
-        updateCallMessage,
-        playSound,
-        resetCall,
-    ]);
+    }, [isCaller, callConversationId, callPhase, isGroupCall, callStartTime, callType, updateCallMessage, playSound, resetCall]);
 
     const { incomingCall, startCall, acceptCall, rejectCall, endCall } = useCallSignaling(userId, {
         onCallAccepted: handleCallAccepted,
@@ -91,11 +98,13 @@ export function useGlobalCall(userId: string) {
         onCallEnded: handleCallEnded,
     });
 
-    // Sync signaling actions into the store so ChatPage can call them
     const syncActions = useCallback(() => {
         setSignalingActions({ startCall, acceptCall, rejectCall, endCall });
     }, [setSignalingActions, startCall, acceptCall, rejectCall, endCall]);
 
+    /**
+     * Callee chấp nhận cuộc gọi đến
+     */
     const handleAcceptIncoming = useCallback(async () => {
         if (!incomingCall) return;
         await acceptCall(incomingCall);
@@ -106,6 +115,7 @@ export function useGlobalCall(userId: string) {
         setIsCaller(false);
         setCallPhase('in-call');
         setCallStartTime(Date.now());
+        playSound('connected');
     }, [
         incomingCall,
         acceptCall,
@@ -116,8 +126,12 @@ export function useGlobalCall(userId: string) {
         setIsCaller,
         setCallPhase,
         setCallStartTime,
+        playSound,
     ]);
 
+    /**
+     * Callee từ chối cuộc gọi đến
+     */
     const handleRejectIncoming = useCallback(async () => {
         if (!incomingCall) return;
         await rejectCall(incomingCall);
@@ -127,7 +141,6 @@ export function useGlobalCall(userId: string) {
     return {
         incomingCall,
         endCall,
-        otherUserIds,
         syncActions,
         handleAcceptIncoming,
         handleRejectIncoming,

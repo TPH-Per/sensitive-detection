@@ -36,6 +36,21 @@ export const onMessageCreated = onValueCreated(
         case 'video': contentSnippet = 'đã gửi một video'; break;
         case 'file': contentSnippet = 'đã gửi một tệp tin'; break;
         case 'voice': contentSnippet = 'đã gửi một tin nhắn thoại'; break;
+        case 'call': {
+          try {
+            const parsed = JSON.parse(content) as { callType?: string; status?: string };
+            if (parsed.status === 'started') {
+              contentSnippet = parsed.callType === 'video'
+                ? 'đang gọi video cho bạn'
+                : 'đang gọi thoại cho bạn';
+            } else {
+              return;
+            }
+          } catch {
+            return;
+          }
+          break;
+        }
         default:
           contentSnippet = content.replace(/@\[[^:]+:([^\]]+)\]/g, '@$1').substring(0, 100);
       }
@@ -43,7 +58,7 @@ export const onMessageCreated = onValueCreated(
       for (const receiverId of memberIds) {
         const isMentioned = isGroup && mentions.includes(receiverId);
         const notificationType = isMentioned ? NotificationType.MENTION : NotificationType.CHAT;
-        
+
         const body = buildPushBody(notificationType, senderName, { contentSnippet });
 
         if (isMentioned) {
@@ -51,10 +66,10 @@ export const onMessageCreated = onValueCreated(
             receiverId,
             actorId: senderId,
             type: notificationType,
-            data: { 
-              convId, 
+            data: {
+              convId,
               contentSnippet,
-              senderName 
+              senderName
             },
           });
         }

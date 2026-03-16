@@ -336,10 +336,7 @@ export const AppLayout: React.FC = () => {
           userAvatar={user.avatar.url}
           isGroupCall={isGroupCall}
           callType={callType}
-          onClose={() => {
-            endCall(otherUserIds);
-            resetCall();
-          }}
+          onClose={resetCall}
         />
       )}
     </div>
