@@ -455,7 +455,7 @@ export const usePostStore = create<PostState>()(
       },
 
       fetchPostById: async (postId: string, currentUserId: string, friendIds: string[]) => {
-        useLoadingStore.getState().setLoading('feed', true);
+        useLoadingStore.getState().setLoading('post.detail', true);
         try {
           const post = await postService.getPostById(postId, currentUserId, friendIds);
 
@@ -475,7 +475,7 @@ export const usePostStore = create<PostState>()(
           console.error("Lỗi lấy chi tiết bài viết:", error);
           toast.error('Không thể tải bài viết');
         } finally {
-          useLoadingStore.getState().setLoading('feed', false);
+          useLoadingStore.getState().setLoading('post.detail', false);
         }
       },
     }),

@@ -4,7 +4,7 @@ import { User, Gender, ReactionType } from '../../shared/types';
 import { useAuthStore } from '../store/authStore';
 import { Button, ConfirmDialog, BlockOptionsModal } from '../components/ui';
 import { CONFIRM_MESSAGES } from '../constants';
-import { PostViewModal } from '../components/feed';
+import { PostItem } from '../components/feed';
 import { usePostStore } from '../store/postStore';
 import { ProfileHeader } from '../components/profile/ProfileHeader';
 import { ProfileTabs } from '../components/profile/ProfileTabs';
@@ -13,7 +13,7 @@ import { PostsTab } from '../components/profile/PostsTab';
 import { PhotosTab } from '../components/profile/PhotosTab';
 import { ProfileSkeleton } from '../components/profile/ProfileSkeleton';
 import { User as UserIcon, Lock, Cake, MapPin } from 'lucide-react';
-import { useProfile } from '../hooks';
+import { useProfile, usePostNavigation } from '../hooks';
 import { toDate } from '../utils/dateUtils';
 
 type ConfirmType = 'unfriend' | 'deleteAvatar' | 'deleteCover';
@@ -50,7 +50,7 @@ const ProfilePage: React.FC = () => {
     closeBlockModal,
   } = useProfile();
 
-  const { selectedPost, setSelectedPost } = usePostStore();
+  const { viewPost } = usePostNavigation();
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [confirmType, setConfirmType] = useState<ConfirmType | null>(null);
@@ -220,7 +220,7 @@ const ProfilePage: React.FC = () => {
               </div>
 
               <div className="flex-1 min-w-0">
-                <PostsTab userId={profile.id} currentUser={currentUser} />
+                <PostsTab userId={profile.id} currentUser={currentUser} onViewPost={viewPost} />
               </div>
             </div>
           ) : (
@@ -282,17 +282,6 @@ const ProfilePage: React.FC = () => {
         initialOptions={currentBlockOptions}
         onApply={handleApplyBlock}
         onClose={closeBlockModal}
-      />
-
-      <PostViewModal
-        isOpen={!!selectedPost}
-        onClose={() => setSelectedPost(null)}
-        post={selectedPost}
-        author={selectedPost?.authorId === profile?.id ? profile : null}
-        currentUser={currentUser}
-        onReact={async (postId, reaction) => {
-          await usePostStore.getState().reactToPost(postId, currentUser.id, reaction);
-        }}
       />
     </div>
   );

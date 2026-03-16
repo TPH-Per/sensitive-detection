@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { MessageCircle, Users, LayoutGrid, Settings, LogOut, User as UserIcon, Moon, Sun, Bell, Flag, Menu, Shield } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
@@ -10,6 +10,7 @@ import { Avatar, UserAvatar, ConfirmDialog, Button, IconButton, ScreenLoader } f
 import { Post, Visibility, ReactionType } from '../../../shared/types';
 import { PostViewModal } from '../feed';
 import { usePostStore } from '../../store/postStore';
+import { usePostNavigation } from '../../hooks/usePostNavigation';
 import { useUserCache } from '../../store/userCacheStore';
 import { useNotificationStore } from '../../store/notificationStore';
 import { NotificationDropdown } from '../notifications/NotificationDropdown';
@@ -30,9 +31,12 @@ export const AppLayout: React.FC = () => {
   const { receivedRequests, subscribeToRequests, subscribeToFriends } = useContactStore();
   const { initialize: initNotifications, unreadCount: unreadNotifications } = useNotificationStore();
 
-  const { selectedPost, setSelectedPost, reactToPost } = usePostStore();
-  const isModalLoading = useLoadingStore(state => state.loadingStates['feed']);
+  const { selectedPost, setSelectedPost, reactToPost, fetchPostById, posts } = usePostStore();
+  const isModalLoading = useLoadingStore(state => state.loadingStates['post.detail']);
   const { users: usersMap, fetchUsers } = useUserCache();
+  const { closePost } = usePostNavigation();
+  const { friends } = useContactStore();
+  const friendIds = useMemo(() => friends.map(f => f.id), [friends]);
 
   const handleConfirmLogout = useLogout();
   const navigate = useNavigate();
@@ -147,6 +151,24 @@ export const AppLayout: React.FC = () => {
       fetchUsers([selectedPost.authorId]);
     }
   }, [selectedPost, usersMap, fetchUsers]);
+
+  const postMatch = location.pathname.match(/\/post\/([^/]+)/);
+  const postId = postMatch?.[1];
+
+  useEffect(() => {
+
+    if (postId && user) {
+      if (selectedPost?.id !== postId) {
+        const cachedPost = posts.find(p => p.id === postId);
+        if (cachedPost) {
+          setSelectedPost(cachedPost);
+        }
+        fetchPostById(postId, user.id, friendIds);
+      }
+    } else if (!postId && selectedPost) {
+      setSelectedPost(null);
+    }
+  }, [postId, user, selectedPost?.id, friendIds, fetchPostById, setSelectedPost]);
 
   const totalUnread = useUnreadCount();
 
@@ -356,8 +378,8 @@ export const AppLayout: React.FC = () => {
 
       {user && (
         <PostViewModal
-          isOpen={!!selectedPost || isModalLoading}
-          onClose={() => setSelectedPost(null)}
+          isOpen={!!postId}
+          onClose={closePost}
           post={selectedPost}
           author={selectedPost ? usersMap[selectedPost.authorId] : null}
           currentUser={user}

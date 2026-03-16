@@ -10,11 +10,11 @@ import { FileText } from 'lucide-react';
 interface PostsTabProps {
   userId: string;
   currentUser: User;
+  onViewPost?: (post: Post) => void;
 }
 
-export const PostsTab: React.FC<PostsTabProps> = ({ userId, currentUser }) => {
+export const PostsTab: React.FC<PostsTabProps> = ({ userId, currentUser, onViewPost }) => {
   const [postToDelete, setPostToDelete] = useState<string | null>(null);
-  const { setSelectedPost } = usePostStore();
 
   const {
     posts,
@@ -81,7 +81,7 @@ export const PostsTab: React.FC<PostsTabProps> = ({ userId, currentUser }) => {
               onReact={handleReact}
               onEdit={() => { }}
               onDelete={(id) => setPostToDelete(id)}
-              onViewDetail={(post) => setSelectedPost(post)}
+              onViewDetail={onViewPost}
             />
           ))}
 

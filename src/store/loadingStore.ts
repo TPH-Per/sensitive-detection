@@ -16,6 +16,7 @@ export type LoadingKey =
     | 'feed.create'
     | 'feed.update'
     | 'feed.delete'
+    | 'post.detail'
     | 'contacts'
     | 'contacts.friends'
     | 'contacts.requests'
@@ -54,6 +55,7 @@ const initialLoadingStates: Record<LoadingKey, boolean> = {
     'feed.create': false,
     'feed.update': false,
     'feed.delete': false,
+    'post.detail': false,
     'contacts': false,
     'contacts.friends': false,
     'contacts.requests': false,

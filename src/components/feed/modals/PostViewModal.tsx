@@ -96,40 +96,79 @@ export const PostViewModal: React.FC<PostViewModalProps> = ({
     }));
   }, [post?.media]);
 
-  if (!isOpen) return null;
+  const shouldShowSkeleton = !post;
 
-  if (isLoading || !post) {
+  if (shouldShowSkeleton || !isOpen) {
+    if (!isOpen) return null;
+    
+    const isCinema = post ? (post.media?.length ?? 0) > 0 : false;
+
     return (
       <Modal
         isOpen={isOpen}
         onClose={onClose}
         showHeader={false}
-        maxWidth="4xl"
-        className="!p-0 shadow-none h-full md:h-auto overflow-hidden"
+        maxWidth={isCinema ? 'full' : '2xl'}
+        padding="none"
+        fullScreen={isCinema ? true : 'mobile'}
+        className="transition-all duration-base overflow-hidden"
+        bodyClassName={`overflow-hidden flex flex-col ${isCinema ? 'lg:flex-row h-full' : 'h-auto'}`}
       >
-        <div className="flex flex-col md:flex-row h-full md:h-[600px] bg-bg-primary md:rounded-2xl overflow-hidden">
-          <div className="hidden md:flex flex-[1.5] bg-bg-secondary items-center justify-center border-r border-border-light">
-            <Skeleton className="w-[80%] aspect-video rounded-lg opacity-20" />
+        {/* Skeleton cho phần Media (Cinema) */}
+        {isCinema && (
+          <div className="hidden lg:flex flex-[1.6] bg-[#0a0c10] items-center justify-center border-r border-white/5 shrink-0">
+            <Skeleton className="w-[80%] aspect-video rounded-xl opacity-10" />
           </div>
+        )}
 
-          <div className="flex-1 p-4 flex flex-col h-full">
-            <div className="flex items-center gap-3 mb-4">
-              <Skeleton variant="circle" width={40} height={40} />
-              <div className="space-y-2">
-                <Skeleton width={120} height={16} />
+        {/* Skeleton cho phần Content Panel */}
+        <div className={`flex flex-col bg-bg-primary shrink-0 transition-theme ${isCinema ? 'h-full w-full lg:w-[460px] flex-1 lg:flex-none' : 'w-full h-auto'}`}>
+          {/* Header Skeleton */}
+          <div className="w-full p-4 md:p-5 border-b border-border-light flex items-center shrink-0">
+            <div className="flex gap-3 items-center flex-1">
+              <Skeleton variant="circle" width={42} height={42} />
+              <div className="space-y-1.5 mt-0.5">
+                <Skeleton width={140} height={16} />
                 <Skeleton width={80} height={12} />
               </div>
             </div>
-            <div className="space-y-2 mb-6">
+            <div className="flex gap-1 ml-auto">
+              <Skeleton variant="circle" width={32} height={32} />
+              <Skeleton variant="circle" width={32} height={32} />
+            </div>
+          </div>
+
+          {/* Body Skeleton */}
+          <div className="flex-1 overflow-hidden">
+            <div className="p-5 md:p-6 space-y-3">
               <Skeleton width="100%" height={16} />
               <Skeleton width="100%" height={16} />
               <Skeleton width="70%" height={16} />
             </div>
-            <div className="mt-auto space-y-4">
-              <div className="flex gap-3">
-                <Skeleton variant="circle" width={32} height={32} />
-                <Skeleton className="flex-1 h-8 rounded-full" />
+
+            {/* Stats & Actions Skeleton */}
+            <div className="mt-4">
+              <div className="px-5 md:px-6 py-4 flex justify-between items-center border-b border-border-light/60">
+                <Skeleton width={120} height={14} />
+                <Skeleton width={60} height={14} />
               </div>
+              <div className="flex px-5 py-3 gap-8">
+                <Skeleton width={80} height={20} />
+                <Skeleton width={80} height={20} />
+              </div>
+            </div>
+
+            {/* Comment Section Skeleton */}
+            <div className="p-5 md:p-6 space-y-6 mt-2 opacity-50">
+              {[...Array(3)].map((_, i) => (
+                <div key={i} className="flex gap-3">
+                  <Skeleton variant="circle" width={32} height={32} />
+                  <div className="space-y-2 flex-1">
+                    <Skeleton width="40%" height={14} />
+                    <Skeleton width="90%" height={12} />
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </div>

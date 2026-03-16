@@ -47,10 +47,10 @@ const App: React.FC = () => {
               </ProtectedRoute>
             }>
               <Route index element={<ChatPage />} />
-              <Route path="feed" element={<FeedPage />} />
+              <Route path="feed/*" element={<FeedPage />} />
               <Route path="contacts" element={<ContactsPage />} />
-              <Route path="profile" element={<ProfilePage />} />
-              <Route path="profile/:userId" element={<ProfilePage />} />
+              <Route path="profile/*" element={<ProfilePage />} />
+              <Route path="profile/:userId/*" element={<ProfilePage />} />
               <Route path="settings" element={<SettingsPage />} />
               <Route path="notifications" element={<NotificationsPage />} />
             </Route>

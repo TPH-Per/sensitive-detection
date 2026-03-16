@@ -1,12 +1,12 @@
 import React, { useState, useCallback } from 'react';
 import { StickyNote } from 'lucide-react';
-import { PostItem, PostModal, PostViewModal, CreatePost, FeedSkeleton } from '../components/feed';
+import { PostItem, PostModal, CreatePost, FeedSkeleton } from '../components/feed';
 import { postService } from '../services/postService';
 import { useAuthStore } from '../store/authStore';
 import { usePostStore } from '../store/postStore';
 import { useLoadingStore } from '../store/loadingStore';
 import { Visibility } from '../../shared/types';
-import { useFeed } from '../hooks';
+import { useFeed, usePostNavigation } from '../hooks';
 import { ConfirmDialog } from '../components/ui';
 
 const FeedPage: React.FC = () => {
@@ -23,7 +23,7 @@ const FeedPage: React.FC = () => {
   } = useFeed();
   const isLoadingMore = useLoadingStore(state => state.loadingStates['feed.loadMore']);
 
-  const { selectedPost, setSelectedPost } = usePostStore();
+  const { viewPost } = usePostNavigation();
 
   const [showEditModal, setShowEditModal] = useState<string | null>(null);
   const [postToDelete, setPostToDelete] = useState<string | null>(null);
@@ -98,7 +98,7 @@ const FeedPage: React.FC = () => {
                   onReact={handleReact}
                   onEdit={(postId) => setShowEditModal(postId)}
                   onDelete={(postId) => setPostToDelete(postId)}
-                  onViewDetail={(post) => setSelectedPost(post)}
+                  onViewDetail={viewPost}
                 />
               );
             })}
@@ -129,15 +129,6 @@ const FeedPage: React.FC = () => {
         initialPost={editPost}
         onSubmit={handleEditPost}
         onUploadImages={handleUploadImages}
-      />
-
-      <PostViewModal
-        isOpen={!!selectedPost}
-        onClose={() => setSelectedPost(null)}
-        post={selectedPost}
-        author={selectedPost ? usersMap[selectedPost.authorId] : null}
-        currentUser={currentUser}
-        onReact={handleReact}
       />
 
       <ConfirmDialog
