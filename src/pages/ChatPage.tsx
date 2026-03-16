@@ -265,6 +265,8 @@ const ChatPage: React.FC = () => {
   };
 
   const handleCancelOutgoingCall = async () => {
+    await endCall(otherUserIds);
+
     if (isCaller && callConversationId) {
       const activeCall = await rtdbCallService.getActiveCall(callConversationId);
       if (activeCall?.messageId) {
@@ -272,11 +274,12 @@ const ChatPage: React.FC = () => {
         await rtdbCallService.endActiveCall(callConversationId);
       }
     }
-    await endCall(otherUserIds);
     resetCall();
   };
 
   const handleMissedCallTimeout = async () => {
+    await endCall(otherUserIds);
+
     if (isCaller && callConversationId) {
       const activeCall = await rtdbCallService.getActiveCall(callConversationId);
       if (activeCall?.messageId) {
@@ -284,7 +287,6 @@ const ChatPage: React.FC = () => {
         await rtdbCallService.endActiveCall(callConversationId);
       }
     }
-    await endCall(otherUserIds);
     playSound('busy');
     resetCall();
   };

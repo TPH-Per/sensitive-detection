@@ -255,42 +255,15 @@ const MessageBubbleInner: React.FC<MessageBubbleProps> = ({
                 );
               })()}
 
-              {!message.data.isRecalled && message.data.replyToId && (message.data.type === 'image' || message.data.type === 'video' || message.data.type === 'file') && (
-                <div className="px-3 pt-1.5">
-                    <MessageContent
-                      message={message}
-                      isMe={isMe}
-                      uploadProgress={uploadProgress}
-                      isPlaying={isPlaying}
-                      onToggleVoice={handleToggleVoice}
-                      onOpenImage={setSelectedImageIndex}
-                      onCall={onCall}
-                    />
-                  </div>
-                )}
-
-              {!message.data.isRecalled && (!message.data.replyToId || (message.data.type !== 'image' && message.data.type !== 'video' && message.data.type !== 'file')) && (
-                <MessageContent
-                  message={message}
-                  isMe={isMe}
-                  uploadProgress={uploadProgress}
-                  isPlaying={isPlaying}
-                  onToggleVoice={handleToggleVoice}
-                  onOpenImage={setSelectedImageIndex}
-                />
-              )}
-
-              {message.data.isRecalled && (
-                <MessageContent
-                  message={message}
-                  isMe={isMe}
-                  uploadProgress={uploadProgress}
-                  isPlaying={isPlaying}
-                  onToggleVoice={handleToggleVoice}
-                  onOpenImage={setSelectedImageIndex}
-                  onCall={onCall}
-                />
-              )}
+              <MessageContent
+                message={message}
+                isMe={isMe}
+                uploadProgress={uploadProgress}
+                isPlaying={isPlaying}
+                onToggleVoice={handleToggleVoice}
+                onOpenImage={setSelectedImageIndex}
+                onCall={onCall}
+              />
 
               {/* Thời gian & Trạng thái */}
               {(message.data.type === 'text' || message.data.type === 'call' || message.data.isRecalled) && (

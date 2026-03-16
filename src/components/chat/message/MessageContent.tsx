@@ -318,6 +318,11 @@ const MessageContentInner: React.FC<MessageContentProps> = ({
       const isMissedOrRejected = status === 'missed' || status === 'rejected';
       const iconColor = isMissedOrRejected ? 'text-red-500' : (isMe ? 'text-white' : 'text-primary');
 
+      const buttonClass = `mt-2 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1.5 transition-all outline-none shadow-sm ${isMe
+        ? 'bg-white/20 text-white hover:bg-white/30'
+        : 'bg-bg-primary text-primary hover:bg-bg-secondary border border-border-light/50'
+        }`;
+
       return (
         <div className={`flex flex-col gap-1 w-fit max-w-[260px] ${isMe ? 'items-end' : 'items-start'
           }`}>
@@ -347,12 +352,10 @@ const MessageContentInner: React.FC<MessageContentProps> = ({
                 });
                 window.dispatchEvent(event);
               }}
-              className={`mt-2 px-3 py-1 rounded-full text-xs font-bold transition-all ${isMe
-                ? 'bg-white text-primary hover:bg-white/90'
-                : 'bg-primary text-white hover:bg-primary-dark'
-                }`}
+              className={buttonClass}
             >
-              Tham gia
+              {isVideo ? <Video size={12} /> : <Phone size={12} />}
+              <span>Tham gia</span>
             </button>
           ) : (
             onCall && (
@@ -361,10 +364,7 @@ const MessageContentInner: React.FC<MessageContentProps> = ({
                   e.stopPropagation();
                   onCall();
                 }}
-                className={`mt-2 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1.5 transition-all outline-none ${isMe
-                  ? 'bg-white/20 text-white hover:bg-white/30'
-                  : 'bg-primary/10 text-primary hover:bg-primary/20'
-                  }`}
+                className={buttonClass}
               >
                 {isVideo ? <Video size={12} /> : <Phone size={12} />}
                 <span>{isVideo ? 'Gọi video lại' : 'Gọi lại'}</span>

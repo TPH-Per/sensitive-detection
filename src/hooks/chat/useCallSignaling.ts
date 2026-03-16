@@ -110,20 +110,18 @@ export function useCallSignaling(
     [currentUserId],
   );
 
-    const endCall = useCallback(
+  const endCall = useCallback(
     async (otherUserIds: string[] = []) => {
-      await rtdbCallService.answerCall(currentUserId, currentUserId, 'ended', false);
-      if (otherUserIds.length > 0) {
-        for (const id of otherUserIds) {
-          await rtdbCallService.answerCall(id, currentUserId, 'ended', false);
+      const allIds = Array.from(new Set([currentUserId, ...otherUserIds]));
+      
+      await rtdbCallService.clearSignalingForUsers(allIds);
+
+      if (allIds.length === 2) {
+        const partnerId = otherUserIds[0];
+        if (partnerId) {
+          await rtdbCallService.answerCall(currentUserId, partnerId, 'ended', false);
         }
       }
-      setTimeout(async () => {
-        await rtdbCallService.clearSignaling(currentUserId);
-        if (otherUserIds.length > 0) {
-          await rtdbCallService.clearSignalingForUsers(otherUserIds);
-        }
-      }, 1000);
     },
     [currentUserId],
   );

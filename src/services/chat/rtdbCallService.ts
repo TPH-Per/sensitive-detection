@@ -60,13 +60,16 @@ export const rtdbCallService = {
         status: 'accepted' | 'rejected' | 'ended',
         isGroupCall = false,
     ): Promise<void> => {
-        const updates: Record<string, any> = {
-            [`call_signaling/${calleeId}`]: null,
-        };
+        const updates: Record<string, any> = {};
+        const now = Date.now();
+
+        updates[`call_signaling/${calleeId}`] = null;
 
         if (!isGroupCall) {
-            updates[`call_signaling/${callerId}/status`] = status;
-            updates[`call_signaling/${callerId}/updatedAt`] = Date.now();
+            if (calleeId !== callerId) {
+                updates[`call_signaling/${callerId}/status`] = status;
+                updates[`call_signaling/${callerId}/updatedAt`] = now;
+            }
         }
 
         await update(ref(rtdb), updates);
