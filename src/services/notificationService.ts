@@ -4,7 +4,6 @@ import {
   query,
   where,
   orderBy,
-  Timestamp,
   doc,
   updateDoc,
   setDoc,
@@ -17,14 +16,50 @@ import {
 } from 'firebase/firestore';
 import { getMessaging, getToken, onMessage } from 'firebase/messaging';
 import { db } from '../firebase/config';
+import NotificationSound from '../assets/sounds/message-notification.mp3';
 import type { Notification } from '../../shared/types';
-import { NotificationType, ReportReason } from '../../shared/types';
-import { REPORT_CONFIG } from '../constants/appConfig';
+import { NotificationType } from '../../shared/types';
 import { getValidatedEnvConfig } from '../utils/validateEnv';
 import { convertDocs } from '../utils/firebaseUtils';
 
+const NOTIFICATION_SOUND_URL = NotificationSound;
+let notificationAudio: HTMLAudioElement | null = null;
+
 export const notificationService = {
-  // Theo dõi thông báo mới nhất.
+  // Chuẩn bị sẵn audio (vượt qua chính sách autoplay)
+  unlockAudio: () => {
+    if (notificationAudio) return;
+    notificationAudio = new Audio(NOTIFICATION_SOUND_URL);
+    notificationAudio.load();
+    // Phát thử siêu nhỏ/không tiếng để trình duyệt cấp quyền
+    notificationAudio.play().then(() => {
+      notificationAudio!.pause();
+      notificationAudio!.currentTime = 0;
+    }).catch(() => {
+      // Bỏ qua lỗi nếu vẫn bị chặn ban đầu
+    });
+  },
+
+  // Phát âm báo
+  playSound: (lastPlayedTimestamp: number): number => {
+    const now = Date.now();
+    if (now - lastPlayedTimestamp < 1500) return lastPlayedTimestamp;
+
+    try {
+      if (!notificationAudio) {
+        notificationAudio = new Audio(NOTIFICATION_SOUND_URL);
+      }
+      notificationAudio.currentTime = 0;
+      notificationAudio.volume = 1.0;
+      notificationAudio.play().catch(err => console.debug('Audio play blocked:', err));
+      return now;
+    } catch (err) {
+      console.error('Lỗi khi phát âm thanh:', err);
+      return lastPlayedTimestamp;
+    }
+  },
+
+  // Theo dõi thông báo mới nhất
   subscribeToNotifications: (userId: string, callback: (notifications: Notification[]) => void, limitCount: number = 20) => {
     const q = query(
       collection(db, 'notifications'),
@@ -38,7 +73,7 @@ export const notificationService = {
     });
   },
 
-  // Đánh dấu thông báo là đã đọc
+  // Đánh dấu thông báo đã đọc
   markAsRead: async (notificationId: string): Promise<void> => {
     try {
       const docRef = doc(db, 'notifications', notificationId);
@@ -46,12 +81,12 @@ export const notificationService = {
         isRead: true, 
         updatedAt: serverTimestamp() 
       });
-    } catch (error) {
-      console.error("Lỗi đánh dấu đã đọc:", error);
+    } catch (err) {
+      console.error('Lỗi markAsRead:', err);
     }
   },
 
-  // Đánh dấu tất cả thông báo là đã đọc
+  // Đánh dấu tất cả là đã đọc
   markAllAsRead: async (userId: string): Promise<void> => {
     try {
       const q = query(
@@ -68,22 +103,22 @@ export const notificationService = {
         });
       });
       await batch.commit();
-    } catch (error) {
-      console.error("Lỗi đánh dấu tất cả đã đọc:", error);
+    } catch (err) {
+      console.error('Lỗi markAllAsRead:', err);
     }
   },
 
-  // Xóa một thông báo
+  // Xóa thông báo
   deleteNotification: async (notificationId: string): Promise<void> => {
     try {
       await deleteDoc(doc(db, 'notifications', notificationId));
     } catch (error) {
-      console.error("Lỗi xóa thông báo:", error);
+      console.error('Lỗi deleteNotification:', error);
       throw error;
     }
   },
 
-  // Xóa tất cả thông báo của người dùng
+  // Xóa tất cả thông báo
   deleteAllNotifications: async (userId: string): Promise<void> => {
     try {
       const q = query(
@@ -97,40 +132,45 @@ export const notificationService = {
       });
       await batch.commit();
     } catch (error) {
-      console.error("Lỗi xóa tất cả thông báo:", error);
+      console.error('Lỗi deleteAllNotifications:', error);
       throw error;
     }
   },
 
-  // Yêu cầu quyền FCM và lưu Token
+  // Đăng ký FCM Token
   requestPushPermission: async (userId: string): Promise<string | null> => {
     try {
-      const messaging = getMessaging();
       const permission = await window.Notification.requestPermission();
-
       if (permission === 'granted') {
+        const messaging = getMessaging();
         const { firebase } = getValidatedEnvConfig();
+
+        const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js', {
+          scope: '/'
+        });
+
         const token = await getToken(messaging, {
-          vapidKey: firebase.vapidKey
+          vapidKey: firebase.vapidKey,
+          serviceWorkerRegistration: registration
         });
 
         if (token) {
           await setDoc(
             doc(db, 'users', userId, 'private', 'fcm'),
-            { fcmTokens: arrayUnion(token), createdAt: serverTimestamp(), updatedAt: serverTimestamp() },
+            { fcmTokens: arrayUnion(token), updatedAt: serverTimestamp() },
             { merge: true }
           );
           return token;
         }
       }
       return null;
-    } catch (error) {
-      console.error("Lỗi đăng ký Push:", error);
+    } catch (err) {
+      console.error('Lỗi requestPushPermission:', err);
       return null;
     }
   },
 
-  // Lấy notification hệ thống gần nhất
+  // Lấy thông báo hệ thống mới nhất
   getLatestSystemNotifications: async (userId: string): Promise<Notification[]> => {
     try {
       const q = query(
@@ -142,13 +182,13 @@ export const notificationService = {
       );
       const snapshot = await getDocs(q);
       return convertDocs<Notification>(snapshot.docs);
-    } catch (error) {
-      console.error("Lỗi lấy system notifications:", error);
+    } catch (err) {
+      console.error('Lỗi getLatestSystemNotifications:', err);
       return [];
     }
   },
 
-  // Helper để lấy text hiển thị ngắn gọn cho thông báo
+  // Văn bản hiển thị cho thông báo
   getNotificationText: (notification: Notification, senderName: string): string => {
     const isInteraction = [
       NotificationType.REACTION,
@@ -183,7 +223,39 @@ export const notificationService = {
       default:
         return "Thông báo mới.";
     }
+  },
+
+  // Lắng nghe tin nhắn khi đang mở app
+  initForegroundMessageHandler: (userId: string, selectedConversationId?: string | null) => {
+    try {
+      const messaging = getMessaging();
+      let lastPlayedTimestamp = 0;
+
+      const handlePayload = (payload: any) => {
+        const data = payload.data;
+        if (!data || data.senderId === userId) return;
+
+        // Ưu tiên phát thanh nếu tab không active hoặc đang không ở chính đoạn chat đó
+        const isBackground = document.visibilityState !== 'visible';
+        const isDifferentConversation = selectedConversationId !== data.conversationId;
+
+        if (isBackground || isDifferentConversation) {
+          lastPlayedTimestamp = notificationService.playSound(lastPlayedTimestamp);
+        }
+      };
+
+      const unsubscribeFCM = onMessage(messaging, handlePayload);
+
+      const bc = new BroadcastChannel('fcm_notifications');
+      bc.onmessage = (event) => handlePayload(event.data);
+
+      return () => {
+        unsubscribeFCM();
+        bc.close();
+      };
+    } catch (err) {
+      console.error('Lỗi khởi tạo Handler thông báo:', err);
+      return () => {};
+    }
   }
 };
-
-

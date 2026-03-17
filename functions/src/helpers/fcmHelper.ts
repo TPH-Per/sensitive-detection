@@ -8,6 +8,7 @@ const NOTIFICATION_TITLES: Partial<Record<NotificationType, string>> = {
   [NotificationType.FRIEND_REQUEST]: 'Lời mời kết bạn',
   [NotificationType.SYSTEM]: 'Thông báo hệ thống',
   [NotificationType.REPORT]: 'Báo cáo vi phạm',
+  [NotificationType.CHAT]: 'Tin nhắn mới',
 };
 
 /**
@@ -18,7 +19,7 @@ async function getUserFcmTokens(userId: string): Promise<string[]> {
     const fcmDoc = await db.collection('users').doc(userId)
       .collection('private').doc('fcm').get();
     if (!fcmDoc.exists) return [];
-    return fcmDoc.data()?.tokens || [];
+    return fcmDoc.data()?.fcmTokens || [];
   } catch {
     return [];
   }
@@ -30,7 +31,7 @@ async function removeInvalidToken(userId: string, token: string): Promise<void> 
     const { FieldValue } = await import('firebase-admin/firestore');
     await db.collection('users').doc(userId)
       .collection('private').doc('fcm')
-      .update({ tokens: FieldValue.arrayRemove(token) });
+      .update({ fcmTokens: FieldValue.arrayRemove(token) });
   } catch {
   }
 }
@@ -51,9 +52,14 @@ export async function sendPushNotification(opts: SendPushOptions): Promise<void>
 
   const title = NOTIFICATION_TITLES[type] || 'Thông báo mới';
 
-  const message = {
-    notification: { title, body },
-    data: { type, ...data },
+  // Luôn dùng data-only để SW/Frontend chủ động xử lý âm thanh/UI
+  const message: any = {
+    data: { 
+      type, 
+      title, 
+      body, 
+      ...data 
+    },
     tokens,
   };
 
@@ -76,7 +82,6 @@ export async function sendPushNotification(opts: SendPushOptions): Promise<void>
     if (failedTokens.length > 0) {
       await Promise.all(failedTokens.map((token) => removeInvalidToken(receiverId, token)));
     }
-  } catch (error) {
-    console.error('[FCM] Lỗi gửi push notification:', error);
+  } catch {
   }
 }

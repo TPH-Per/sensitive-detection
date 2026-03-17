@@ -5,10 +5,7 @@ import { userService } from '../../services/userService';
 import { friendService } from '../../services/friendService';
 import { useAuthStore } from '../authStore';
 import { useLoadingStore } from '../loadingStore';
-import NotificationSound from '../../assets/sounds/message-notification.mp3';
 import type { RtdbChatState } from '../rtdbChatStore';
-
-let lastPlayedId = '';
 
 export interface RtdbConversationSlice {
     conversations: Array<{ id: string; data: RtdbConversation; userChat: RtdbUserChat }>;
@@ -55,23 +52,6 @@ export const createRtdbConversationSlice: StateCreator<RtdbChatState, [], [], Rt
         useLoadingStore.getState().setLoading('chat', !hasCache);
 
         const unsubscribe = rtdbConversationService.subscribeToUserConversations(userId, (conversations) => {
-            // Sound notification
-            const prevConversations = get().conversations;
-            if (prevConversations.length > 0) {
-                conversations.forEach(conv => {
-                    const lastMsg = conv.data.lastMessage;
-                    const isUnread = conv.userChat.unreadCount > 0;
-                    const isMuted = conv.userChat.isMuted;
-                    const isViewingThisConv = get().isChatVisible && conv.id === get().selectedConversationId;
-
-                    if (lastMsg && lastMsg.timestamp.toString() !== lastPlayedId && isUnread &&
-                        lastMsg.senderId !== userId && !isMuted && !isViewingThisConv) {
-                        lastPlayedId = lastMsg.timestamp.toString();
-                        new Audio(NotificationSound).play().catch(err => console.debug("Autoplay blocked:", err));
-                    }
-                });
-            }
-
             set({ conversations });
             useLoadingStore.getState().setLoading('chat', false);
         });

@@ -7,6 +7,7 @@ import { ReportModal } from './components/ui/ReportModal';
 import { AdminLayout } from './components/layout/AdminLayout';
 import { ProtectedRoute } from './components/layout/ProtectedRoute';
 import { useSelfPresence } from './hooks/useSelfPresence';
+import { useNotifications } from './hooks/useNotifications';
 import LoginPage from './pages/LoginPage';
 import ChatPage from './pages/ChatPage';
 
@@ -33,6 +34,8 @@ const App: React.FC = () => {
 
   // Quản lý trạng thái Online/Offline của bản thân
   useSelfPresence(user);
+  // Quản lý thông báo tập trung
+  useNotifications();
 
   return (
     <ErrorBoundary>

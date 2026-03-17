@@ -1,5 +1,5 @@
 import { onValueCreated } from 'firebase-functions/v2/database';
-import { db } from '../app';
+import { rtdb } from '../app';
 import { NotificationType } from '../types';
 import { createNotification, getSenderName, buildPushBody } from '../helpers/notificationHelper';
 import { sendPushNotification } from '../helpers/fcmHelper';
@@ -18,14 +18,23 @@ export const onMessageCreated = onValueCreated(
 
     const { convId } = event.params;
     const { senderId, content, type, mentions = [] } = message;
+    if (type === 'system') return;
 
     try {
-      const convSnap = await db.collection('conversations').doc(convId).get();
-      if (!convSnap.exists) return;
+      // Lấy thông tin hội thoại từ Realtime Database thay vì Firestore
+      const convRef = rtdb.ref(`conversations/${convId}`);
+      const convSnap = await convRef.get();
+      
+      if (!convSnap.exists()) {
+        console.log(`[onMessageCreated] Hội thoại ${convId} không tồn tại trong RTDB.`);
+        return;
+      }
 
-      const conversation = convSnap.data()!;
+      const conversation = convSnap.val();
       const members = conversation.members || {};
       const isGroup = !!conversation.isGroup;
+      
+      // Tìm danh sách người nhận (tất cả mọi người trừ người gửi)
       const memberIds = Object.keys(members).filter(id => id !== senderId);
 
       const senderName = await getSenderName(senderId);
@@ -78,7 +87,11 @@ export const onMessageCreated = onValueCreated(
           receiverId,
           type: notificationType,
           body,
-          data: { convId },
+          data: { 
+            convId,
+            senderName,
+            contentSnippet
+          },
         });
       }
     } catch (error) {

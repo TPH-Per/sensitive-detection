@@ -20,6 +20,7 @@ export async function createNotification(data: NotificationData): Promise<string
  * Lấy tên người gửi
  */
 export async function getSenderName(senderId: string): Promise<string> {
+  if (senderId === 'system') return 'Hệ thống';
   try {
     const userDoc = await db.collection('users').doc(senderId).get();
     return userDoc.data()?.fullName || 'Ai đó';
