@@ -17,8 +17,9 @@ import { NotificationDropdown } from '../notifications/NotificationDropdown';
 import { useUnreadCount } from '../../hooks/utils/useUnreadCount';
 import { useLogout } from '../../hooks/utils/useLogout';
 import { useCallStore } from '../../store/callStore';
-import { useGlobalCall } from '../../hooks/chat/useGlobalCall';
+import { useCallManager } from '../../hooks/chat/useCallManager';
 import { IncomingCallDialog } from '../chat/call/IncomingCallDialog';
+import { OutgoingCallDialog } from '../chat/call/OutgoingCallDialog';
 import { CallWindow } from '../chat/call/CallWindow';
 import { CONFIRM_MESSAGES } from '../../constants';
 
@@ -45,20 +46,8 @@ export const AppLayout: React.FC = () => {
 
   const isChatRoom = location.pathname === '/' && !!selectedConversationId;
 
-  // Global Call State
-  const { callPhase, activeRoomId, callType, isGroupCall, otherUserIds, resetCall } = useCallStore();
-
-  const {
-    incomingCall,
-    endCall,
-    syncActions,
-    handleAcceptIncoming,
-    handleRejectIncoming,
-  } = useGlobalCall(user?.id || '');
-
-  useEffect(() => {
-    syncActions();
-  }, [syncActions]);
+  // Global Call Manager
+  const { phase, session, incomingSignal, acceptCall, rejectCall, endCall } = useCallManager(user?.id || '');
 
   useEffect(() => {
     if (!user) return;
@@ -317,26 +306,36 @@ export const AppLayout: React.FC = () => {
       )}
 
       {/* Global Call UI */}
-      {incomingCall && callPhase === 'idle' && (
+      {phase === 'incoming' && incomingSignal && (
         <IncomingCallDialog
-          callerName={incomingCall.callerName!}
-          callerId={incomingCall.callerId}
-          callType={incomingCall.callType}
-          isGroupCall={incomingCall.isGroupCall}
-          onAccept={handleAcceptIncoming}
-          onReject={handleRejectIncoming}
+          callerName={incomingSignal.callerName!}
+          callerId={incomingSignal.callerId}
+          callType={incomingSignal.callType}
+          isGroupCall={incomingSignal.isGroupCall}
+          onAccept={acceptCall}
+          onReject={rejectCall}
         />
       )}
 
-      {user && callPhase === 'in-call' && activeRoomId && (
+      {phase === 'outgoing' && session && (
+        <OutgoingCallDialog
+          calleeName={session.calleeName || "Đang gọi..."}
+          calleeId={session.participants[0]}
+          calleeAvatar={session.calleeAvatar}
+          callType={session.callType}
+          onCancel={() => endCall('missed')}
+        />
+      )}
+
+      {user && phase === 'in-call' && session && (
         <CallWindow
-          roomId={activeRoomId}
+          roomId={session.conversationId}
           userId={user.id}
           userName={user.fullName}
           userAvatar={user.avatar.url}
-          isGroupCall={isGroupCall}
-          callType={callType}
-          onClose={resetCall}
+          isGroupCall={session.isGroupCall}
+          callType={session.callType}
+          onClose={() => endCall('ended')}
         />
       )}
     </div>

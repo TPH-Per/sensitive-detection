@@ -6,6 +6,7 @@ import waitRingSound from '../../../assets/sounds/wait_ring.mp3';
 interface OutgoingCallDialogProps {
   calleeName: string;
   calleeId: string;
+  calleeAvatar?: string;
   callType: 'voice' | 'video';
   onCancel: () => void;
   onTimeout?: () => void;
@@ -14,6 +15,7 @@ interface OutgoingCallDialogProps {
 export const OutgoingCallDialog: React.FC<OutgoingCallDialogProps> = ({
   calleeName,
   calleeId,
+  calleeAvatar,
   callType,
   onCancel,
   onTimeout,
@@ -53,7 +55,7 @@ export const OutgoingCallDialog: React.FC<OutgoingCallDialogProps> = ({
           {callType === 'video' ? 'Cuộc gọi video' : 'Cuộc gọi thoại'}
         </p>
 
-        <UserAvatar userId={calleeId} name={calleeName} size="xl" />
+        <UserAvatar userId={calleeId} name={calleeName} src={calleeAvatar} size="xl" />
 
         <div className="text-center">
           <h3 className="text-white text-xl font-semibold">{calleeName}</h3>

@@ -214,6 +214,12 @@ export interface RtdbUserChat {
     updatedAt: number;
 }
 
+export interface CallMessagePayload {
+    callType: 'voice' | 'video';
+    status: 'started' | 'ended' | 'missed' | 'rejected' | 'busy';
+    duration?: number;
+}
+
 export interface RtdbMessage {
     senderId: string;
     type: MessageType;
@@ -245,7 +251,7 @@ export interface RtdbCallSignaling {
     callerAvatar: string;
     conversationId: string;
     callType: 'voice' | 'video';
-    status: 'ringing' | 'accepted' | 'rejected' | 'ended';
+    status: 'ringing' | 'accepted' | 'rejected' | 'ended' | 'busy';
     isGroupCall?: boolean;
     timestamp: number;
     createdAt: number;

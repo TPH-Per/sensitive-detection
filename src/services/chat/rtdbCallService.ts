@@ -1,4 +1,4 @@
-import { ref, set, get, update, remove, onValue, off } from 'firebase/database';
+import { ref, set, get, update, remove, onValue, off, onDisconnect } from 'firebase/database';
 import { doc, getDoc } from 'firebase/firestore';
 import { rtdb, db } from '../../firebase/config';
 import { RtdbCallSignaling } from '../../../shared/types';
@@ -54,22 +54,23 @@ export const rtdbCallService = {
         return { success: true };
     },
 
+    /**
+     * Phản hồi cuộc gọi (Chấp nhận/Từ chối/Bận/Kết thúc)
+     */
     answerCall: async (
         calleeId: string,
         callerId: string,
-        status: 'accepted' | 'rejected' | 'ended',
+        status: 'accepted' | 'rejected' | 'ended' | 'busy',
         isGroupCall = false,
     ): Promise<void> => {
-        const updates: Record<string, any> = {};
         const now = Date.now();
+        const updates: Record<string, any> = {};
 
         updates[`call_signaling/${calleeId}`] = null;
 
-        if (!isGroupCall) {
-            if (calleeId !== callerId) {
-                updates[`call_signaling/${callerId}/status`] = status;
-                updates[`call_signaling/${callerId}/updatedAt`] = now;
-            }
+        if (!isGroupCall && calleeId !== callerId) {
+            updates[`call_signaling/${callerId}/status`] = status;
+            updates[`call_signaling/${callerId}/updatedAt`] = now;
         }
 
         await update(ref(rtdb), updates);
@@ -111,13 +112,19 @@ export const rtdbCallService = {
         callType: 'voice' | 'video',
         messageId: string,
     ): Promise<void> => {
-        await set(ref(rtdb, `conversations/${convId}/activeCall`), {
+        const activeCallRef = ref(rtdb, `conversations/${convId}/activeCall`);
+        const participantRef = ref(rtdb, `conversations/${convId}/activeCall/participants/${callerId}`);
+        
+        await set(activeCallRef, {
             callerId,
             callType,
             messageId,
             startedAt: Date.now(),
-            participants: { [callerId]: true },
+            participants: { [callerId]: Date.now() },
         });
+
+        // Tự động dọn dẹp khi mất kết nối
+        onDisconnect(participantRef).remove();
     },
 
     updateCallParticipant: async (
@@ -127,9 +134,11 @@ export const rtdbCallService = {
     ): Promise<void> => {
         const participantRef = ref(rtdb, `conversations/${convId}/activeCall/participants/${userId}`);
         if (isJoining) {
-            await set(participantRef, true);
+            await set(participantRef, Date.now());
+            onDisconnect(participantRef).remove();
         } else {
             await remove(participantRef);
+            onDisconnect(participantRef).cancel();
         }
     },
 
@@ -138,7 +147,7 @@ export const rtdbCallService = {
         callType: 'voice' | 'video';
         messageId: string;
         startedAt: number;
-        participants?: Record<string, boolean>;
+        participants?: Record<string, number>;
     } | null> => {
         const snapshot = await get(ref(rtdb, `conversations/${convId}/activeCall`));
         return snapshot.exists() ? snapshot.val() : null;
@@ -146,5 +155,30 @@ export const rtdbCallService = {
 
     endActiveCall: async (convId: string): Promise<void> => {
         await remove(ref(rtdb, `conversations/${convId}/activeCall`));
+    },
+
+    endCallSession: async (
+        convId: string,
+        updateMessageFn: (convId: string, msgId: string, payload: any) => Promise<void>,
+        status: 'ended' | 'missed' | 'rejected' | 'busy' = 'ended'
+    ): Promise<void> => {
+        try {
+            const activeCall = await rtdbCallService.getActiveCall(convId);
+            if (!activeCall) return;
+
+            if (activeCall.messageId) {
+                const duration = Math.max(0, Math.floor((Date.now() - activeCall.startedAt) / 1000));
+                
+                await updateMessageFn(convId, activeCall.messageId, {
+                    callType: activeCall.callType,
+                    status: status,
+                    duration: status === 'ended' ? duration : 0,
+                });
+            }
+
+            await rtdbCallService.endActiveCall(convId);
+        } catch (error) {
+            console.error('[rtdbCallService] Lỗi endCallSession:', error);
+        }
     },
 };

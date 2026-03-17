@@ -241,23 +241,24 @@ _Mô tả: Lưu cấu trúc Core của Nhóm chat và Chat 1-1, cấu hình Grou
 
 _Mô tả: Nơi lưu raw data từng cục tin nhắn riêng lẻ được gắn theo ID nhóm chat._
 
-| Field         | Type        | Required/Optional | Description/Default                                         |
-| :------------ | :---------- | :---------------- | :---------------------------------------------------------- |
-| `senderId`    | String      | **Required**      | ID người gửi                                                |
-| `type`        | String Enum | **Required**      | `text`, `image`, `video`, `file`, `voice`, `system`, `call` |
-| `content`     | String      | **Required**      | Nội dung tin nhắn                                           |
-| `createdAt`   | Number      | **Required**      | Timestamp tạo                                               |
-| `media`       | Array       | _Optional_        | Danh sách file đính kèm                                     |
-| `mentions`    | Array       | _Optional_        | Danh sách UID được nhắc tên                                 |
-| `isForwarded` | Boolean     | _Optional_        | Tin nhắn chuyển tiếp                                        |
-| `replyToId`   | String      | _Optional_        | ID tin nhắn phản hồi                                        |
-| `isEdited`    | Boolean     | _Optional_        | Đã chỉnh sửa. Mặc định `false`                              |
-| `isRecalled`  | Boolean     | _Optional_        | Đã thu hồi. Mặc định `false`                                |
-| `deletedBy`   | Map         | _Optional_        | Danh sách người đã xóa (UID: true)                          |
-| `readBy`      | Map         | _Optional_        | Trạng thái đã xem (UID: Timestamp)                          |
-| `deliveredTo` | Map         | _Optional_        | Trạng thái đã phát (UID: Timestamp)                         |
-| `reactions`   | Map         | _Optional_        | Cảm xúc (UID: Type)                                         |
-| `updatedAt`   | Number      | **Required**      | Timestamp cập nhật                                          |
+| Field         | Type        | Required/Optional | Description/Default                                                                                                       |
+| :------------ | :---------- | :---------------- | :------------------------------------------------------------------------------------------------------------------------ |
+| `senderId`    | String      | **Required**      | ID người gửi                                                                                                              |
+| `type`        | String Enum | **Required**      | `text`, `image`, `video`, `file`, `voice`, `system`, `call`                                                               |
+| `content`     | String      | **Required**      | Nội dung tin nhắn                                                                                                         |
+| `createdAt`   | Number      | **Required**      | Timestamp tạo                                                                                                             |
+| `media`       | Array       | _Optional_        | Danh sách file đính kèm                                                                                                   |
+| `mentions`    | Array       | _Optional_        | Danh sách UID được nhắc tên                                                                                               |
+| `isForwarded` | Boolean     | _Optional_        | Tin nhắn chuyển tiếp                                                                                                      |
+| `replyToId`   | String      | _Optional_        | ID tin nhắn phản hồi                                                                                                      |
+| `isEdited`    | Boolean     | _Optional_        | Đã chỉnh sửa. Mặc định `false`                                                                                            |
+| `isRecalled`  | Boolean     | _Optional_        | Đã thu hồi. Mặc định `false`                                                                                              |
+| `deletedBy`   | Map         | _Optional_        | Danh sách người đã xóa (UID: true)                                                                                        |
+| `readBy`      | Map         | _Optional_        | Trạng thái đã xem (UID: Timestamp)                                                                                        |
+| `deliveredTo` | Map         | _Optional_        | Trạng thái đã phát (UID: Timestamp)                                                                                       |
+| `payload`     | Object      | _Optional_        | **Chỉ dành cho `type: call`**: `{ callType, status, duration }`. Status: `started`, `ended`, `missed`, `rejected`, `busy` |
+| `reactions`   | Map         | _Optional_        | Cảm xúc (UID: Type)                                                                                                       |
+| `updatedAt`   | Number      | **Required**      | Timestamp cập nhật                                                                                                        |
 
 ### 4. Node `user_chats`
 
@@ -279,15 +280,15 @@ _Mô tả: Bảng Metadata cắm theo cấu trúc của User (Ghim, Tắt thông
 
 _Mô tả: Bảng tạm (Ephemeral) để báo hiệu cuộc gọi tới các User._
 
-| Field            | Type        | Required/Optional | Description/Default                        |
-| :--------------- | :---------- | :---------------- | :----------------------------------------- |
-| `callerId`       | String      | **Required**      | ID người gọi                               |
-| `callerName`     | String      | **Required**      | Tên người gọi                              |
-| `callerAvatar`   | String      | **Required**      | Ảnh người gọi                              |
-| `conversationId` | String      | **Required**      | ID hội thoại                               |
-| `callType`       | String Enum | **Required**      | `voice`, `video`                           |
-| `status`         | String Enum | **Required**      | `ringing`, `accepted`, `rejected`, `ended` |
-| `timestamp`      | Number      | **Required**      | Timestamp tín hiệu                         |
-| `isGroupCall`    | Boolean     | _Optional_        | Gọi nhóm. Mặc định `false`                 |
-| `createdAt`      | Number      | **Required**      | Timestamp tạo                              |
-| `updatedAt`      | Number      | **Required**      | Timestamp cập nhật                         |
+| Field            | Type        | Required/Optional | Description/Default                                |
+| :--------------- | :---------- | :---------------- | :------------------------------------------------- |
+| `callerId`       | String      | **Required**      | ID người gọi                                       |
+| `callerName`     | String      | **Required**      | Tên người gọi                                      |
+| `callerAvatar`   | String      | **Required**      | Ảnh người gọi                                      |
+| `conversationId` | String      | **Required**      | ID hội thoại                                       |
+| `callType`       | String Enum | **Required**      | `voice`, `video`                                   |
+| `status`         | String Enum | **Required**      | `ringing`, `accepted`, `rejected`, `ended`, `busy` |
+| `timestamp`      | Number      | **Required**      | Timestamp tín hiệu                                 |
+| `isGroupCall`    | Boolean     | _Optional_        | Gọi nhóm. Mặc định `false`                         |
+| `createdAt`      | Number      | **Required**      | Timestamp tạo                                      |
+| `updatedAt`      | Number      | **Required**      | Timestamp cập nhật                                 |

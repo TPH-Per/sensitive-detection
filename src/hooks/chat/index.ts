@@ -8,6 +8,5 @@ export { useMentions } from './useMentions';
 export { useConversationItem } from './useConversationItem';
 export { useConversationGroups } from './useConversationGroups';
 export { useConversationParticipants } from './useConversationParticipants';
-export { useGlobalCall } from './useGlobalCall';
-export { useCallSignaling } from './useCallSignaling';
+export { useCallManager } from './useCallManager';
 export { useCallSounds } from './useCallSounds';
