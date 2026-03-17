@@ -12,6 +12,7 @@ interface ImageCropperProps {
   onCropComplete: (croppedFile: File, shouldShare: boolean) => void;
   onImageChange?: (file: File) => void;
   onCancel: () => void;
+  showShareOption?: boolean;
 }
 
 export const ImageCropper: React.FC<ImageCropperProps> = ({
@@ -21,7 +22,8 @@ export const ImageCropper: React.FC<ImageCropperProps> = ({
   title = 'Cắt ảnh',
   onCropComplete,
   onImageChange,
-  onCancel
+  onCancel,
+  showShareOption = false
 }) => {
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
@@ -89,14 +91,16 @@ export const ImageCropper: React.FC<ImageCropperProps> = ({
       padding="none"
       footer={
         <div className="flex flex-col w-full gap-4">
-          <div className="flex items-center px-1">
-            <Checkbox
-              id="should-share-to-feed"
-              label="Chia sẻ lên bảng tin"
-              checked={shouldShare}
-              onChange={(e) => setShouldShare(e.target.checked)}
-            />
-          </div>
+          {showShareOption && (
+            <div className="flex items-center px-1">
+              <Checkbox
+                id="should-share-to-feed"
+                label="Chia sẻ lên bảng tin"
+                checked={shouldShare}
+                onChange={(e) => setShouldShare(e.target.checked)}
+              />
+            </div>
+          )}
           <div className="flex items-center justify-between w-full">
             <div className="flex gap-2">
               <Button

@@ -198,6 +198,7 @@ export const EditGroupModal: React.FC<EditGroupModalProps> = ({
           title="Cắt ảnh nhóm"
           onCropComplete={handleCropComplete}
           onCancel={handleCropCancel}
+          showShareOption={false}
         />
       )}
     </>

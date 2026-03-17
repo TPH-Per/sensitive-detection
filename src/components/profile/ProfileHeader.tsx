@@ -431,6 +431,7 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
           onCropComplete={handleCropComplete}
           onImageChange={handleImageChange}
           onCancel={handleCropCancel}
+          showShareOption={true}
         />
       )}
     </>
