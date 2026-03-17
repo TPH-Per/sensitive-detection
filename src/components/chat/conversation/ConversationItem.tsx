@@ -240,7 +240,7 @@ const ConversationItemInner: React.FC<ConversationItemProps> = ({
           {onBlock && !conversation.data.isGroup && (
             <DropdownItem
               icon={<Ban size={16} />}
-              label="Chặn"
+              label="Quản lý chặn"
               variant="danger"
               onClick={() => { onBlock?.(); setIsMenuOpen(false); }}
             />

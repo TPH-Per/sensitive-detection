@@ -332,7 +332,7 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                   >
                     <DropdownItem
                       icon={<UserCheck size={16} />}
-                      label="Bỏ chặn"
+                      label="Quản lý chặn"
                       onClick={onUnblockClick || (() => { })}
                     />
                     <DropdownItem

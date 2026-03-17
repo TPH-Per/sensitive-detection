@@ -3,7 +3,6 @@ import { RtdbMessage, User, RtdbConversation, RtdbUserChat } from '../../../shar
 import { Loading } from '../ui';
 import { ChatBoxSkeleton } from './ChatBoxSkeleton';
 import { MessageRequestBanner } from './message/MessageRequestBanner';
-import { BlockedUserBanner } from './BlockedUserBanner';
 import { useChatScroll } from '../../hooks/chat/useChatScroll';
 import { ChatBoxHeader } from './ChatBoxHeader';
 import { MessageList } from './MessageList';
@@ -35,7 +34,10 @@ interface ChatBoxProps {
   onLoadMore?: () => void;
   isBlocked?: boolean;
   isBlockedByMe?: boolean;
+  myBlockOptions?: { blockMessages: boolean; blockCalls: boolean; blockViewMyActivity: boolean; hideTheirActivity: boolean };
   onUnblock?: () => void;
+  onManageBlock?: () => void;
+  shouldShowBlockBanner?: boolean;
   onCall?: (isVideo: boolean) => void;
   onVideoCall?: () => void;
   canCall?: boolean;
@@ -66,7 +68,10 @@ export const ChatBox: React.FC<ChatBoxProps> = ({
   onLoadMore,
   isBlocked = false,
   isBlockedByMe = false,
+  myBlockOptions,
   onUnblock,
+  onManageBlock,
+  shouldShowBlockBanner = false,
   onCall,
   onVideoCall,
   canCall = true,
@@ -216,13 +221,6 @@ export const ChatBox: React.FC<ChatBoxProps> = ({
           </div>
         )}
       </div>
-
-      {isBlockedByMe && partner && onUnblock && !conversation.data.isGroup && (
-        <BlockedUserBanner
-          partnerName={partner.fullName || 'Người dùng'}
-          onUnblock={onUnblock}
-        />
-      )}
 
       {!conversation.data.isDisbanded && (
         <TypingIndicator

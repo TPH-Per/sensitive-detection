@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Send, X, Edit2, Reply, Pause, Play } from 'lucide-react';
+import { Send, X, Edit2, Reply, Pause, Play, Ban } from 'lucide-react';
 import { EmojiPicker, Button, IconButton, TextArea } from '../../ui';
 import { MentionList } from './MentionList';
 import { FilePreview, FilePreviewItem } from './FilePreview';
@@ -31,6 +31,7 @@ interface ChatInputProps {
   isGroup?: boolean;
   isDisbanded?: boolean;
   onDeleteConversation?: () => void;
+  onManageBlock?: () => void;
 }
 
 export const ChatInput: React.FC<ChatInputProps> = ({
@@ -51,7 +52,8 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   participants = [],
   isGroup = false,
   isDisbanded = false,
-  onDeleteConversation
+  onDeleteConversation,
+  onManageBlock
 }) => {
   const [inputText, setInputText] = useState('');
   const [activeMentions, setActiveMentions] = useState<{ id: string; name: string }[]>([]);
@@ -330,20 +332,38 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   if (blockedMessage || isDisbanded) {
     return (
       <div className="flex-shrink-0 border-t border-border-light bg-bg-primary pb-safe z-30">
-        <div className="flex flex-col items-center justify-center px-4 py-4 gap-3">
-          <span className="text-text-tertiary text-sm">
-            {isDisbanded ? 'Nhóm này đã giải tán.' : blockedMessage}
-          </span>
-          {isDisbanded && onDeleteConversation && (
-            <Button
-              onClick={onDeleteConversation}
-              variant="danger"
-              size="sm"
-              className="rounded-full px-6"
-            >
-              Xóa hội thoại
-            </Button>
-          )}
+        <div className="flex flex-row items-center justify-between px-4 py-3 gap-3">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-8 h-8 rounded-full bg-error-light flex items-center justify-center flex-shrink-0">
+              <Ban size={16} className="text-error" />
+            </div>
+            <span className="text-text-secondary text-sm font-medium truncate">
+              {isDisbanded ? 'Nhóm này đã giải tán.' : blockedMessage}
+            </span>
+          </div>
+          
+          <div className="flex items-center gap-2 flex-shrink-0">
+            {isDisbanded && onDeleteConversation && (
+              <Button
+                onClick={onDeleteConversation}
+                variant="danger"
+                size="sm"
+                className="rounded-xl px-4"
+              >
+                Xóa hội thoại
+              </Button>
+            )}
+            {!isDisbanded && onManageBlock && (
+              <Button
+                onClick={onManageBlock}
+                variant="primary"
+                size="sm"
+                className="rounded-xl px-4"
+              >
+                Quản lý chặn
+              </Button>
+            )}
+          </div>
         </div>
       </div>
     );
@@ -443,11 +463,11 @@ export const ChatInput: React.FC<ChatInputProps> = ({
 
         <Button
           type="submit"
-          disabled={disabled || (!inputText.trim() && selectedFiles.length === 0)}
+          disabled={disabled || !!blockedMessage || (!inputText.trim() && selectedFiles.length === 0)}
           isLoading={isSending}
-          variant={(inputText.trim() || selectedFiles.length > 0) ? 'primary' : 'secondary'}
-          className={`w-11 h-11 shadow-md rounded-full flex-shrink-0 ${(inputText.trim() || selectedFiles.length > 0) ? '' : 'opacity-40'}`}
-          icon={<Send size={20} className={inputText.trim() || selectedFiles.length > 0 ? 'fill-current' : ''} />}
+          variant={(inputText.trim() || selectedFiles.length > 0) && !blockedMessage ? 'primary' : 'secondary'}
+          className={`w-11 h-11 shadow-md rounded-full flex-shrink-0 ${((inputText.trim() || selectedFiles.length > 0) && !blockedMessage) ? '' : 'opacity-40'}`}
+          icon={<Send size={20} className={(inputText.trim() || selectedFiles.length > 0) && !blockedMessage ? 'fill-current' : ''} />}
         />
       </form>
     </div>

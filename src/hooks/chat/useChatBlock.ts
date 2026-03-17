@@ -41,9 +41,8 @@ export const useChatBlock = ({
   const isBlockedByMe = !!myBlockOptions;
   const isMessageBlockedByMe = !!myBlockOptions?.blockMessages;
   const isCallBlockedByMe = !!myBlockOptions?.blockCalls;
-
-  // Bị partner chặn tin nhắn
   const isBlocked = isMessageBlockedByMe || isBlockedByPartner;
+  const shouldShowBlockBanner = isBlockedByMe;
 
   useEffect(() => {
     if (!partnerId) {
@@ -144,5 +143,6 @@ export const useChatBlock = ({
     handleApplyBlock,
     handleUnblock,
     blockedMessage,
+    shouldShowBlockBanner,
   };
 };

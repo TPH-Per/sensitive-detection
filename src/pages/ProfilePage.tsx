@@ -47,6 +47,7 @@ const ProfilePage: React.FC = () => {
     handleOpenBlockModal,
     handleApplyBlock,
     handleUnblockUser,
+    confirmUnblock,
     closeBlockModal,
   } = useProfile();
 
@@ -244,7 +245,7 @@ const ProfilePage: React.FC = () => {
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               {isBlockedByMe ? (
                 <Button onClick={handleUnblockUser} variant="primary" className="px-8">
-                  Bỏ chặn
+                  Quản lý chặn
                 </Button>
               ) : (
                 <Button onClick={() => navigate(-1)} variant="ghost">Quay lại</Button>
@@ -281,6 +282,7 @@ const ProfilePage: React.FC = () => {
         targetName={profile.fullName}
         initialOptions={currentBlockOptions}
         onApply={handleApplyBlock}
+        onUnblock={confirmUnblock}
         onClose={closeBlockModal}
       />
     </div>

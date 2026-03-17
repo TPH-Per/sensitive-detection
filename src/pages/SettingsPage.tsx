@@ -14,6 +14,8 @@ import {
   Globe,
   Users,
   Lock,
+  MessageSquareOff,
+  PhoneOff,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
@@ -81,15 +83,16 @@ const SettingItem = React.memo(({
 
 // Tag hiển thị options đang active
 const BlockOptionTags: React.FC<{ options: BlockOptions }> = ({ options }) => {
-  const tags: { icon: React.ReactNode; label: string }[] = [];
-  if (options.blockMessages) tags.push({ icon: <MessageCircle size={10} />, label: 'Tin nhắn' });
-  if (options.blockCalls) tags.push({ icon: <Phone size={10} />, label: 'Gọi điện' });
-  if (options.blockViewMyActivity || options.hideTheirActivity) tags.push({ icon: <EyeOff size={10} />, label: 'Nhật ký' });
+  const tags: { icon: React.ReactNode; label: string; color: string }[] = [];
+  if (options.blockMessages) tags.push({ icon: <MessageSquareOff size={10} />, label: 'Tin nhắn', color: 'text-error bg-error-light/10 border-error/20' });
+  if (options.blockCalls) tags.push({ icon: <PhoneOff size={10} />, label: 'Cuộc gọi', color: 'text-warning bg-warning-light/10 border-warning/20' });
+  if (options.blockViewMyActivity) tags.push({ icon: <EyeOff size={10} />, label: 'Xem mình', color: 'text-primary bg-primary-light/10 border-primary/20' });
+  if (options.hideTheirActivity) tags.push({ icon: <EyeOff size={10} />, label: 'Ẩn họ', color: 'text-secondary bg-secondary-light/10 border-secondary/20' });
 
   return (
-    <div className="flex gap-1 flex-wrap mt-1">
+    <div className="flex gap-1.5 flex-wrap mt-1.5">
       {tags.map(t => (
-        <span key={t.label} className="flex items-center gap-1 text-[10px] text-text-tertiary bg-bg-secondary px-1.5 py-0.5 rounded-full border border-border-light">
+        <span key={t.label} className={`flex items-center gap-1 text-[10px] sm:text-[11px] font-medium px-2 py-0.5 rounded-full border ${t.color}`}>
           {t.icon} {t.label}
         </span>
       ))}
@@ -360,34 +363,28 @@ const SettingsPage: React.FC = () => {
                 {blockedList.map(({ user, options }) => (
                   <div
                     key={user.id}
-                    className="flex items-center gap-3 p-3 border-b border-border-light last:border-b-0"
+                    className="flex items-center gap-4 p-4 border-b border-border-light last:border-b-0 hover:bg-bg-hover transition-colors"
                   >
                     <UserAvatar
                       userId={user.id}
                       src={user.avatar.url}
                       name={user.fullName}
-                      size="md"
+                      size="lg"
+                      className="border-2 border-border-light"
                     />
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-medium text-text-primary truncate">{user.fullName}</h3>
+                      <h3 className="font-bold text-text-primary truncate">{user.fullName}</h3>
                       <BlockOptionTags options={options} />
                     </div>
                     <div className="flex items-center gap-2 flex-shrink-0">
                       <Button
-                        variant="secondary"
-                        size="sm"
+                        variant="primary"
+                        size="md"
                         onClick={() => setManageBlockTarget({ user, options })}
-                        icon={<Settings2 size={14} />}
+                        icon={<Settings2 size={16} />}
+                        className="rounded-xl px-4"
                       >
-                        Chỉnh sửa
-                      </Button>
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        onClick={() => setUnblockUserId(user.id)}
-                        icon={<UserCheck size={16} />}
-                      >
-                        Bỏ chặn
+                        Quản lý chặn
                       </Button>
                     </div>
                   </div>

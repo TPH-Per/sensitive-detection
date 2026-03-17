@@ -12,6 +12,7 @@ interface BlockOptionsModalProps {
   targetName: string;
   initialOptions?: Partial<BlockOptions>;
   onApply: (options: BlockOptions) => Promise<void>;
+  onUnblock?: () => Promise<void>;
   onClose: () => void;
 }
 
@@ -63,6 +64,7 @@ export const BlockOptionsModal: React.FC<BlockOptionsModalProps> = ({
   targetName,
   initialOptions,
   onApply,
+  onUnblock,
   onClose,
 }) => {
   const [options, setOptions] = useState<BlockOptions>(DEFAULT_OPTIONS);
@@ -103,7 +105,16 @@ export const BlockOptionsModal: React.FC<BlockOptionsModalProps> = ({
   const handleApply = async () => {
     setIsLoading(true);
     try {
-      await onApply(options);
+      const hasAnyOption = options.blockMessages || 
+                          options.blockCalls || 
+                          options.blockViewMyActivity || 
+                          options.hideTheirActivity;
+
+      if (!hasAnyOption && onUnblock) {
+        await onUnblock();
+      } else {
+        await onApply(options);
+      }
       onClose();
     } finally {
       setIsLoading(false);
@@ -124,7 +135,7 @@ export const BlockOptionsModal: React.FC<BlockOptionsModalProps> = ({
               <Ban size={18} className="text-error" />
             </div>
             <div>
-              <h3 className="font-bold text-text-primary text-base">Chặn {targetName}</h3>
+              <h3 className="font-bold text-text-primary text-base">Quản lý chặn {targetName}</h3>
               <p className="text-xs text-text-tertiary">Chọn những gì bạn muốn chặn</p>
             </div>
           </div>

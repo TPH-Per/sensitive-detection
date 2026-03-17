@@ -8,9 +8,9 @@ export const CONFIRM_MESSAGES = {
       CONFIRM: 'Hủy kết bạn',
     },
     UNBLOCK: {
-      TITLE: 'Bỏ chặn người dùng',
-      MESSAGE: (name: string) => `Bạn có chắc chắn muốn bỏ chặn ${name}? Họ sẽ có thể gửi tin nhắn cho bạn.`,
-      CONFIRM: 'Bỏ chặn',
+      TITLE: 'Quản lý chặn',
+      MESSAGE: (name: string) => `Bạn có muốn thay đổi tùy chọn chặn hoặc bỏ chặn ${name}?`,
+      CONFIRM: 'Xác nhận',
     },
   },
   MEDIA: {

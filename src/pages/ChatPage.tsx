@@ -68,6 +68,7 @@ const ChatPage: React.FC = () => {
     handleMarkAllRead,
     handleApplyBlock,
     handleUnblock,
+    shouldShowBlockBanner,
     myBlockOptions,
     handleCreateGroup,
     handleAddMembers,
@@ -124,6 +125,11 @@ const ChatPage: React.FC = () => {
 
   const openBlockModal = () => setIsBlockModalOpen(true);
   const closeBlockModal = () => setIsBlockModalOpen(false);
+
+  const confirmUnblock = async () => {
+    await handleUnblock();
+    closeBlockModal();
+  };
 
   const { startCall, endCall } = useCallManager(currentUser?.id || '');
 
@@ -275,34 +281,38 @@ const ChatPage: React.FC = () => {
               onLoadMore={handleLoadMoreMessages}
               isBlocked={isBlocked}
               isBlockedByMe={isBlockedByMe}
+              myBlockOptions={myBlockOptions}
               onUnblock={handleUnblock}
+              onManageBlock={openBlockModal}
+              shouldShowBlockBanner={shouldShowBlockBanner}
               onCall={(isVideo) => handleInitiateCall(isVideo ? 'video' : 'voice')}
               onVideoCall={() => handleInitiateCall('video')}
               canCall={canCall}
             />
-            <ChatInput
-              key={selectedConversationId}
-              onSendText={handleSendText}
-              onSendImages={handleSendImage}
-              onSendFile={handleSendFile}
-              onSendVideo={handleSendVideo}
-              onSendVoice={handleSendVoice}
-              onTyping={handleTyping}
-              blockedMessage={blockedMessage}
-              replyingTo={replyingTo}
-              editingMessage={editingMessage}
-              currentUserId={currentUser.id}
-              usersMap={usersMap}
-              participants={participants}
-              isGroup={selectedConversation.data.isGroup}
-              isDisbanded={selectedConversation.data.isDisbanded}
-              onDeleteConversation={() => handleDelete(selectedConversation.id)}
-              onCancelAction={() => {
-                setReplyingTo(null);
-                setEditingMessage(null);
-              }}
-              onEditMessage={editingMessage ? (text) => handleEditMessage(editingMessage.id, text) : undefined}
-            />
+              <ChatInput
+                key={selectedConversationId}
+                onSendText={handleSendText}
+                onSendImages={handleSendImage}
+                onSendFile={handleSendFile}
+                onSendVideo={handleSendVideo}
+                onSendVoice={handleSendVoice}
+                onTyping={handleTyping}
+                blockedMessage={blockedMessage}
+                onManageBlock={openBlockModal}
+                replyingTo={replyingTo}
+                editingMessage={editingMessage}
+                currentUserId={currentUser.id}
+                usersMap={usersMap}
+                participants={participants}
+                isGroup={selectedConversation.data.isGroup}
+                isDisbanded={selectedConversation.data.isDisbanded}
+                onDeleteConversation={() => handleDelete(selectedConversation.id)}
+                onCancelAction={() => {
+                  setReplyingTo(null);
+                  setEditingMessage(null);
+                }}
+                onEditMessage={editingMessage ? (text) => handleEditMessage(editingMessage.id, text) : undefined}
+              />
           </>
         ) : (
           <div className="flex-1 flex flex-col items-center justify-center bg-bg-secondary p-4 text-center">
@@ -413,6 +423,7 @@ const ChatPage: React.FC = () => {
           targetName={partner.fullName}
           initialOptions={myBlockOptions}
           onApply={handleApplyBlock}
+          onUnblock={confirmUnblock}
           onClose={closeBlockModal}
         />
       )}

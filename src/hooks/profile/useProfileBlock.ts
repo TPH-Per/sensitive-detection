@@ -60,7 +60,7 @@ export const useProfileBlock = ({
     return () => unsub();
   }, [currentUser, profileUserId, isOwnProfile]);
 
-  const handleUnblockUser = useCallback(async () => {
+  const confirmUnblock = useCallback(async () => {
     if (!currentUser || !profile || isOwnProfile) return;
     try {
       await userService.unblockUser(currentUser.id, profile.id);
@@ -72,6 +72,11 @@ export const useProfileBlock = ({
     } catch {
       toast.error(TOAST_MESSAGES.BLOCK.UNBLOCK_FAILED);
     }
+  }, [currentUser, profile, isOwnProfile]);
+
+  const handleUnblockUser = useCallback(async () => {
+    if (!currentUser || !profile || isOwnProfile) return;
+    setIsBlockModalOpen(true);
   }, [currentUser, profile, isOwnProfile]);
 
   const handleApplyBlock = useCallback(async (options: BlockOptions) => {
@@ -109,6 +114,7 @@ export const useProfileBlock = ({
     handleOpenBlockModal,
     handleApplyBlock,
     handleUnblockUser,
+    confirmUnblock,
     closeBlockModal: () => setIsBlockModalOpen(false),
   };
 };

@@ -12,9 +12,15 @@ export const rtdbCallService = {
         callerName: string,
         callerAvatar: string,
         isGroupCall = false,
+        isBlocked = false,
+        isBlockedByMe = false
     ): Promise<{ success: boolean; reason?: string }> => {
         if (!isGroupCall && recipientIds.length === 1) {
             const recipientId = recipientIds[0];
+
+            if (isBlocked || isBlockedByMe) {
+                return { success: false, reason: 'blocked' };
+            }
 
             const friendDoc = await getDoc(doc(db, 'users', callerId, 'friends', recipientId));
             if (!friendDoc.exists()) {

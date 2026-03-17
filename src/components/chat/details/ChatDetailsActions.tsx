@@ -103,8 +103,8 @@ export const ChatDetailsActions: React.FC<ChatDetailsActionsProps> = ({
   // Block - chỉ cho chat 1-1
   if (!isGroup) {
     actions.push({
-      icon: isBlocked ? <UserCheck size={20} /> : <Ban size={20} />,
-      label: isBlocked ? 'Bỏ chặn người dùng' : 'Chặn người dùng',
+      icon: <Ban size={20} />,
+      label: 'Quản lý chặn',
       onClick: onToggleBlock,
       variant: 'danger' as const,
     });

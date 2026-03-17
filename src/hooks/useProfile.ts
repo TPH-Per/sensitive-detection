@@ -48,7 +48,7 @@ export const useProfile = () => {
 
   const isBannedProfile = profile?.status === 'banned';
 
-  const canViewContent = !block.isBlockedByMe && !block.isActivityBlockedByPartner;
+  const canViewContent = isOwnProfile || !block.isActivityBlockedByPartner;
 
   const handleMessage = useCallback(async () => {
     if (!currentUser || !profile) return;
@@ -116,6 +116,7 @@ export const useProfile = () => {
     handleOpenBlockModal: block.handleOpenBlockModal,
     handleApplyBlock: block.handleApplyBlock,
     handleUnblockUser: block.handleUnblockUser,
+    confirmUnblock: block.confirmUnblock,
     closeBlockModal: block.closeBlockModal,
   };
 };
