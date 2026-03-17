@@ -43,7 +43,7 @@ interface ConversationListProps {
   onMarkAllRead?: () => void;
 }
 
-export const ConversationList: React.FC<ConversationListProps> = ({
+export const ConversationList = React.memo<ConversationListProps>(({
   conversations,
   selectedId,
   currentUserId,
@@ -77,7 +77,7 @@ export const ConversationList: React.FC<ConversationListProps> = ({
   const [activeFilter, setActiveFilter] = useState<FilterType>('all');
   const [requestsExpanded, setRequestsExpanded] = useState(true);
 
-  // Phân nhóm và lọc hội thoại
+  // Phân nhóm hội thoại
   const {
     friendConversations,
     requestConversations,
@@ -137,7 +137,8 @@ export const ConversationList: React.FC<ConversationListProps> = ({
     onDelete,
     onBlock,
     onArchive,
-    onMarkUnread
+    onMarkUnread,
+    onViewProfile
   ]);
 
   return (
@@ -173,7 +174,7 @@ export const ConversationList: React.FC<ConversationListProps> = ({
         )
       )}
 
-      {/* List Content */}
+      {/* Danh sách chính */}
       <div className="flex-1 overflow-y-auto">
         {isLoading && conversations.length === 0 ? (
           <div className="p-2 space-y-2">
@@ -221,7 +222,7 @@ export const ConversationList: React.FC<ConversationListProps> = ({
           </div>
         ) : (
           <div>
-            {/* Người lạ Section */}
+            {/* Tin nhắn chờ */}
             {viewMode === 'normal' && activeFilter === 'all' && requestConversations.length > 0 && (
               <>
                 <button
@@ -246,11 +247,11 @@ export const ConversationList: React.FC<ConversationListProps> = ({
               </>
             )}
 
-            {/* Main List */}
+            {/* Danh sách hiển thị */}
             {displayConversations.map(renderConversationItem)}
           </div>
         )}
       </div>
     </div>
   );
-};
+});

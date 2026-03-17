@@ -271,6 +271,17 @@ const ConversationItemInner: React.FC<ConversationItemProps> = ({
 };
 
 export const ConversationItem = Object.assign(
-  React.memo(ConversationItemInner),
+  React.memo(ConversationItemInner, (prev, next) => {
+    return (
+      prev.isActive === next.isActive &&
+      prev.conversation.id === next.conversation.id &&
+      prev.conversation.data.updatedAt === next.conversation.data.updatedAt &&
+      prev.conversation.userChat.updatedAt === next.conversation.userChat.updatedAt &&
+      prev.currentUserId === next.currentUserId &&
+      prev.onClick === next.onClick &&
+      prev.onPin === next.onPin &&
+      prev.onMute === next.onMute
+    );
+  }),
   { Skeleton: ConversationItemSkeleton }
 );

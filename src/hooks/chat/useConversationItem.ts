@@ -87,7 +87,7 @@ export const useConversationItem = ({
     return time ? formatChatTime(new Date(time)) : '';
   }, [conversation.data.updatedAt]);
 
-  return {
+  return useMemo(() => ({
     partner,
     participants,
     isDataMissing,
@@ -102,5 +102,19 @@ export const useConversationItem = ({
     isLastMessageRead: readers.length > 0,
     isLastMessageDelivered: deliveredUsers.length > 0,
     displayTime
-  };
+  }), [
+    partner,
+    participants,
+    isDataMissing,
+    chatInfo,
+    isMessageRequest,
+    isUnread,
+    unreadCount,
+    lastMessage,
+    lastMessagePreview,
+    currentUserId,
+    readers,
+    deliveredUsers,
+    displayTime
+  ]);
 };

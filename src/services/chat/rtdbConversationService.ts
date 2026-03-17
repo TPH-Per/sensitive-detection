@@ -98,26 +98,28 @@ export const rtdbConversationService = {
         callback: (conversations: Array<{ id: string; data: RtdbConversation; userChat: RtdbUserChat }>) => void
     ) => {
         const userChatsRef = ref(rtdb, `user_chats/${userId}`);
-        const conversationListeners: Array<() => void> = [];
+        const conversationListeners = new Map<string, () => void>();
+        const conversationsMap = new Map<string, { id: string; data: RtdbConversation; userChat: RtdbUserChat }>();
 
-        const mainUnsubscribe = onValue(userChatsRef, async (snapshot) => {
-            conversationListeners.forEach(unsub => unsub());
-            conversationListeners.length = 0;
-
+        const mainUnsubscribe = onValue(userChatsRef, (snapshot) => {
             if (!snapshot.exists()) {
+                conversationsMap.clear();
+                conversationListeners.forEach(unsub => unsub());
+                conversationListeners.clear();
                 callback([]);
                 return;
             }
 
             const userChats = snapshot.val() as Record<string, RtdbUserChat>;
-            const convIds = Object.keys(userChats);
+            const currentConvIds = new Set(Object.keys(userChats));
 
-            if (convIds.length === 0) {
-                callback([]);
-                return;
+            for (const convId of conversationListeners.keys()) {
+                if (!currentConvIds.has(convId)) {
+                    conversationListeners.get(convId)?.();
+                    conversationListeners.delete(convId);
+                    conversationsMap.delete(convId);
+                }
             }
-
-            const conversationsMap = new Map<string, { id: string; data: RtdbConversation; userChat: RtdbUserChat }>();
 
             const updateCallback = () => {
                 const conversations = Array.from(conversationsMap.values())
@@ -131,32 +133,39 @@ export const rtdbConversationService = {
                 callback(conversations);
             };
 
-            for (const convId of convIds) {
-                const convRef = ref(rtdb, `conversations/${convId}`);
-
-                const unsubConv = onValue(convRef, (convSnap) => {
-                    if (convSnap.exists()) {
-                        const data = convSnap.val() as RtdbConversation;
-                        const userChat = userChats[convId];
-                        
-                        conversationsMap.set(convId, {
-                            id: convId,
-                            data,
-                            userChat
-                        });
-                        updateCallback();
-                    } else {
-                        conversationsMap.delete(convId);
+            // Subscribe item mới
+            for (const convId of currentConvIds) {
+                if (!conversationListeners.has(convId)) {
+                    const convRef = ref(rtdb, `conversations/${convId}`);
+                    const unsubConv = onValue(convRef, (convSnap) => {
+                        if (convSnap.exists()) {
+                            const data = convSnap.val() as RtdbConversation;
+                            const userChat = userChats[convId];
+                            
+                            // Chỉ cập nhật nếu thực sự thay đổi nội dung (so sánh đơn giản qua updatedAt)
+                            const existing = conversationsMap.get(convId);
+                            if (!existing || existing.data.updatedAt !== data.updatedAt || existing.userChat.updatedAt !== userChat.updatedAt) {
+                                conversationsMap.set(convId, { id: convId, data, userChat });
+                                updateCallback();
+                            }
+                        } else {
+                            if (conversationsMap.has(convId)) {
+                                conversationsMap.delete(convId);
+                                updateCallback();
+                            }
+                        }
+                    });
+                    conversationListeners.set(convId, unsubConv);
+                } else {
+                    // Cập nhật userChat info kịp thời
+                    const existing = conversationsMap.get(convId);
+                    const userChat = userChats[convId];
+                    if (existing && existing.userChat.updatedAt !== userChat.updatedAt) {
+                        conversationsMap.set(convId, { ...existing, userChat });
                         updateCallback();
                     }
-                }, (error) => {
-                    console.error(`[rtdbConversationService] Lỗi subscribe conversation ${convId}:`, error);
-                });
-
-                conversationListeners.push(unsubConv);
+                }
             }
-        }, (error) => {
-            console.error('[rtdbConversationService] Lỗi subscribe user_chats:', error);
         });
 
         return () => {
