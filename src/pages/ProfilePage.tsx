@@ -25,7 +25,7 @@ const ProfilePage: React.FC = () => {
     profile,
     latestMedia,
     loading,
-    uploading,
+    uploadingType,
     uploadProgress,
     isOwnProfile,
     friendStatus,
@@ -128,10 +128,9 @@ const ProfilePage: React.FC = () => {
           onCoverChange={handleCoverChange}
           onAvatarDelete={() => setConfirmType('deleteAvatar')}
           onCoverDelete={() => setConfirmType('deleteCover')}
-          onBlockClick={handleOpenBlockModal}
           onUnblockClick={handleUnblockUser}
           isBlockedByMe={isBlockedByMe}
-          uploading={uploading}
+          uploadingType={uploadingType}
           uploadProgress={uploadProgress}
         />
 

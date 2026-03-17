@@ -101,7 +101,7 @@ export const useProfile = () => {
     confirmUnfriend: friend.confirmUnfriend,
 
     // Media
-    uploading: media.uploading,
+    uploadingType: media.uploadingType,
     uploadProgress: media.uploadProgress,
     handleAvatarChange: media.handleAvatarChange,
     handleCoverChange: media.handleCoverChange,

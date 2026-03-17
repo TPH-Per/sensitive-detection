@@ -23,7 +23,7 @@ interface ProfileHeaderProps {
   onBlockClick?: () => void;
   onUnblockClick?: () => void;
   isBlockedByMe?: boolean;
-  uploading?: boolean;
+  uploadingType?: 'avatar' | 'cover' | null;
   uploadProgress?: number;
 }
 
@@ -41,7 +41,7 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   onBlockClick,
   onUnblockClick,
   isBlockedByMe = false,
-  uploading = false,
+  uploadingType,
   uploadProgress
 }) => {
   const navigate = useNavigate();
@@ -57,13 +57,13 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   } | null>(null);
 
   const handleAvatarClick = () => {
-    if (isOwnProfile && !uploading) {
+    if (isOwnProfile && !uploadingType) {
       avatarInputRef.current?.click();
     }
   };
 
   const handleCoverClick = () => {
-    if (isOwnProfile && !uploading) {
+    if (isOwnProfile && !uploadingType) {
       coverInputRef.current?.click();
     }
   };
@@ -144,10 +144,10 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
           <div className="absolute inset-0 bg-gradient-to-br from-primary to-primary-active md:rounded-b-2xl overflow-hidden">
             <LazyImage
               src={user.cover?.url || '/cover-image.jpg'}
-              className={`w-full h-full object-cover transition-all duration-base ${uploading ? 'opacity-60' : ''}`}
+              className={`w-full h-full object-cover transition-all duration-base ${uploadingType === 'cover' ? 'opacity-60' : ''}`}
               alt="Cover"
             />
-            {uploading && uploadProgress !== undefined && (
+            {uploadingType === 'cover' && uploadProgress !== undefined && (
               <div className="absolute inset-0 flex items-center justify-center">
                 <CircularProgress
                   progress={uploadProgress}
@@ -164,7 +164,8 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
               <Dropdown
                 trigger={
                   <Button
-                    isLoading={uploading}
+                    isLoading={uploadingType === 'cover'}
+                    disabled={!!uploadingType && uploadingType !== 'cover'}
                     variant="ghost"
                     className="bg-black/30 backdrop-blur-md text-white hover:bg-black/50 hover:!text-white transition-all gap-2 border border-white/20 rounded-xl"
                     icon={<Pencil size={18} />}
@@ -218,7 +219,7 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                       initialStatus={user.status}
                       showStatus={false}
                     />
-                    {uploading && uploadProgress !== undefined && (
+                    {uploadingType === 'avatar' && uploadProgress !== undefined && (
                       <div className="absolute inset-0 flex items-center justify-center bg-black/60 rounded-full z-20">
                         <CircularProgress
                           progress={uploadProgress}
@@ -234,7 +235,8 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                       <Dropdown
                         trigger={
                           <Button
-                            isLoading={uploading}
+                            isLoading={uploadingType === 'avatar'}
+                            disabled={!!uploadingType && uploadingType !== 'avatar'}
                             variant="secondary"
                             className="shadow-md border-2 border-bg-primary rounded-full w-11 h-11 p-0 flex items-center justify-center bg-bg-card hover:bg-bg-hover transition-all duration-base active:scale-95"
                             icon={<Pencil size={18} />}
