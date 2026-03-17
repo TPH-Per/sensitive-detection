@@ -5,14 +5,19 @@ importScripts('https://www.gstatic.com/firebasejs/9.0.0/firebase-messaging-compa
 self.addEventListener('install', () => self.skipWaiting());
 self.addEventListener('activate', () => self.clients.claim());
 
-firebase.initializeApp({
-    apiKey: "AIzaSyCNmxniAL5vcKcVJN-PaywlD9uPRRj4DHo",
-    authDomain: "smurf-social.firebaseapp.com",
-    projectId: "smurf-social",
-    storageBucket: "smurf-social.firebasestorage.app",
-    messagingSenderId: "517846344524",
-    appId: "1:517846344524:web:7ee2038e9ab9d24a41a5e9"
-});
+const params = new URLSearchParams(location.search);
+const firebaseConfig = {
+    apiKey: params.get('apiKey'),
+    authDomain: params.get('authDomain'),
+    projectId: params.get('projectId'),
+    storageBucket: params.get('storageBucket'),
+    messagingSenderId: params.get('messagingSenderId'),
+    appId: params.get('appId')
+};
+
+if (firebaseConfig.apiKey) {
+    firebase.initializeApp(firebaseConfig);
+}
 
 const messaging = firebase.messaging();
 const notificationChannel = new BroadcastChannel('fcm_notifications');

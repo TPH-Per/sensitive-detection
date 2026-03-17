@@ -143,14 +143,15 @@ export const notificationService = {
       const permission = await window.Notification.requestPermission();
       if (permission === 'granted') {
         const messaging = getMessaging();
-        const { firebase } = getValidatedEnvConfig();
+        const { firebase: fbConfig } = getValidatedEnvConfig();
+        const swUrl = `/firebase-messaging-sw.js?apiKey=${encodeURIComponent(fbConfig.apiKey)}&authDomain=${encodeURIComponent(fbConfig.authDomain)}&projectId=${encodeURIComponent(fbConfig.projectId)}&storageBucket=${encodeURIComponent(fbConfig.storageBucket)}&messagingSenderId=${encodeURIComponent(fbConfig.messagingSenderId)}&appId=${encodeURIComponent(fbConfig.appId)}`;
 
-        const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js', {
+        const registration = await navigator.serviceWorker.register(swUrl, {
           scope: '/'
         });
 
         const token = await getToken(messaging, {
-          vapidKey: firebase.vapidKey,
+          vapidKey: fbConfig.vapidKey,
           serviceWorkerRegistration: registration
         });
 
