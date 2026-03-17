@@ -56,6 +56,7 @@ const App: React.FC = () => {
               <Route path="profile/:userId/*" element={<ProfilePage />} />
               <Route path="settings" element={<SettingsPage />} />
               <Route path="notifications" element={<NotificationsPage />} />
+              <Route path="post/:postId" element={null} />
             </Route>
 
             <Route path="/admin" element={

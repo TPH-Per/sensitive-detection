@@ -188,25 +188,16 @@ export const notificationService = {
   },
 
   // Văn bản hiển thị cho thông báo
-  getNotificationText: (notification: Notification, senderName: string): string => {
-    const isInteraction = [
-      NotificationType.REACTION,
-      NotificationType.COMMENT,
-      NotificationType.FRIEND_REQUEST
-    ].includes(notification.type);
-
-    const displayName = senderName || 'Ai đó';
-    const prefix = (displayName && isInteraction) ? `${displayName} ` : '';
-
+  getNotificationText: (notification: Notification): string => {
     switch (notification.type) {
       case NotificationType.REACTION:
-        return `${prefix}đã bày tỏ cảm xúc về nội dung của bạn.`;
+        return `đã bày tỏ cảm xúc về nội dung của bạn.`;
       case NotificationType.COMMENT:
         return notification.data.contentSnippet
-          ? `${prefix}đã bình luận: "${notification.data.contentSnippet}"`
-          : `${prefix}đã bình luận.`;
+          ? `đã bình luận: "${notification.data.contentSnippet}"`
+          : `đã bình luận.`;
       case NotificationType.FRIEND_REQUEST:
-        return `${prefix}đã gửi lời mời kết bạn.`;
+        return `đã gửi lời mời kết bạn.`;
       case NotificationType.REPORT:
         return notification.data.contentSnippet || 'Cập nhật về báo cáo vi phạm.';
       case NotificationType.SYSTEM:

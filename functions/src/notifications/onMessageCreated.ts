@@ -21,7 +21,6 @@ export const onMessageCreated = onValueCreated(
     if (type === 'system') return;
 
     try {
-      // Lấy thông tin hội thoại từ Realtime Database thay vì Firestore
       const convRef = rtdb.ref(`conversations/${convId}`);
       const convSnap = await convRef.get();
       

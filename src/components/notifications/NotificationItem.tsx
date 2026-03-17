@@ -6,10 +6,8 @@ import { UserAvatar, Button, Skeleton } from '../ui';
 import { notificationService } from '../../services/notificationService';
 import { useNavigate } from 'react-router-dom';
 import { useNotificationStore } from '../../store/notificationStore';
-import { usePostStore } from '../../store/postStore';
 import { useAuthStore } from '../../store/authStore';
 import { useUserCache } from '../../store/userCacheStore';
-import { useFriendIds } from '../../hooks';
 import { useEffect } from 'react';
 
 interface NotificationItemProps {
@@ -23,7 +21,6 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({ notification
   const deleteNotification = useNotificationStore(state => state.deleteNotification);
   const { getUser, fetchUser } = useUserCache();
   const sender = getUser(notification.actorId);
-  const friendIds = useFriendIds();
 
   useEffect(() => {
     if (!sender) {
@@ -36,19 +33,18 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({ notification
       await markAsRead(notification.id);
     }
 
-    const { fetchPostById } = usePostStore.getState();
     const { user } = useAuthStore.getState();
 
     if (onClick) {
       onClick();
     }
 
-    // Điều hướng theo loại thông báo
+    // Luồng điều hướng triệt để cho mọi loại thông báo
     switch (notification.type) {
       case NotificationType.REACTION:
       case NotificationType.COMMENT:
-        if (notification.data.postId && user) {
-          fetchPostById(notification.data.postId, user.id, friendIds);
+        if (notification.data.postId) {
+          navigate(`/post/${notification.data.postId}`);
         }
         break;
       case NotificationType.FRIEND_REQUEST:
@@ -64,7 +60,11 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({ notification
       case NotificationType.SYSTEM:
         if (notification.data.friendRequestId) {
           navigate(`/profile/${notification.actorId}`);
+        } else {
+          navigate('/notifications');
         }
+        break;
+      default:
         break;
     }
   };
@@ -74,13 +74,7 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({ notification
     await deleteNotification(notification.id);
   };
 
-  const isInteraction = [
-    NotificationType.REACTION,
-    NotificationType.COMMENT,
-    NotificationType.FRIEND_REQUEST
-  ].includes(notification.type);
-
-  const isSystem = notification.type === NotificationType.SYSTEM || notification.type === NotificationType.REPORT;
+  const showSenderName = notification.type !== NotificationType.SYSTEM && notification.type !== NotificationType.REPORT;
 
   return (
     <div
@@ -88,7 +82,7 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({ notification
         }`}
       onClick={handleItemClick}
     >
-      {isSystem ? (
+      {!showSenderName ? (
         <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
           <Shield size={20} className="text-primary" />
         </div>
@@ -97,14 +91,14 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({ notification
       )}
       <div className="flex-1 min-w-0">
         <p className="text-sm text-text-primary leading-tight">
-          {isInteraction && (
+          {showSenderName && (
             <span className="font-semibold mr-1">
               {sender?.fullName
                 ? sender.fullName
                 : <Skeleton width={72} height={13} className="opacity-60 inline-block align-middle" />}
             </span>
           )}
-          {notificationService.getNotificationText(notification, sender?.fullName || '')}
+          {notificationService.getNotificationText(notification)}
         </p>
         <span className="text-xs text-text-tertiary mt-1 block" title={formatDateTime(notification.createdAt)}>
           {formatRelativeTime(notification.createdAt)}
