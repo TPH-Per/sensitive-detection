@@ -221,13 +221,15 @@ export const notificationService = {
         const convMetadata = chatStore.conversations.find(c => c.id === data.convId);
         const isMuted = convMetadata?.userChat?.isMuted === true;
         const isMention = data.type === NotificationType.MENTION;
+        const isChat = data.type === NotificationType.CHAT;
 
         if (isMuted && !isMention) return;
 
         const isBackground = document.visibilityState !== 'visible';
         const isDifferentConversation = selectedConversationId !== data.convId;
 
-        if (isBackground || isDifferentConversation) {
+        // Chỉ phát âm thanh cho tin nhắn và nhắc tên
+        if ((isChat || isMention) && (isBackground || isDifferentConversation)) {
           lastPlayedTimestamp = notificationService.playSound(lastPlayedTimestamp);
         }
       };

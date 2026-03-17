@@ -39,7 +39,6 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({ notification
       onClick();
     }
 
-    // Luồng điều hướng triệt để cho mọi loại thông báo
     switch (notification.type) {
       case NotificationType.REACTION:
       case NotificationType.COMMENT:
@@ -74,7 +73,7 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({ notification
     await deleteNotification(notification.id);
   };
 
-  const showSenderName = notification.type !== NotificationType.SYSTEM && notification.type !== NotificationType.REPORT;
+  const showSenderName = ![NotificationType.SYSTEM, NotificationType.REPORT].includes(notification.type);
 
   return (
     <div

@@ -100,9 +100,11 @@ export const rtdbConversationService = {
         const userChatsRef = ref(rtdb, `user_chats/${userId}`);
         const conversationListeners = new Map<string, () => void>();
         const conversationsMap = new Map<string, { id: string; data: RtdbConversation; userChat: RtdbUserChat }>();
+        let latestUserChats: Record<string, RtdbUserChat> = {};
 
         const mainUnsubscribe = onValue(userChatsRef, (snapshot) => {
             if (!snapshot.exists()) {
+                latestUserChats = {};
                 conversationsMap.clear();
                 conversationListeners.forEach(unsub => unsub());
                 conversationListeners.clear();
@@ -110,8 +112,8 @@ export const rtdbConversationService = {
                 return;
             }
 
-            const userChats = snapshot.val() as Record<string, RtdbUserChat>;
-            const currentConvIds = new Set(Object.keys(userChats));
+            latestUserChats = snapshot.val() as Record<string, RtdbUserChat>;
+            const currentConvIds = new Set(Object.keys(latestUserChats));
 
             for (const convId of conversationListeners.keys()) {
                 if (!currentConvIds.has(convId)) {
@@ -140,9 +142,8 @@ export const rtdbConversationService = {
                     const unsubConv = onValue(convRef, (convSnap) => {
                         if (convSnap.exists()) {
                             const data = convSnap.val() as RtdbConversation;
-                            const userChat = userChats[convId];
+                            const userChat = latestUserChats[convId];
                             
-                            // Chỉ cập nhật nếu thực sự thay đổi nội dung (so sánh đơn giản qua updatedAt)
                             const existing = conversationsMap.get(convId);
                             if (!existing || existing.data.updatedAt !== data.updatedAt || existing.userChat.updatedAt !== userChat.updatedAt) {
                                 conversationsMap.set(convId, { id: convId, data, userChat });
@@ -157,9 +158,8 @@ export const rtdbConversationService = {
                     });
                     conversationListeners.set(convId, unsubConv);
                 } else {
-                    // Cập nhật userChat info kịp thời
                     const existing = conversationsMap.get(convId);
-                    const userChat = userChats[convId];
+                    const userChat = latestUserChats[convId];
                     if (existing && existing.userChat.updatedAt !== userChat.updatedAt) {
                         conversationsMap.set(convId, { ...existing, userChat });
                         updateCallback();
