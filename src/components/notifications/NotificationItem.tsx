@@ -61,12 +61,6 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({ notification
           navigate('/notifications');
         }
         break;
-      case NotificationType.CHAT:
-      case NotificationType.MENTION:
-        if (notification.data.convId) {
-          navigate(`/chat/${notification.data.convId}`);
-        }
-        break;
       case NotificationType.SYSTEM:
         if (notification.data.friendRequestId) {
           navigate(`/profile/${notification.actorId}`);
@@ -83,9 +77,7 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({ notification
   const isInteraction = [
     NotificationType.REACTION,
     NotificationType.COMMENT,
-    NotificationType.FRIEND_REQUEST,
-    NotificationType.CHAT,
-    NotificationType.MENTION
+    NotificationType.FRIEND_REQUEST
   ].includes(notification.type);
 
   const isSystem = notification.type === NotificationType.SYSTEM || notification.type === NotificationType.REPORT;

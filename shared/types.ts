@@ -117,8 +117,6 @@ export interface NotificationPayload {
     friendRequestId?: string;
     contentSnippet?: string;
     reportId?: string;
-    convId?: string;
-    senderName?: string;
 }
 
 // ========== BASE ENTITIES ==========

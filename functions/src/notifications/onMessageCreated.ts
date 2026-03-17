@@ -1,7 +1,7 @@
 import { onValueCreated } from 'firebase-functions/v2/database';
 import { rtdb } from '../app';
 import { NotificationType } from '../types';
-import { createNotification, getSenderName, buildPushBody } from '../helpers/notificationHelper';
+import { getSenderName, buildPushBody } from '../helpers/notificationHelper';
 import { sendPushNotification } from '../helpers/fcmHelper';
 
 /**
@@ -71,16 +71,7 @@ export const onMessageCreated = onValueCreated(
         const body = buildPushBody(notificationType, senderName, { contentSnippet });
 
         if (isMentioned) {
-          await createNotification({
-            receiverId,
-            actorId: senderId,
-            type: notificationType,
-            data: {
-              convId,
-              contentSnippet,
-              senderName
-            },
-          });
+          // Bỏ qua tạo document trong Firestore, chỉ gửi Push
         }
 
         await sendPushNotification({

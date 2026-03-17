@@ -194,12 +194,10 @@ export const notificationService = {
     const isInteraction = [
       NotificationType.REACTION,
       NotificationType.COMMENT,
-      NotificationType.FRIEND_REQUEST,
-      NotificationType.CHAT,
-      NotificationType.MENTION
+      NotificationType.FRIEND_REQUEST
     ].includes(notification.type);
 
-    const displayName = senderName || notification.data.senderName || 'Ai đó';
+    const displayName = senderName || 'Ai đó';
     const prefix = (displayName && isInteraction) ? `${displayName} ` : '';
 
     switch (notification.type) {
@@ -211,12 +209,6 @@ export const notificationService = {
           : `${prefix}đã bình luận.`;
       case NotificationType.FRIEND_REQUEST:
         return `${prefix}đã gửi lời mời kết bạn.`;
-      case NotificationType.CHAT:
-        return notification.data.contentSnippet 
-          ? `${prefix}đã gửi: "${notification.data.contentSnippet}"`
-          : `${prefix}đã gửi một tin nhắn.`;
-      case NotificationType.MENTION:
-        return `${prefix}đã nhắc tên bạn trong một cuộc trò chuyện.`;
       case NotificationType.REPORT:
         return notification.data.contentSnippet || 'Cập nhật về báo cáo vi phạm.';
       case NotificationType.SYSTEM:
