@@ -21,22 +21,20 @@ import type { Notification } from '../../shared/types';
 import { NotificationType } from '../../shared/types';
 import { getValidatedEnvConfig } from '../utils/validateEnv';
 import { convertDocs } from '../utils/firebaseUtils';
+import { useRtdbChatStore } from '../store/rtdbChatStore';
 
 const NOTIFICATION_SOUND_URL = NotificationSound;
 let notificationAudio: HTMLAudioElement | null = null;
 
 export const notificationService = {
-  // Chuẩn bị sẵn audio (vượt qua chính sách autoplay)
   unlockAudio: () => {
     if (notificationAudio) return;
     notificationAudio = new Audio(NOTIFICATION_SOUND_URL);
     notificationAudio.load();
-    // Phát thử siêu nhỏ/không tiếng để trình duyệt cấp quyền
     notificationAudio.play().then(() => {
       notificationAudio!.pause();
       notificationAudio!.currentTime = 0;
     }).catch(() => {
-      // Bỏ qua lỗi nếu vẫn bị chặn ban đầu
     });
   },
 
@@ -228,9 +226,15 @@ export const notificationService = {
         const data = payload.data;
         if (!data || data.senderId === userId) return;
 
-        // Ưu tiên phát thanh nếu tab không active hoặc đang không ở chính đoạn chat đó
+        const chatStore = useRtdbChatStore.getState();
+        const convMetadata = chatStore.conversations.find(c => c.id === data.convId);
+        const isMuted = convMetadata?.userChat?.isMuted === true;
+        const isMention = data.type === NotificationType.MENTION;
+
+        if (isMuted && !isMention) return;
+
         const isBackground = document.visibilityState !== 'visible';
-        const isDifferentConversation = selectedConversationId !== data.conversationId;
+        const isDifferentConversation = selectedConversationId !== data.convId;
 
         if (isBackground || isDifferentConversation) {
           lastPlayedTimestamp = notificationService.playSound(lastPlayedTimestamp);

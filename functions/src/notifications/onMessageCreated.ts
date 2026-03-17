@@ -34,7 +34,6 @@ export const onMessageCreated = onValueCreated(
       const members = conversation.members || {};
       const isGroup = !!conversation.isGroup;
       
-      // Tìm danh sách người nhận (tất cả mọi người trừ người gửi)
       const memberIds = Object.keys(members).filter(id => id !== senderId);
 
       const senderName = await getSenderName(senderId);
@@ -68,11 +67,15 @@ export const onMessageCreated = onValueCreated(
         const isMentioned = isGroup && mentions.includes(receiverId);
         const notificationType = isMentioned ? NotificationType.MENTION : NotificationType.CHAT;
 
-        const body = buildPushBody(notificationType, senderName, { contentSnippet });
+        const userChatRef = rtdb.ref(`user_chats/${receiverId}/${convId}`);
+        const userChatSnap = await userChatRef.get();
+        const isMuted = userChatSnap.exists() && userChatSnap.val().isMuted === true;
 
-        if (isMentioned) {
-          // Bỏ qua tạo document trong Firestore, chỉ gửi Push
+        if (isMuted && !isMentioned) {
+          continue;
         }
+
+        const body = buildPushBody(notificationType, senderName, { contentSnippet });
 
         await sendPushNotification({
           receiverId,
@@ -80,6 +83,7 @@ export const onMessageCreated = onValueCreated(
           body,
           data: { 
             convId,
+            senderId,
             senderName,
             contentSnippet
           },

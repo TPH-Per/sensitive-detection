@@ -14,7 +14,7 @@ export const useUnreadCount = (): number => {
     let total = 0;
     conversations.forEach(conv => {
       const userChat = conv.userChat;
-      if (!userChat || userChat.isArchived) return;
+      if (!userChat || userChat.isArchived || userChat.isMuted) return;
       const count = userChat.unreadCount || 0;
       total += count;
     });
