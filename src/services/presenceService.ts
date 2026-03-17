@@ -8,12 +8,15 @@ import {
     get
 } from 'firebase/database';
 import { presenceRef, presencesRef } from '../firebase/rtdb';
+import { auth } from '../firebase/config';
 import { RtdbPresence } from '../../shared/types';
 import { userService } from './userService';
 
 export const presenceService = {
     setOnline: async (uid: string): Promise<void> => {
         try {
+            if (auth.currentUser?.uid !== uid) return;
+
             const settings = await userService.getUserSettings(uid);
             const userPresenceRef = presenceRef(uid);
             const isOnlineStatus = settings.showOnlineStatus;
@@ -43,7 +46,8 @@ export const presenceService = {
             }
 
             await disconnectRef.update(disconnectData);
-        } catch (error) {
+        } catch (error: any) {
+            if (error.message?.includes('PERMISSION_DENIED')) return;
             console.error('Lỗi set online:', error);
             throw error;
         }
@@ -54,13 +58,16 @@ export const presenceService = {
      */
     setOffline: async (uid: string): Promise<void> => {
         try {
+            if (!auth.currentUser || auth.currentUser.uid !== uid) return;
+
             const userPresenceRef = presenceRef(uid);
             await update(userPresenceRef, {
                 isOnline: false,
                 lastSeen: Date.now(),
                 updatedAt: rtdbServerTimestamp()
             });
-        } catch (error) {
+        } catch (error: any) {
+            if (error.message?.includes('PERMISSION_DENIED')) return;
             console.error('Lỗi set offline:', error);
             throw error;
         }
@@ -150,6 +157,9 @@ export const presenceService = {
         }
     },
 
+    /**
+     * Hủy disconnect
+     */
     cancelDisconnect: async (uid: string): Promise<void> => {
         try {
             const userPresenceRef = presenceRef(uid);
