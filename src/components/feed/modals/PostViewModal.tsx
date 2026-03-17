@@ -96,13 +96,12 @@ export const PostViewModal: React.FC<PostViewModalProps> = ({
     }));
   }, [post?.media]);
 
-  const shouldShowSkeleton = !post;
+  if (!isOpen) return null;
 
-  if (shouldShowSkeleton || !isOpen) {
-    if (!isOpen) return null;
-    
-    const isCinema = post ? (post.media?.length ?? 0) > 0 : false;
+  const shouldShowSkeleton = !post || isLoading;
+  const isCinema = post ? (post.media?.length ?? 0) > 0 : false;
 
+  if (shouldShowSkeleton) {
     return (
       <Modal
         isOpen={isOpen}
@@ -112,7 +111,7 @@ export const PostViewModal: React.FC<PostViewModalProps> = ({
         padding="none"
         fullScreen={isCinema ? true : 'mobile'}
         className="transition-all duration-base overflow-hidden"
-        bodyClassName={`overflow-hidden flex flex-col ${isCinema ? 'lg:flex-row h-full' : 'h-auto'}`}
+        bodyClassName={`overflow-hidden flex flex-col h-full ${isCinema ? 'lg:flex-row' : ''}`}
       >
         {/* Skeleton cho phần Media (Cinema) */}
         {isCinema && (

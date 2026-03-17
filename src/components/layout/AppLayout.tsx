@@ -73,19 +73,12 @@ export const AppLayout: React.FC = () => {
   const postId = postMatch?.[1];
 
   useEffect(() => {
-
     if (postId && user) {
-      if (selectedPost?.id !== postId) {
-        const cachedPost = posts.find(p => p.id === postId);
-        if (cachedPost) {
-          setSelectedPost(cachedPost);
-        }
-        fetchPostById(postId, user.id, friendIds);
-      }
+      fetchPostById(postId, user.id, friendIds);
     } else if (!postId && selectedPost) {
       setSelectedPost(null);
     }
-  }, [postId, user, selectedPost?.id, friendIds, fetchPostById, setSelectedPost]);
+  }, [postId, user?.id, selectedPost?.id, friendIds, fetchPostById, setSelectedPost]);
 
   const totalUnread = useUnreadCount();
 

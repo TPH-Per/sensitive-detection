@@ -10,11 +10,8 @@ export const usePostNavigation = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const params = useParams();
-  const setSelectedPost = usePostStore(state => state.setSelectedPost);
 
   const viewPost = useCallback((post: Post) => {
-    setSelectedPost(post);
-    
     const currentPath = location.pathname;
     if (currentPath.includes(`/post/${post.id}`)) return;
 
@@ -24,18 +21,16 @@ export const usePostNavigation = () => {
     } else {
       navigate(`/feed/post/${post.id}`);
     }
-  }, [navigate, location.pathname, params.userId, setSelectedPost]);
+  }, [navigate, location.pathname, params.userId]);
 
   const closePost = useCallback(() => {
-    setSelectedPost(null);
-    
     const currentPath = location.pathname;
     const basePath = currentPath.split('/post/')[0];
     
     if (basePath !== currentPath) {
-      navigate(basePath);
+      navigate(basePath || '/feed');
     }
-  }, [navigate, location.pathname, setSelectedPost]);
+  }, [navigate, location.pathname]);
 
   return { viewPost, closePost };
 };

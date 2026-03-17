@@ -432,9 +432,16 @@ export const usePostStore = create<PostState>()(
       },
 
       setSelectedPost: (post: Post | null) => {
-        const { selectedPostUnsubscribe } = get();
+        const { selectedPost, selectedPostUnsubscribe } = get();
+
+        if (post?.id === selectedPost?.id && !!selectedPostUnsubscribe === !!post) return;
+
         if (selectedPostUnsubscribe) {
-          selectedPostUnsubscribe();
+          try {
+            selectedPostUnsubscribe();
+          } catch (e) {
+            console.warn("[PostStore] Lỗi khi hủy listener:", e);
+          }
         }
 
         if (post) {
@@ -445,7 +452,14 @@ export const usePostStore = create<PostState>()(
                 selectedPost: state.selectedPost?.id === post.id ? updatedPost : state.selectedPost,
                 posts: state.posts.map(p => p.id === post.id ? updatedPost : p)
               }));
+            } else {
+              set({ selectedPost: null, selectedPostUnsubscribe: null });
             }
+          }, (error) => {
+            if (error.code !== 'permission-denied') {
+              console.error("[PostStore] Lỗi listener bài viết:", error);
+            }
+            set({ selectedPost: null, selectedPostUnsubscribe: null });
           });
 
           set({ selectedPost: post, selectedPostUnsubscribe: unsubscribe });
@@ -455,27 +469,34 @@ export const usePostStore = create<PostState>()(
       },
 
       fetchPostById: async (postId: string, currentUserId: string, friendIds: string[]) => {
-        useLoadingStore.getState().setLoading('post.detail', true);
+        const { selectedPost, setSelectedPost } = get();
+        if (selectedPost?.id === postId) return;
+
+        const loadingStore = useLoadingStore.getState();
+        loadingStore.setLoading('post.detail', true);
+        
         try {
           const post = await postService.getPostById(postId, currentUserId, friendIds);
 
           if (!post) {
             toast.info('Bài viết này đã bị xóa hoặc không còn tồn tại');
-            set({ selectedPost: null });
+            setSelectedPost(null);
             return;
           }
 
           const myReaction = await postService.getMyReactionForPost(postId, currentUserId);
 
-          set({
-            selectedPost: post,
-            myPostReactions: { ...get().myPostReactions, [postId]: myReaction || '' }
-          });
+          set(state => ({
+            myPostReactions: { ...state.myPostReactions, [postId]: myReaction || '' }
+          }));
+          
+          setSelectedPost(post);
         } catch (error) {
-          console.error("Lỗi lấy chi tiết bài viết:", error);
+          console.error("[PostStore] Lỗi lấy chi tiết bài viết:", error);
           toast.error('Không thể tải bài viết');
+          setSelectedPost(null);
         } finally {
-          useLoadingStore.getState().setLoading('post.detail', false);
+          loadingStore.setLoading('post.detail', false);
         }
       },
     }),
