@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { Send, X, Edit2, Reply, Pause, Play, Ban } from 'lucide-react';
 import { EmojiPicker, Button, IconButton, TextArea } from '../../ui';
 import { MentionList } from './MentionList';
@@ -66,6 +66,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout>(undefined);
+  const isCurrentlyTypingRef = useRef(false);
 
   const {
     isRecording,
@@ -135,35 +136,40 @@ export const ChatInput: React.FC<ChatInputProps> = ({
     };
   }, [selectedFiles]);
 
-  useEffect(() => {
-    if (!inputText) {
-      if (activeMentions.length > 0) setActiveMentions([]);
-      return;
-    }
-
+  const detectedActiveMentions = useMemo(() => {
+    if (!inputText) return [];
+    
     const mentionRegex = /@([^\n\u200B]+)\u200B/g;
     const namesInText: string[] = [];
     let match;
     while ((match = mentionRegex.exec(inputText)) !== null) {
       namesInText.push(match[1]);
     }
+    
+    return activeMentions.filter(m => namesInText.includes(m.name));
+  }, [inputText, activeMentions]);
 
-    if (namesInText.length !== activeMentions.length) {
-       const newActiveMentions = activeMentions.filter(m => namesInText.includes(m.name));
-       if (JSON.stringify(newActiveMentions) !== JSON.stringify(activeMentions)) {
-         setActiveMentions(newActiveMentions);
-       }
+  useEffect(() => {
+    if (JSON.stringify(detectedActiveMentions) !== JSON.stringify(activeMentions)) {
+      setActiveMentions(detectedActiveMentions);
     }
-  }, [inputText]);
+  }, [detectedActiveMentions]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const text = e.target.value;
     setInputText(text);
 
-    // Typing indicator
-    onTyping(true);
+    // Chỉ gọi onTyping(true) một lần khi bắt đầu gõ
+    if (!isCurrentlyTypingRef.current) {
+      isCurrentlyTypingRef.current = true;
+      onTyping(true);
+    }
+
     if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
-    typingTimeoutRef.current = setTimeout(() => onTyping(false), TIME_LIMITS.TYPING_TIMEOUT);
+    typingTimeoutRef.current = setTimeout(() => {
+      isCurrentlyTypingRef.current = false;
+      onTyping(false);
+    }, TIME_LIMITS.TYPING_TIMEOUT);
 
     handleMentionInputChange(text, e.target.selectionStart);
   };
@@ -276,6 +282,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
       toast.error(TOAST_MESSAGES.CHAT.SEND_FAILED);
     } finally {
       setIsSending(false);
+      isCurrentlyTypingRef.current = false;
       setTimeout(() => inputRef.current?.focus(), 0);
     }
   };
@@ -434,7 +441,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
             maxHeight={120}
             containerClassName="flex-1"
             className="rounded-2xl"
-            renderOverlay={(value) => (
+            renderOverlay={useCallback((value: string) => (
               <>
                 {value.split(/(@[^\n\u200B]+\u200B)/g).map((part, i) => {
                   if (part.startsWith('@') && part.endsWith('\u200B')) {
@@ -448,7 +455,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                 })}
                 {value.endsWith('\n') && <br />}
               </>
-            )}
+            ), [])}
             rightElement={
               <EmojiPicker
                 onEmojiSelect={(emoji) => {

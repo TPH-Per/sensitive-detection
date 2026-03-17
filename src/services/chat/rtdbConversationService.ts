@@ -319,16 +319,12 @@ export const rtdbConversationService = {
      */
     setTyping: async (convId: string, uid: string, isTyping: boolean): Promise<void> => {
         try {
-            const convRef = ref(rtdb, `conversations/${convId}`);
-            const convSnap = await get(convRef);
-            if (!convSnap.exists()) return;
-
-            const typingRef = ref(rtdb, `conversations/${convId}/typing/${uid}`);
-            if (isTyping) {
-                await set(typingRef, Date.now());
-            } else {
-                await remove(typingRef);
-            }
+      const typingRef = ref(rtdb, `conversations/${convId}/typing/${uid}`);
+      if (isTyping) {
+        await set(typingRef, serverTimestamp());
+      } else {
+        await remove(typingRef);
+      }
         } catch (error) {
             if (!(error as any).message?.includes('PERMISSION_DENIED')) {
                 console.error('[rtdbConversationService] Lỗi setTyping:', error);
