@@ -52,15 +52,37 @@ export async function sendPushNotification(opts: SendPushOptions): Promise<void>
 
   const title = NOTIFICATION_TITLES[type] || 'Thông báo mới';
 
-  // Luôn dùng data-only để SW/Frontend chủ động xử lý âm thanh/UI
   const message: any = {
+    tokens,
     data: { 
       type, 
       title, 
       body, 
       ...data 
     },
-    tokens,
+    android: {
+      notification: {
+        title,
+        body,
+        sound: 'default'
+      }
+    },
+    apns: {
+      payload: {
+        aps: {
+          alert: {
+            title,
+            body
+          },
+          sound: 'default'
+        }
+      }
+    },
+    webpush: {
+      headers: {
+        'Urgency': 'high'
+      },
+    }
   };
 
   try {

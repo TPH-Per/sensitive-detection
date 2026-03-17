@@ -22,7 +22,8 @@ if (firebaseConfig.apiKey) {
 const messaging = firebase.messaging();
 const notificationChannel = new BroadcastChannel('fcm_notifications');
 
-messaging.onBackgroundMessage(async (payload) => {
-    // Chỉ báo cho Frontend xử lý âm thanh hoặc UI, không hiện popup
+messaging.onBackgroundMessage((payload) => {
     notificationChannel.postMessage(payload);
+
+    return Promise.resolve();
 });

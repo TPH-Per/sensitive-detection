@@ -214,23 +214,29 @@ export const notificationService = {
       let lastPlayedTimestamp = 0;
 
       const handlePayload = (payload: any) => {
+        
         const data = payload.data;
-        if (!data || data.senderId === userId) return;
+        if (!data) return;
 
-        const chatStore = useRtdbChatStore.getState();
-        const convMetadata = chatStore.conversations.find(c => c.id === data.convId);
-        const isMuted = convMetadata?.userChat?.isMuted === true;
+        if (data.senderId && data.senderId === userId) return;
+
         const isMention = data.type === NotificationType.MENTION;
         const isChat = data.type === NotificationType.CHAT;
 
-        if (isMuted && !isMention) return;
+        if (isChat || isMention) {
+          const chatStore = useRtdbChatStore.getState();
+          const convId = data.convId;
+          const convMetadata = chatStore.conversations.find(c => c.id === convId);
+          const isMuted = convMetadata?.userChat?.isMuted === true;
 
-        const isBackground = document.visibilityState !== 'visible';
-        const isDifferentConversation = selectedConversationId !== data.convId;
+          if (isMuted && !isMention) return;
 
-        // Chỉ phát âm thanh cho tin nhắn và nhắc tên
-        if ((isChat || isMention) && (isBackground || isDifferentConversation)) {
-          lastPlayedTimestamp = notificationService.playSound(lastPlayedTimestamp);
+          const isBackground = document.visibilityState !== 'visible';
+          const isDifferentConversation = selectedConversationId !== convId;
+
+          if (isBackground || isDifferentConversation) {
+            lastPlayedTimestamp = notificationService.playSound(lastPlayedTimestamp);
+          }
         }
       };
 
