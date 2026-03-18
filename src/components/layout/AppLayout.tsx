@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { MessageCircle, Users, LayoutGrid, Settings, LogOut, Moon, Sun, Bell, Menu, Shield } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
@@ -22,6 +22,7 @@ import { IncomingCallDialog } from '../chat/call/IncomingCallDialog';
 import { OutgoingCallDialog } from '../chat/call/OutgoingCallDialog';
 import { CallWindow } from '../chat/call/CallWindow';
 import { CONFIRM_MESSAGES } from '../../constants';
+import { notificationService } from '../../services/notificationService';
 
 export const AppLayout: React.FC = () => {
   const { user } = useAuthStore();
@@ -68,6 +69,21 @@ export const AppLayout: React.FC = () => {
     conversations
       .filter(c => c.id !== selectedConversationId && (c.userChat?.unreadCount || 0) > 0)
       .forEach(c => markAsDelivered(c.id, user.id));
+  }, [conversations, selectedConversationId, user?.id]);
+
+  const prevUnreadRef = useRef<Record<string, number>>({});
+  const lastSoundRef = useRef<number>(0);
+  useEffect(() => {
+    if (!user) return;
+    let shouldPlay = false;
+    conversations.forEach(c => {
+      if (c.id === selectedConversationId) return;
+      const prev = prevUnreadRef.current[c.id] ?? 0;
+      const curr = c.userChat?.unreadCount ?? 0;
+      if (curr > prev && !c.userChat?.isMuted) shouldPlay = true;
+      prevUnreadRef.current[c.id] = curr;
+    });
+    if (shouldPlay) lastSoundRef.current = notificationService.playSound(lastSoundRef.current);
   }, [conversations, selectedConversationId, user?.id]);
 
   useEffect(() => {

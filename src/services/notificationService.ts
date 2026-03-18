@@ -1,3 +1,4 @@
+import React from 'react';
 import {
   collection,
   getDocs,
@@ -208,13 +209,12 @@ export const notificationService = {
   },
 
   // Lắng nghe tin nhắn khi đang mở app
-  initForegroundMessageHandler: (userId: string, selectedConversationId?: string | null) => {
+  initForegroundMessageHandler: (userId: string, selectedConversationRef?: React.RefObject<string | null>) => {
     try {
       const messaging = getMessaging();
       let lastPlayedTimestamp = 0;
 
       const handlePayload = (payload: any) => {
-        
         const data = payload.data;
         if (!data) return;
 
@@ -228,22 +228,25 @@ export const notificationService = {
           const convId = data.convId;
           const convMetadata = chatStore.conversations.find(c => c.id === convId);
           const isMuted = convMetadata?.userChat?.isMuted === true;
-
           if (isMuted && !isMention) return;
-
-          const isBackground = document.visibilityState !== 'visible';
-          const isDifferentConversation = selectedConversationId !== convId;
-
-          if (isBackground || isDifferentConversation) {
-            lastPlayedTimestamp = notificationService.playSound(lastPlayedTimestamp);
-          }
         }
       };
 
       const unsubscribeFCM = onMessage(messaging, handlePayload);
 
       const bc = new BroadcastChannel('fcm_notifications');
-      bc.onmessage = (event) => handlePayload(event.data);
+      bc.onmessage = (event) => {
+        const data = event.data?.data;
+        if (!data) return;
+        if (data.senderId === userId) return;
+        const isMention = data.type === NotificationType.MENTION;
+        const isChat = data.type === NotificationType.CHAT;
+        if (!isChat && !isMention) return;
+        const chatStore = useRtdbChatStore.getState();
+        const convMetadata = chatStore.conversations.find(c => c.id === data.convId);
+        if (convMetadata?.userChat?.isMuted && !isMention) return;
+        lastPlayedTimestamp = notificationService.playSound(lastPlayedTimestamp);
+      };
 
       return () => {
         unsubscribeFCM();
