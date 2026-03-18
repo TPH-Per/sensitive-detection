@@ -197,9 +197,9 @@ _Mô tả: Lưu trữ mọi thông báo (Tương tác, Hệ thống) đẩy tớ
 | :----------- | :---------- | :---------------- | :----------------------------------------------------------------------------------------------------------------------------------- |
 | `id`         | String      | **Required**      | Document ID                                                                                                                          |
 | `receiverId` | String      | **Required**      | ID người nhận                                                                                                                        |
-| `actorId`    | String      | **Required**      | ID người thực hiện hành động                                                                                                         |
+| `actorId`    | String      | **Required**      | ID người thực hiện hành động (Nếu là hệ thống thì để `"system"`)                                                                     |
 | `type`       | String Enum | **Required**      | `reaction`, `comment`, `friend_request`, `system`, `report`. (Lưu ý: Loại `chat` và `mention` chỉ gửi Push, không lưu vào Firestore) |
-| `data`       | Map         | **Required**      | Chứa `postId`, `commentId`, `friendRequestId`, `contentSnippet`, v.v.                                        |
+| `data`       | Map         | **Required**      | Chứa `postId`, `commentId`, `friendRequestId`, `contentSnippet`, `reportId`, `targetTypeLabel`, `reasonLabel`, `resolution`.         |
 | `isRead`     | Boolean     | **Required**      | Đã đọc hay chưa. Mặc định `false`                                                                                                    |
 | `createdAt`  | Timestamp   | **Required**      | Thời điểm tạo                                                                                                                        |
 | `updatedAt`  | Timestamp   | **Required**      | Thời điểm cập nhật                                                                                                                   |

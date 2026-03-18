@@ -1,14 +1,8 @@
 import { onDocumentCreated } from 'firebase-functions/v2/firestore';
 import { db } from '../app';
-import { NotificationType } from '../types';
+import { NotificationType, REPORT_TYPE_LABELS, REPORT_REASON_LABELS, ReportType, ReportReason } from '../types';
 import { createNotification } from '../helpers/notificationHelper';
 import { sendPushNotification } from '../helpers/fcmHelper';
-
-const REPORT_TYPE_LABELS: Record<string, string> = {
-  post: 'Bài viết',
-  comment: 'Bình luận',
-  user: 'Người dùng',
-};
 
 /**
  * Xử lý khi có báo cáo mới
@@ -28,8 +22,9 @@ export const onReportCreated = onDocumentCreated(
 
       if (adminIds.length === 0) return;
 
-      const typeLabel = REPORT_TYPE_LABELS[targetType] || targetType;
-      const contentSnippet = `${typeLabel} - ${reason}`;
+      const typeLabel = REPORT_TYPE_LABELS[targetType as ReportType] || targetType;
+      const reasonLabel = REPORT_REASON_LABELS[reason as ReportReason] || reason;
+      const contentSnippet = `Báo cáo mới về ${typeLabel}: ${reasonLabel}`;
 
       const notifications = adminIds.map((adminId) =>
         createNotification({

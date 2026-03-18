@@ -1,7 +1,7 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { FieldValue } from 'firebase-admin/firestore';
 import { db } from '../app';
-import { NotificationType, ReportStatus } from '../types';
+import { NotificationType, ReportStatus, REPORT_TYPE_LABELS, ReportType } from '../types';
 import { createNotification } from '../helpers/notificationHelper';
 import { sendPushNotification } from '../helpers/fcmHelper';
 
@@ -40,16 +40,21 @@ export const rejectReport = onCall(
       updatedAt: FieldValue.serverTimestamp(),
     });
 
+    const typeLabel = REPORT_TYPE_LABELS[reportData.targetType as ReportType] || reportData.targetType;
+
     await createNotification({
       receiverId: reportData.reporterId,
       actorId: adminId,
       type: NotificationType.REPORT,
-      data: { reportId, contentSnippet: 'Không phát hiện vi phạm' },
+      data: { 
+        reportId, 
+        contentSnippet: `Báo cáo của bạn về ${typeLabel} đã được xem xét. Chúng tôi không phát hiện thấy vi phạm quy tắc cộng đồng trong nội dung này.` 
+      },
     });
     await sendPushNotification({
       receiverId: reportData.reporterId,
       type: NotificationType.REPORT,
-      body: 'Báo cáo của bạn đã được xem xét và không phát hiện vi phạm.',
+      body: `Kết quả xem xét báo cáo về ${typeLabel}.`,
       data: { reportId },
     });
 

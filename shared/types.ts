@@ -76,6 +76,21 @@ export enum ReportStatus {
     REJECTED = "rejected",
 }
 
+export const REPORT_TYPE_LABELS: Record<ReportType, string> = {
+    [ReportType.POST]: 'Bài viết',
+    [ReportType.COMMENT]: 'Bình luận',
+    [ReportType.USER]: 'Người dùng',
+};
+
+export const REPORT_REASON_LABELS: Record<ReportReason, string> = {
+    [ReportReason.SPAM]: 'Spam / Nội dung rác',
+    [ReportReason.HARASSMENT]: 'Quấy rối / Làm phiền',
+    [ReportReason.HATE_SPEECH]: 'Ngôn từ thù ghét',
+    [ReportReason.SENSITIVE]: 'Nội dung nhạy cảm / Khiêu dâm',
+    [ReportReason.SCAM_IMPERSONATION]: 'Lừa đảo / Giả mạo',
+    [ReportReason.OTHER]: 'Lý do khác',
+};
+
 export enum PostStatus {
     ACTIVE = "active",
     DELETED = "deleted",

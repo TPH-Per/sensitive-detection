@@ -200,9 +200,8 @@ export const notificationService = {
       case NotificationType.FRIEND_REQUEST:
         return `đã gửi lời mời kết bạn.`;
       case NotificationType.REPORT:
-        return notification.data.contentSnippet || 'Cập nhật về báo cáo vi phạm.';
       case NotificationType.SYSTEM:
-        return notification.data.contentSnippet || 'Bạn có thông báo hệ thống mới.';
+        return notification.data.contentSnippet || "Thông báo hệ thống mới.";
       default:
         return "Thông báo mới.";
     }
