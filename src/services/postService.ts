@@ -75,18 +75,17 @@ export const postService = {
       const postIds = feedSnapshot.docs.map(doc => doc.data().postId);
 
       const posts: Post[] = [];
-      const chunkSize = 10;
 
-      for (let i = 0; i < postIds.length; i += chunkSize) {
-        const chunk = postIds.slice(i, i + chunkSize);
-        const postsQuery = query(
-          collection(db, 'posts'),
-          where('__name__', 'in', chunk),
-          where('status', '==', PostStatus.ACTIVE)
-        );
+      const postPromises = postIds.map(id => getDoc(doc(db, 'posts', id)));
+      const postResults = await Promise.allSettled(postPromises);
 
-        const postsSnapshot = await getDocs(postsQuery);
-        posts.push(...convertDocs<Post>(postsSnapshot.docs));
+      for (const result of postResults) {
+        if (result.status === 'fulfilled' && result.value.exists()) {
+          const postData = result.value.data();
+          if (postData.status === PostStatus.ACTIVE) {
+            posts.push(convertDoc<Post>(result.value));
+          }
+        }
       }
 
       posts.sort((a, b) => getSafeMillis(b.createdAt) - getSafeMillis(a.createdAt));
@@ -137,13 +136,18 @@ export const postService = {
         .map(c => c.doc.data().postId);
 
       if (addedIds.length > 0) {
-        const postsQuery = query(
-          collection(db, 'posts'),
-          where('__name__', 'in', addedIds)
-        );
-        const postsSnap = await getDocs(postsQuery);
-        const posts = convertDocs<Post>(postsSnap.docs)
-          .filter(p => p.status === PostStatus.ACTIVE);
+        const postPromises = addedIds.map(id => getDoc(doc(db, 'posts', id)));
+        const postResults = await Promise.allSettled(postPromises);
+        
+        const posts: Post[] = [];
+        for (const result of postResults) {
+          if (result.status === 'fulfilled' && result.value.exists()) {
+            const postData = result.value.data();
+            if (postData.status === PostStatus.ACTIVE) {
+              posts.push(convertDoc<Post>(result.value));
+            }
+          }
+        }
         
         if (posts.length > 0) callback('add', posts);
       }
