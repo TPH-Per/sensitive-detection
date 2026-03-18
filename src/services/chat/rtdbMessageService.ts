@@ -485,11 +485,16 @@ export const rtdbMessageService = {
             const msgId = snapshot.key;
             const msgData = snapshot.val() as RtdbMessage;
 
+            if (msgData.createdAt <= sinceTimestamp) return;
+
             const existingIndex = messages.findIndex(m => m.id === msgId);
             if (existingIndex !== -1) {
                 messages[existingIndex] = { id: msgId, data: msgData };
-                callback([...messages]);
+            } else {
+                messages.push({ id: msgId, data: msgData });
+                messages.sort((a, b) => a.data.createdAt - b.data.createdAt);
             }
+            callback([...messages]);
         };
 
         onChildAdded(messagesQuery, childAddedHandler);
@@ -549,6 +554,7 @@ export const rtdbMessageService = {
     markAsRead: async (convId: string, uid: string, lastMsgId?: string): Promise<void> => {
         try {
             const settings = await userService.getUserSettings(uid);
+            const now = Date.now();
 
             const messagesRef = ref(rtdb, `messages/${convId}`);
             const lastMessagesQuery = query(messagesRef, orderByChild('createdAt'), limitToLast(50));
@@ -557,50 +563,50 @@ export const rtdbMessageService = {
             if (!snapshot.exists()) return;
 
             const updates: Record<string, any> = {};
-            let hasUpdates = false;
-            let lastMessageIdInSnapshot: string | null = null;
-            let lastMessageTimestamp = 0;
 
             snapshot.forEach((childSnap) => {
                 const msgId = childSnap.key!;
                 const msgData = childSnap.val() as RtdbMessage;
 
-                if (msgData.createdAt > lastMessageTimestamp) {
-                    lastMessageTimestamp = msgData.createdAt;
-                    lastMessageIdInSnapshot = msgId;
+                if (msgData.senderId === uid) return;
+
+                if (!msgData.deliveredTo?.[uid]) {
+                    updates[`messages/${convId}/${msgId}/deliveredTo/${uid}`] = now;
                 }
 
-                if (msgData.senderId !== uid && !msgData.readBy?.[uid]) {
-                    if (settings.showReadReceipts) {
-                        updates[`messages/${convId}/${msgId}/readBy/${uid}`] = Date.now();
-                        updates[`messages/${convId}/${msgId}/deliveredTo/${uid}`] = Date.now();
-                        hasUpdates = true;
-                    }
+                if (settings.showReadReceipts && !msgData.readBy?.[uid]) {
+                    updates[`messages/${convId}/${msgId}/readBy/${uid}`] = now;
                 }
             });
 
-            if (hasUpdates) {
+            if (Object.keys(updates).length > 0) {
                 await update(ref(rtdb), updates);
             }
 
             const lastMsgPath = `conversations/${convId}/lastMessage`;
             const lastMsgSnap = await get(ref(rtdb, lastMsgPath));
-            
+
             if (lastMsgSnap.exists()) {
                 const lastMsg = lastMsgSnap.val();
-                if (lastMsg.senderId !== uid && !lastMsg.readBy?.[uid]) {
-                    if (settings.showReadReceipts) {
-                        const lastMsgUpdates: Record<string, any> = {};
-                        lastMsgUpdates[`${lastMsgPath}/readBy/${uid}`] = Date.now();
-                        lastMsgUpdates[`${lastMsgPath}/deliveredTo/${uid}`] = Date.now();
-                        await update(ref(rtdb), lastMsgUpdates);
+                if (lastMsg.senderId !== uid) {
+                    const convUpdates: Record<string, any> = {};
+
+                    if (!lastMsg.deliveredTo?.[uid]) {
+                        convUpdates[`${lastMsgPath}/deliveredTo/${uid}`] = now;
+                    }
+                    if (settings.showReadReceipts && !lastMsg.readBy?.[uid]) {
+                        convUpdates[`${lastMsgPath}/readBy/${uid}`] = now;
+                    }
+
+                    if (Object.keys(convUpdates).length > 0) {
+                        await update(ref(rtdb), convUpdates);
                     }
                 }
             }
 
             const userChatUpdates: Record<string, any> = {
                 [`user_chats/${uid}/${convId}/unreadCount`]: 0,
-                [`user_chats/${uid}/${convId}/updatedAt`]: Date.now()
+                [`user_chats/${uid}/${convId}/updatedAt`]: now
             };
 
             if (lastMsgId) {
@@ -608,6 +614,10 @@ export const rtdbMessageService = {
             }
 
             await update(ref(rtdb), userChatUpdates);
+
+            await update(ref(rtdb), {
+                [`conversations/${convId}/updatedAt`]: now
+            });
         } catch (error) {
             console.error('[rtdbMessageService] Lỗi markAsRead:', error);
             throw error;
@@ -659,6 +669,12 @@ export const rtdbMessageService = {
                         [`deliveredTo/${uid}`]: Date.now()
                     });
                 }
+            }
+
+            if (hasUpdates) {
+                await update(ref(rtdb), {
+                    [`conversations/${convId}/updatedAt`]: Date.now()
+                });
             }
         } catch (error) {
             console.error('[rtdbMessageService] Lỗi markAsDelivered:', error);

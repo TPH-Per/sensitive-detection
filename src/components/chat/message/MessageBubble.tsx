@@ -1,10 +1,9 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Smile, Check, CheckCheck } from 'lucide-react';
+import { Smile } from 'lucide-react';
 
 import { RtdbMessage, User, MessageType } from '../../../../shared/types';
 import {
-  Avatar,
   UserAvatar,
   ReactionDisplay,
   ReactionSelector,
@@ -14,12 +13,13 @@ import {
   MediaViewer,
   ReactionDetailsModal
 } from '../../ui';
-import { useRtdbChatStore, useAuthStore } from '../../../store';
+import { useRtdbChatStore } from '../../../store';
 import { TIME_LIMITS } from '../../../constants/appConfig';
 import { formatTimeOnly } from '../../../utils/dateUtils';
 import { scrollToMessage } from '../../../utils';
 import { MessageContent } from './MessageContent';
 import { MessageActions } from './MessageActions';
+import { MessageStatus } from './MessageStatus';
 
 
 interface MessageBubbleProps {
@@ -73,7 +73,6 @@ const MessageBubbleInner: React.FC<MessageBubbleProps> = ({
   const [showReactionSelector, setShowReactionSelector] = useState(false);
   const [showReactionDetails, setShowReactionDetails] = useState(false);
   const { toggleReaction, uploadProgress } = useRtdbChatStore();
-  const { settings } = useAuthStore();
   const [isPlaying, setIsPlaying] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
@@ -94,7 +93,8 @@ const MessageBubbleInner: React.FC<MessageBubbleProps> = ({
 
   const senderName = sender?.fullName || 'Người dùng';
 
-  const isDelivered = message.data.deliveredTo && Object.keys(message.data.deliveredTo).length > 0;
+  const isDelivered = message.data.deliveredTo &&
+    Object.keys(message.data.deliveredTo).some(uid => uid !== currentUserId);
 
   const canEdit = isMe && !message.data.isRecalled && message.data.type === MessageType.TEXT && (
     (Date.now() - message.data.createdAt) <= TIME_LIMITS.MESSAGE_EDIT_WINDOW
@@ -349,36 +349,19 @@ const MessageBubbleInner: React.FC<MessageBubbleProps> = ({
           )}
           {isMe && (isLastMessage || lastReadByUsers.length > 0) && (
             <div className="flex flex-col items-end mt-0.5">
-              {(isLastMessage && (lastReadByUsers.length === 0 || !settings?.showReadReceipts)) && (
-                <div className="mt-0.5 select-none text-text-tertiary">
-                  {(lastReadByUsers.length > 0 || isDelivered) ? <CheckCheck size={14} strokeWidth={2.5} /> : <Check size={14} strokeWidth={2.5} />}
-                </div>
-              )}
+              <div
+                className="mt-0.5 cursor-pointer"
+                onClick={() => isGroup && lastReadByUsers.length > 0 && setShowReaders(!showReaders)}
+              >
+                <MessageStatus
+                  isMine={isMe}
+                  isRead={lastReadByUsers.length > 0}
+                  isDelivered={isDelivered}
+                  readers={lastReadByUsers}
+                />
+              </div>
 
-              {lastReadByUsers.length > 0 && !!settings?.showReadReceipts && (
-                <div
-                  className="flex items-center gap-1 mt-1 cursor-pointer"
-                  onClick={() => isGroup && setShowReaders(!showReaders)}
-                >
-                  <div className="flex -space-x-1.5 overflow-hidden">
-                    {lastReadByUsers.slice(0, 3).map(user => (
-                      <Avatar
-                        key={user.id}
-                        src={user.avatar.url}
-                        name={user.fullName}
-                        size="2xs"
-                      />
-                    ))}
-                  </div>
-                  {lastReadByUsers.length > 3 && (
-                    <span className="text-[10px] text-text-tertiary font-medium">
-                      +{lastReadByUsers.length - 3}
-                    </span>
-                  )}
-                </div>
-              )}
-
-              {/* Danh sách người xem chi tiết khi click (chỉ cho group) */}
+              {/* Modal danh sách người xem (chỉ group) */}
               {isGroup && lastReadByUsers.length > 0 && (
                 <Modal
                   isOpen={showReaders}

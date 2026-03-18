@@ -272,6 +272,13 @@ const ConversationItemInner: React.FC<ConversationItemProps> = ({
 
 export const ConversationItem = Object.assign(
   React.memo(ConversationItemInner, (prev, next) => {
+    const prevLast = prev.conversation.data.lastMessage;
+    const nextLast = next.conversation.data.lastMessage;
+    const lastMessageEqual =
+      prevLast?.messageId === nextLast?.messageId &&
+      JSON.stringify(prevLast?.readBy) === JSON.stringify(nextLast?.readBy) &&
+      JSON.stringify(prevLast?.deliveredTo) === JSON.stringify(nextLast?.deliveredTo);
+
     return (
       prev.isActive === next.isActive &&
       prev.conversation.id === next.conversation.id &&
@@ -280,7 +287,8 @@ export const ConversationItem = Object.assign(
       prev.currentUserId === next.currentUserId &&
       prev.onClick === next.onClick &&
       prev.onPin === next.onPin &&
-      prev.onMute === next.onMute
+      prev.onMute === next.onMute &&
+      lastMessageEqual
     );
   }),
   { Skeleton: ConversationItemSkeleton }

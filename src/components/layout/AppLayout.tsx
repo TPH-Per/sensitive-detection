@@ -26,7 +26,7 @@ import { CONFIRM_MESSAGES } from '../../constants';
 export const AppLayout: React.FC = () => {
   const { user } = useAuthStore();
   const { mode, toggleTheme } = useThemeStore();
-  const { subscribeToConversations, selectedConversationId } = useRtdbChatStore();
+  const { subscribeToConversations, selectedConversationId, conversations, markAsDelivered } = useRtdbChatStore();
   const { receivedRequests, subscribeToRequests, subscribeToFriends } = useContactStore();
   const { initialize: initNotifications, unreadCount: unreadNotifications } = useNotificationStore();
 
@@ -62,6 +62,13 @@ export const AppLayout: React.FC = () => {
       unsubscribeNotifications();
     };
   }, [user, subscribeToConversations, subscribeToRequests, subscribeToFriends, initNotifications]);
+
+  useEffect(() => {
+    if (!user) return;
+    conversations
+      .filter(c => c.id !== selectedConversationId && (c.userChat?.unreadCount || 0) > 0)
+      .forEach(c => markAsDelivered(c.id, user.id));
+  }, [conversations, selectedConversationId, user?.id]);
 
   useEffect(() => {
     if (selectedPost && !usersMap[selectedPost.authorId]) {

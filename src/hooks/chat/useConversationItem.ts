@@ -72,9 +72,9 @@ export const useConversationItem = ({
     const readBy = lastMessage.readBy || {};
     return Object.keys(readBy)
       .filter(uid => uid !== currentUserId)
-      .map(uid => participants.find(p => p.id === uid))
-      .filter((u): u is User => !!u);
-  }, [lastMessage, participants, currentUserId]);
+      .map(uid => participants.find(p => p.id === uid) ?? usersMap[uid])
+      .filter((u): u is User => !!u && u.settings?.showReadReceipts !== false);
+  }, [lastMessage, participants, usersMap, currentUserId, isMessageRequest]);
 
   const deliveredUsers = useMemo(() => {
     if (!lastMessage) return [];

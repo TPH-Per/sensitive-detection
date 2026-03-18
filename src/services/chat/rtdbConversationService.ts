@@ -143,12 +143,8 @@ export const rtdbConversationService = {
                         if (convSnap.exists()) {
                             const data = convSnap.val() as RtdbConversation;
                             const userChat = latestUserChats[convId];
-                            
-                            const existing = conversationsMap.get(convId);
-                            if (!existing || existing.data.updatedAt !== data.updatedAt || existing.userChat.updatedAt !== userChat.updatedAt) {
-                                conversationsMap.set(convId, { id: convId, data, userChat });
-                                updateCallback();
-                            }
+                            conversationsMap.set(convId, { id: convId, data, userChat });
+                            updateCallback();
                         } else {
                             if (conversationsMap.has(convId)) {
                                 conversationsMap.delete(convId);

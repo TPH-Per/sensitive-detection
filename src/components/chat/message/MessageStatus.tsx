@@ -2,35 +2,30 @@ import React from 'react';
 import { Check, CheckCheck } from 'lucide-react';
 import { User } from '../../../../shared/types';
 import { Avatar } from '../../ui';
-import { useAuthStore } from '../../../store';
 
 interface MessageStatusProps {
+  isMine: boolean;
   isRead: boolean;
   isDelivered: boolean;
   readers: User[];
-  isMine: boolean;
 }
 
 export const MessageStatus: React.FC<MessageStatusProps> = ({
+  isMine,
   isRead,
   isDelivered,
-  readers,
-  isMine
+  readers
 }) => {
-  const { settings } = useAuthStore();
-  
   if (!isMine) return null;
 
-  const shouldShowReaders = isRead && !!settings?.showReadReceipts;
-
-  if (shouldShowReaders) {
+  if (isRead && readers.length > 0) {
     return (
       <div className="flex items-center gap-1">
         <div className="flex -space-x-1">
           {readers.slice(0, 3).map(user => (
             <Avatar
               key={user.id}
-              src={user.avatar.url}
+              src={user.avatar?.url}
               name={user.fullName}
               size="2xs"
             />
@@ -45,13 +40,17 @@ export const MessageStatus: React.FC<MessageStatusProps> = ({
     );
   }
 
+  if (isDelivered) {
+    return (
+      <div className="text-text-tertiary">
+        <CheckCheck size={14} strokeWidth={2.5} />
+      </div>
+    );
+  }
+
   return (
     <div className="text-text-tertiary">
-      {isDelivered || isRead ? (
-        <CheckCheck size={14} strokeWidth={2.5} />
-      ) : (
-        <Check size={14} strokeWidth={2.5} />
-      )}
+      <Check size={14} strokeWidth={2.5} />
     </div>
   );
 };

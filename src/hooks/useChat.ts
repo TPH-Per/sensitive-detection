@@ -187,18 +187,35 @@ export const useChat = () => {
     };
   }, [selectedConversationId, currentUser, subscribeToMessages, subscribeToTyping, markAsDelivered]);
 
+
   useEffect(() => {
+    if (!selectedConversationId || !currentUser) return;
+
     const selectedConvData = conversations.find(c => c.id === selectedConversationId)?.data;
     const isGroup = selectedConvData?.isGroup || false;
-    
-    let isMessageRequest = false;
+
     if (!isGroup) {
       const activeParticipantIds = Object.keys(selectedConvData?.members || {});
       const activePartnerId = activeParticipantIds.find(id => id !== currentUser.id);
-      isMessageRequest = activePartnerId ? !friendIds.includes(activePartnerId) : false;
+      const isMessageRequest = activePartnerId ? !friendIds.includes(activePartnerId) : false;
+      if (isMessageRequest) return;
     }
 
-    if (isMessageRequest) return;
+    markAsRead(selectedConversationId, currentUser.id);
+  }, [selectedConversationId, currentUser?.id]);
+
+  useEffect(() => {
+    if (!selectedConversationId || !currentUser) return;
+
+    const selectedConvData = conversations.find(c => c.id === selectedConversationId)?.data;
+    const isGroup = selectedConvData?.isGroup || false;
+
+    if (!isGroup) {
+      const activeParticipantIds = Object.keys(selectedConvData?.members || {});
+      const activePartnerId = activeParticipantIds.find(id => id !== currentUser.id);
+      const isMessageRequest = activePartnerId ? !friendIds.includes(activePartnerId) : false;
+      if (isMessageRequest) return;
+    }
 
     const msgs = messages[selectedConversationId] || [];
     const hasUnread = msgs.some(m =>
