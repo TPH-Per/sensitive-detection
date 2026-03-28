@@ -86,6 +86,7 @@ const LoginPage: React.FC = () => {
       setInfoMessage('Email chưa được xác thực. Vui lòng kiểm tra hộp thư hoặc gửi lại email xác thực.');
       setShowResend(true);
       toast.info('Email chưa được xác thực. Vui lòng xác thực email.');
+      toast.info(TOAST_MESSAGES.AUTH.VERIFY_EMAIL_PENDING);
       return;
     }
 
@@ -158,6 +159,7 @@ const LoginPage: React.FC = () => {
       setInfoMessage('Email chưa được xác thực. Vui lòng kiểm tra hộp thư hoặc gửi lại email xác thực.');
       setShowResend(true);
       toast.info('Email chưa được xác thực. Vui lòng xác thực email.');
+        toast.info(TOAST_MESSAGES.AUTH.VERIFY_EMAIL_PENDING);
       return;
     }
       if (err.code === 'auth/user-not-found') message = "Email này chưa được đăng ký.";

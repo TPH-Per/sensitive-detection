@@ -1,7 +1,11 @@
 // ========== SHARED ENUMS ==========
 // Các enums này được dùng chung giữa frontend (src) và backend (functions)
 
-import { Timestamp } from 'firebase/firestore';
+export interface Timestamp {
+    seconds: number;
+    nanoseconds: number;
+    toDate: () => Date;
+}
 
 export enum UserStatus {
     ACTIVE = "active",
