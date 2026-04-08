@@ -30,13 +30,17 @@ const MessageListInner: React.FC<MessageListProps> = ({
   onCall, onJoinCall, chatName, avatarSrc, partner,
   isBlocked = false, partnerStatus,
 }) => {
+  const [renderLimit, setRenderLimit] = React.useState<number>(200);
+
+  const visibleAll = useMemo(() => messages.filter(
+    msg => !msg.data.deletedBy || !msg.data.deletedBy[currentUserId]
+  ), [messages, currentUserId]);
+
   const groupedMessages = useMemo(() => {
     const groups: { date: string; messages: Array<{ id: string; data: RtdbMessage }> }[] = [];
     let currentDate = '';
 
-    const visible = messages.filter(
-      msg => !msg.data.deletedBy || !msg.data.deletedBy[currentUserId]
-    );
+    const visible = visibleAll.length > renderLimit ? visibleAll.slice(visibleAll.length - renderLimit) : visibleAll;
 
     visible.forEach((msg) => {
       const msgDate = new Date(msg.data.createdAt).toLocaleDateString('vi-VN');
@@ -49,7 +53,9 @@ const MessageListInner: React.FC<MessageListProps> = ({
     });
 
     return groups;
-  }, [messages, currentUserId]);
+  }, [visibleAll, renderLimit]);
+
+  const hasMore = visibleAll.length > renderLimit;
 
   const shouldShowAvatar = (
     msg: { id: string; data: RtdbMessage },
@@ -94,6 +100,14 @@ const MessageListInner: React.FC<MessageListProps> = ({
 
   return (
     <div className="space-y-1">
+      {hasMore && (
+        <div className="flex items-center justify-center my-2">
+          <button className="text-sm text-link" onClick={() => setRenderLimit(visibleAll.length)}>
+            Xem tin nhắn cũ hơn
+          </button>
+        </div>
+      )}
+
       {groupedMessages.map((group, groupIndex) => (
         <div key={groupIndex}>
           {/* Date separator */}

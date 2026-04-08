@@ -1,4 +1,5 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
+import { Virtuoso } from 'react-virtuoso';
 import { Users, Archive } from 'lucide-react';
 import { RtdbConversation, RtdbUserChat, User } from '../../../../shared/types';
 import { ConversationItem } from './ConversationItem';
@@ -62,6 +63,10 @@ export const ConversationList = React.memo<ConversationListProps>(({
     viewMode: (viewMode || 'normal') as 'normal' | 'archived',
     activeFilter,
   });
+
+  const [renderLimit, setRenderLimit] = useState<number>(50);
+  const conversationsToShow = useMemo(() => displayConversations.slice(0, renderLimit), [displayConversations, renderLimit]);
+  const hasMoreConversations = displayConversations.length > renderLimit;
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -143,7 +148,7 @@ export const ConversationList = React.memo<ConversationListProps>(({
         )
       )}
 
-      <div className="flex-1 overflow-y-auto scroll-hide">
+      <div className="flex-1">
         {isLoading && conversations.length === 0 ? (
           <div className="p-1 pt-2">
             {[...Array(6)].map((_, i) => (
@@ -178,7 +183,7 @@ export const ConversationList = React.memo<ConversationListProps>(({
             </p>
           </div>
         ) : (
-          <div className="py-1">
+          <div className="py-1 h-full">
             {/* Stranger tab */}
             {activeFilter === 'stranger' ? (
               requestConversations.length === 0 ? (
@@ -192,7 +197,25 @@ export const ConversationList = React.memo<ConversationListProps>(({
                 requestConversations.map(renderConversationItem)
               )
             ) : (
-              displayConversations.map(renderConversationItem)
+              <div className="h-full">
+                <Virtuoso
+                  style={{ height: '100%' }}
+                  totalCount={conversationsToShow.length}
+                  itemContent={(index) => {
+                    const conversation = conversationsToShow[index];
+                    return renderConversationItem(conversation);
+                  }}
+                  components={{
+                    Footer: () => hasMoreConversations ? (
+                      <div className="flex items-center justify-center mt-2">
+                        <button className="text-sm text-link" onClick={() => setRenderLimit(prev => prev + 50)}>
+                          Tải thêm cuộc trò chuyện
+                        </button>
+                      </div>
+                    ) : null,
+                  }}
+                />
+              </div>
             )}
           </div>
         )}

@@ -20,9 +20,11 @@ import { useUnreadCount } from '../../hooks/utils/useUnreadCount';
 import { useLogout } from '../../hooks/utils/useLogout';
 import { useCallStore } from '../../store/callStore';
 import { useCallManager } from '../../hooks/chat/useCallManager';
-import { IncomingCallDialog } from '../chat/call/IncomingCallDialog';
-import { OutgoingCallDialog } from '../chat/call/OutgoingCallDialog';
-import { CallWindow } from '../chat/call/CallWindow';
+const IncomingCallDialog = React.lazy(() => import('../chat/call/IncomingCallDialog').then(mod => ({ default: mod.IncomingCallDialog })));
+const OutgoingCallDialog = React.lazy(() => import('../chat/call/OutgoingCallDialog').then(mod => ({ default: mod.OutgoingCallDialog })));
+
+const CallWindow = React.lazy(() => import('../chat/call/CallWindow').then(mod => ({ default: mod.CallWindow })));
+
 import { CONFIRM_MESSAGES } from '../../constants';
 import { soundManager } from '../../services/soundManager';
 
@@ -350,38 +352,44 @@ export const AppLayout: React.FC = () => {
       />
 
       {phase === 'incoming' && incomingSignal && (
-        <IncomingCallDialog
-          callerName={incomingSignal.callerName!}
-          callerId={incomingSignal.callerId}
-          callType={incomingSignal.callType}
-          isGroupCall={incomingSignal.isGroupCall}
-          onAccept={acceptCall}
-          onReject={rejectCall}
-        />
+        <React.Suspense fallback={null}>
+          <IncomingCallDialog
+            callerName={incomingSignal.callerName!}
+            callerId={incomingSignal.callerId}
+            callType={incomingSignal.callType}
+            isGroupCall={incomingSignal.isGroupCall}
+            onAccept={acceptCall}
+            onReject={rejectCall}
+          />
+        </React.Suspense>
       )}
 
       {phase === 'outgoing' && session && (
-        <OutgoingCallDialog
-          calleeName={session.calleeName || 'Đang gọi...'}
-          calleeId={session.participants[0]}
-          calleeAvatar={session.calleeAvatar}
-          callType={session.callType}
-          endReason={callEndReason}
-          onCancel={() => endCall('missed')}
-          onDismiss={dismissEndedCall}
-        />
+        <React.Suspense fallback={null}>
+          <OutgoingCallDialog
+            calleeName={session.calleeName || 'Đang gọi...'}
+            calleeId={session.participants[0]}
+            calleeAvatar={session.calleeAvatar}
+            callType={session.callType}
+            endReason={callEndReason}
+            onCancel={() => endCall('missed')}
+            onDismiss={dismissEndedCall}
+          />
+        </React.Suspense>
       )}
 
       {user && phase === 'in-call' && session && (
-        <CallWindow
-          roomId={session.conversationId}
-          userId={user.id}
-          userName={user.fullName}
-          userAvatar={user.avatar?.url ?? ''}
-          isGroupCall={session.isGroupCall}
-          callType={session.callType}
-          onClose={() => endCall('ended')}
-        />
+        <React.Suspense fallback={<ScreenLoader />}>
+          <CallWindow
+            roomId={session.conversationId}
+            userId={user.id}
+            userName={user.fullName}
+            userAvatar={user.avatar?.url ?? ''}
+            isGroupCall={session.isGroupCall}
+            callType={session.callType}
+            onClose={() => endCall('ended')}
+          />
+        </React.Suspense>
       )}
     </div>
   );
