@@ -1,0 +1,6 @@
+FrameLayout id=android:id/content bounds=[0,0][1080,2337]
+  FrameLayout flags=focusable bounds=[0,0][1080,2337]
+    Button flags=clickable,focusable bounds=[11,74][137,200]
+    View desc="Danh sách bạn bè" flags=focusable bounds=[331,106][749,167]
+    View desc="Chưa có bạn bè nào" flags=focusable bounds=[348,1359][732,1419]
+View id=android:id/navigationBarBackground bounds=[0,2337][1080,2400]

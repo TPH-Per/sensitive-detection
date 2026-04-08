@@ -1,0 +1,449 @@
+import React from 'react';
+import { FileText, Download, Image as ImageIcon, Play, Pause, Mic, PhoneIncoming, Phone, PhoneMissed, Video, FileVideo } from 'lucide-react';
+import { RtdbMessage, MessageType } from '../../../../shared/types';
+import { LazyVideo, LazyImage } from '../../ui';
+import { downloadFile } from '../../../utils';
+import { LinkPreviewCard } from '../../shared/LinkPreviewCard';
+import { extractFirstUrl } from '../../../services/linkPreviewService';
+
+interface MessageContentProps {
+  message: { id: string; data: RtdbMessage };
+  isMe: boolean;
+  isGroup?: boolean;
+  uploadProgress: Record<string, { progress: number; error?: boolean }>;
+  isPlaying: boolean;
+  onToggleVoice: (e: React.MouseEvent) => void;
+  onOpenImage: (index: number) => void;
+  onCall?: () => void;
+  onJoinCall?: (callType: 'voice' | 'video') => void;
+}
+
+const UploadBar: React.FC<{ progress: number; error?: boolean; light?: boolean }> = ({ progress, error, light }) => (
+  <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center p-4">
+    <div className="w-full bg-white/20 h-1.5 rounded-full overflow-hidden mb-2">
+      <div className="bg-primary h-full transition-all duration-slow" style={{ width: `${progress}%` }} />
+    </div>
+    <span className={`text-xs font-medium ${light ? 'text-white' : 'text-text-secondary'}`}>
+      {error ? 'Lỗi tải lên' : `Đang tải ${Math.round(progress)}%`}
+    </span>
+  </div>
+);
+
+const renderTextWithMentions = (text: string, isMe: boolean): React.ReactNode => {
+  const parts = text.split(/(@\[[^:]+:[^\]]+\]|@[^\s\u200B]+(?:\s[^\s\u200B]+)*\u200B|(?:https?:\/\/|www\.)[^\s]+)/g);
+  return parts.map((part, index) => {
+    if (part.startsWith('@[') && part.endsWith(']')) {
+      const match = part.match(/@\[([^:]+):([^\]]+)\]/);
+      if (match) {
+        const [, userId, name] = match;
+        return (
+          <a key={index} href={`/profile/${userId}`}
+            className="font-bold hover:underline transition-all duration-base"
+            onClick={(e) => e.stopPropagation()}
+          >
+            @{name}
+          </a>
+        );
+      }
+    }
+    // plain text mention: @Name\u200B (zero-width space marker)
+    if (part.startsWith('@') && part.endsWith('\u200B')) {
+      const name = part.slice(1, -1);
+      return (
+        <span key={index} className="font-bold">
+          @{name}
+        </span>
+      );
+    }
+    if (/^(https?:\/\/|www\.)/.test(part)) {
+      const href = part.startsWith('www.') ? `https://${part}` : part;
+      return (
+        <a key={index} href={href} target="_blank" rel="noopener noreferrer"
+          className={`underline break-all transition-all duration-base hover:opacity-80 ${isMe ? 'text-white/90' : 'text-primary'}`}
+          onClick={(e) => e.stopPropagation()}
+        >
+          {part}
+        </a>
+      );
+    }
+    return <span key={index}>{part}</span>;
+  });
+};
+
+const MessageContentInner: React.FC<MessageContentProps> = ({
+  message, isMe, isGroup = false, uploadProgress,
+  isPlaying, onToggleVoice, onOpenImage, onCall, onJoinCall,
+}) => {
+  if (message.data.isRecalled) {
+    return <div className={`italic text-sm ${isMe ? 'text-white/80' : 'text-text-tertiary'}`}>Tin nhắn đã thu hồi</div>;
+  }
+
+  const up = uploadProgress[message.id];
+
+  if (message.data.type === 'image') {
+    const mediaItems = message.data.media?.length
+      ? message.data.media
+      : message.data.content
+        ? [{ url: message.data.content, fileName: '', mimeType: '', size: 0, isSensitive: false }]
+        : [];
+    const count = mediaItems.length;
+    const validUrls = mediaItems.map(m => m.url).filter(Boolean);
+    const isUploading = isMe && up && validUrls.length === 0 && count > 0;
+
+    if (count === 0 && validUrls.length === 0) return null;
+
+    if (isUploading) {
+      if (count > 1) {
+        const cols = count === 2 ? 'grid-cols-2' : 'grid-cols-3';
+        return (
+          <div className={`relative rounded-xl overflow-hidden grid gap-0.5 ${cols} border border-border-light shadow-sm bg-bg-secondary w-full max-w-full`}>
+            {Array.from({ length: count }).map((_, i) => (
+              <div key={i} className="bg-bg-tertiary/60 aspect-square" />
+            ))}
+            <UploadBar progress={up.progress} error={up.error} light />
+          </div>
+        );
+      }
+      return (
+        <div className="relative rounded-lg overflow-hidden max-w-[280px] bg-bg-tertiary/60 aspect-square">
+          <UploadBar progress={up.progress} error={up.error} light />
+        </div>
+      );
+    }
+
+    if (count > 1) {
+      const renderItem = (item: typeof mediaItems[0], idx: number) => {
+        const isVid = item.mimeType?.startsWith('video/');
+        return (
+          <div
+            key={`${message.id}-media-${idx}`}
+            className="relative overflow-hidden cursor-pointer border border-border-light aspect-square"
+            onClick={() => onOpenImage(idx)}
+          >
+            {isVid ? (
+              item.thumbnailUrl
+                ? <img src={item.thumbnailUrl} alt="" className="w-full h-full object-cover" />
+                : <video src={item.url} className="w-full h-full object-cover" preload="metadata" playsInline muted />
+            ) : (
+              <LazyImage src={item.url} alt="sent" className="w-full h-full object-cover transition-all duration-base" />
+            )}
+            {isVid && (
+              <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+                <div className="w-7 h-7 rounded-full bg-white/80 flex items-center justify-center shadow-sm">
+                  <Play size={14} className="text-text-primary ml-0.5 fill-current" />
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      };
+
+      // row-based layouts for counts that don't fill a single grid evenly
+      const rowLayouts: Record<number, number[]> = {
+        5: [3, 2],
+        7: [4, 3],
+        10: [4, 3, 3],
+      };
+      // single-grid column counts for even layouts
+      const singleGrid: Record<number, string> = {
+        2: 'grid-cols-2',
+        3: 'grid-cols-3',
+        4: 'grid-cols-2',
+        6: 'grid-cols-3',
+        8: 'grid-cols-4',
+        9: 'grid-cols-3',
+      };
+
+      const wrapperClass = "relative rounded-xl overflow-hidden flex flex-col gap-0.5 w-full max-w-[320px] border border-border-light bg-bg-secondary shadow-sm";
+
+      if (rowLayouts[count]) {
+        const rows = rowLayouts[count];
+        let offset = 0;
+        const rowEls = rows.map((cols, rowIdx) => {
+          const start = offset;
+          offset += cols;
+          return (
+            <div key={rowIdx} className={`grid grid-cols-${cols} gap-0.5`}>
+              {mediaItems.slice(start, offset).map((item, i) => renderItem(item, start + i))}
+            </div>
+          );
+        });
+        return (
+          <div className={wrapperClass}>
+            {rowEls}
+            {isMe && up && <UploadBar progress={up.progress} error={up.error} light />}
+          </div>
+        );
+      }
+
+      const cols = singleGrid[count] ?? 'grid-cols-3';
+      return (
+        <div className={`relative rounded-xl overflow-hidden grid gap-0.5 ${cols} shadow-sm bg-bg-secondary w-full max-w-[320px] border border-border-light`}>
+          {mediaItems.map((item, idx) => renderItem(item, idx))}
+          {isMe && up && <UploadBar progress={up.progress} error={up.error} light />}
+        </div>
+      );
+    }
+
+    const first = mediaItems[0];
+    const isVid = first.mimeType?.startsWith('video/');
+    return (
+      <div className="rounded-lg overflow-hidden max-w-[280px] cursor-pointer group relative" onClick={() => onOpenImage(0)}>
+        {isVid
+          ? <LazyVideo src={first.url} thumbnail={first.thumbnailUrl} className="w-full h-auto max-h-[400px] object-contain" />
+          : <LazyImage src={first.url} alt="sent" className="w-full h-auto" />
+        }
+        {isMe && up && <UploadBar progress={up.progress} error={up.error} light />}
+        {!isVid && (
+          <div className="absolute inset-0 bg-black/0 md:group-hover:bg-black/10 transition-all duration-base flex items-center justify-center">
+            <ImageIcon className="opacity-0 md:group-hover:opacity-100 text-white transition-all duration-base" size={32} />
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  if (message.data.type === 'file') {
+    const fileData = message.data.media?.[0];
+    const fileUrl = fileData?.url || '';
+    const fileName = fileData?.fileName || 'Tài liệu';
+    const fileMime = fileData?.mimeType || '';
+    const fileSize = fileData?.size ? `${(fileData.size / 1024).toFixed(1)} KB` : 'N/A';
+    const isFileUploading = isMe && up && !fileUrl;
+    const isImageFile = fileMime.startsWith('image/');
+    const isVideoFile = fileMime.startsWith('video/');
+    const isAudioFile = fileMime.startsWith('audio/') || (fileName && /\.(mp3|wav|m4a|ogg|aac)$/i.test(fileName));
+
+    if (isFileUploading) {
+      return (
+        <div className={`relative flex items-center gap-3 p-3 rounded-xl border w-full max-w-xs ${isMe ? 'bg-primary/10 border-primary/20' : 'bg-bg-primary border-border-light'}`}>
+          <div className={`p-2 rounded-lg ${isMe ? 'bg-primary/10' : 'bg-bg-secondary'}`}>
+            <FileText size={24} className={isMe ? 'text-primary' : 'text-text-secondary'} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="font-medium truncate text-sm">{fileName}</div>
+            <div className="text-xs opacity-70">{fileSize}</div>
+          </div>
+          <div className="absolute inset-0 bg-bg-primary/80 flex flex-col items-center justify-center p-2 rounded-lg">
+            <div className="w-full bg-bg-secondary h-1.5 rounded-full overflow-hidden mb-1">
+              <div className="bg-primary h-full transition-all duration-slow" style={{ width: `${up.progress}%` }} />
+            </div>
+            <span className="text-xs text-text-secondary">
+              {up.error ? 'Lỗi' : `${Math.round(up.progress)}%`}
+            </span>
+          </div>
+        </div>
+      );
+    }
+
+    // If it's an audio file, render inline audio player (uses MessageBubble's onToggleVoice)
+    if (isAudioFile && fileUrl) {
+      const audioClass = `flex items-center gap-3 p-3 rounded-2xl min-w-[200px] transition-all duration-base ${isMe ? 'bg-bg-message-sent text-text-on-primary shadow-md' : 'bg-bg-message-received text-text-primary' }`;
+      const btnClass = `p-2.5 rounded-full shadow-sm transition-all duration-base ${isMe ? 'bg-bg-primary text-primary' : 'bg-primary text-white'}`;
+
+      return (
+        <div className={`${audioClass} cursor-pointer`} onClick={onToggleVoice}>
+          <div className={btnClass}>
+            {isPlaying ? <Pause size={18} fill="currentColor" /> : <Play size={18} className="ml-0.5" fill="currentColor" />}
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="text-sm font-bold mb-0.5">{fileName}</div>
+            <div className={`flex items-center gap-1.5 opacity-80 ${isMe ? 'text-text-on-primary' : 'text-text-tertiary'}`}>
+              <div className="text-xs">{fileSize}</div>
+            </div>
+          </div>
+          <button
+            onClick={(e) => { e.stopPropagation(); downloadFile(fileUrl, fileName); }}
+            className={`p-2 rounded-full transition-all duration-base ${isMe ? 'hover:bg-primary/10 text-primary' : 'hover:bg-black/5 text-text-secondary'}`}
+            title="Tải về"
+          >
+            <Download size={18} />
+          </button>
+        </div>
+      );
+    }
+
+    return (
+      <div className={`flex flex-col gap-2 p-2 rounded-xl border max-w-[300px] ${isMe ? 'bg-primary/5 border-primary/20' : 'bg-bg-secondary border-border-light'}`}>
+        {(isImageFile || isVideoFile) && fileUrl && (
+          <div className="rounded-lg overflow-hidden cursor-pointer bg-black/5 aspect-video flex items-center justify-center" onClick={() => isImageFile ? onOpenImage(0) : undefined}>
+            {isImageFile
+              ? <LazyImage src={fileUrl} alt={fileName} className="w-full h-full object-cover" />
+              : (
+                <div className="relative w-full h-full">
+                  <LazyVideo src={fileUrl} className="w-full h-full object-cover" />
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+                    <FileVideo size={32} className="text-white shadow-sm" />
+                  </div>
+                </div>
+              )
+            }
+          </div>
+        )}
+        <div className="flex items-center gap-3 p-1">
+          <div className={`p-2 rounded-lg ${isMe ? 'bg-primary text-white' : 'bg-bg-tertiary text-text-secondary'}`}>
+            <FileText size={20} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="font-bold truncate text-sm">{fileName}</div>
+            <div className="text-xs opacity-60">{fileSize}</div>
+          </div>
+          <button
+            onClick={(e) => { e.stopPropagation(); downloadFile(fileUrl, fileName); }}
+            className={`p-2 rounded-full transition-all duration-base ${isMe ? 'hover:bg-primary/10 text-primary' : 'hover:bg-black/5 text-text-secondary'}`}
+            title="Tải về"
+          >
+            <Download size={18} />
+          </button>
+        </div>
+        {isMe && up && (
+          <div className="absolute inset-0 bg-bg-primary/80 flex flex-col items-center justify-center p-2 rounded-lg" style={{ zIndex: 10 }}>
+            <div className="w-full bg-bg-secondary h-1.5 rounded-full overflow-hidden mb-1">
+              <div className="bg-primary h-full transition-all duration-slow" style={{ width: `${up.progress}%` }} />
+            </div>
+            <span className="text-xs text-text-secondary">{up.error ? 'Lỗi' : `${Math.round(up.progress)}%`}</span>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  if (message.data.type === 'video') {
+    const videoUrl = message.data.media?.[0]?.url || '';
+    if (isMe && up && !videoUrl) {
+      return (
+        <div className="relative rounded-lg overflow-hidden max-w-[300px] border border-border-light shadow-sm bg-bg-tertiary/60 aspect-video">
+          <UploadBar progress={up.progress} error={up.error} light />
+        </div>
+      );
+    }
+    return (
+      <div className="rounded-lg overflow-hidden max-w-[300px] shadow-sm">
+        <LazyVideo src={videoUrl} thumbnail={message.data.media?.[0]?.thumbnailUrl} className="w-full h-auto max-h-[400px] object-contain" />
+      </div>
+    );
+  }
+
+  if (message.data.type === MessageType.CALL) {
+    let parsed: { callType: 'voice' | 'video'; status: 'ended' | 'missed' | 'rejected' | 'started'; duration?: number };
+    try { parsed = JSON.parse(message.data.content); }
+    catch { parsed = { callType: 'voice', status: 'missed' }; }
+
+    const { callType, status, duration } = parsed;
+    const isVid = callType === 'video';
+    const isMissedOrRejected = !isGroup && (status === 'missed' || status === 'rejected');
+    const iconColor = isMissedOrRejected ? 'text-red-500' : (isMe ? 'text-white' : 'text-primary');
+
+    let title = '';
+    if (isGroup) {
+      title = status === 'started' ? 'Cuộc gọi nhóm đang diễn ra' : status === 'ended' ? 'Cuộc gọi nhóm' : 'Cuộc gọi nhóm đã kết thúc';
+    } else {
+      if (status === 'ended') title = isMe ? 'Cuộc gọi đi' : 'Cuộc gọi đến';
+      else if (status === 'missed') title = 'Cuộc gọi nhỡ';
+      else if (status === 'rejected') title = isMe ? 'Cuộc gọi bị từ chối' : 'Cuộc gọi';
+      else title = 'Cuộc gọi';
+    }
+
+    let durationStr = '';
+    if (duration && duration > 0) {
+      const mins = Math.floor(duration / 60);
+      const secs = duration % 60;
+      durationStr = mins > 0 ? `${mins} phút ${secs} giây` : `${secs} giây`;
+    }
+
+    const btnClass = `mt-2 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1.5 transition-all outline-none shadow-sm ${isMe ? 'bg-white/20 text-white hover:bg-white/30' : 'bg-bg-primary text-primary hover:bg-bg-secondary border border-border-light/50'
+      }`;
+
+    return (
+      <div className={`flex flex-col gap-1 w-fit max-w-[260px] ${isMe ? 'items-end' : 'items-start'}`}>
+        <div className={`flex items-center gap-2 text-sm font-semibold ${!isMe && isMissedOrRejected ? 'text-red-500' : (isMe ? 'text-white' : 'text-text-primary')}`}>
+          {isMissedOrRejected ? <PhoneMissed size={16} className={iconColor} /> : (isVid ? <Video size={16} className={iconColor} /> : <PhoneIncoming size={16} className={iconColor} />)}
+          <span>{title}</span>
+        </div>
+        {durationStr && (
+          <div className={`flex items-center gap-1.5 text-xs ${isMe ? 'text-white/70' : 'text-text-tertiary'}`}>
+            <Phone size={12} /><span>{durationStr}</span>
+          </div>
+        )}
+        {status === 'started' ? (
+          <button onClick={() => onJoinCall?.(callType)} className={btnClass}>
+            {isVid ? <Video size={12} /> : <Phone size={12} />}
+            <span>Tham gia</span>
+          </button>
+        ) : onCall && (
+          <button onClick={(e) => { e.stopPropagation(); onCall(); }} className={btnClass}>
+            {isVid ? <Video size={12} /> : <Phone size={12} />}
+            <span>{isVid ? 'Gọi video lại' : 'Gọi lại'}</span>
+          </button>
+        )}
+      </div>
+    );
+  }
+
+  if (message.data.type === 'voice') {
+    const voiceUrl = message.data.media?.[0]?.url || '';
+    const rawDuration = message.data.content ? parseInt(message.data.content) : 0;
+    const durationStr = rawDuration > 0
+      ? (rawDuration >= 60
+        ? `${Math.floor(rawDuration / 60)}:${String(rawDuration % 60).padStart(2, '0')}`
+        : `0:${String(rawDuration).padStart(2, '0')}`)
+      : null;
+    const voiceClass = `flex items-center gap-3 p-3 rounded-2xl min-w-[200px] transition-all duration-base ${isMe ? 'bg-bg-message-sent text-text-on-primary shadow-md' : 'bg-bg-message-received text-text-primary'
+      }`;
+    const btnClass = `p-2.5 rounded-full shadow-sm transition-all duration-base ${isMe ? 'bg-bg-primary text-primary' : 'bg-primary text-white'}`;
+
+    if (isMe && up && !voiceUrl) {
+      return (
+        <div className={voiceClass}>
+          <div className={btnClass}><Pause size={18} /></div>
+          <div className="flex-1">
+            <div className="text-sm font-bold mb-0.5">Tin nhắn thoại</div>
+            <div className={`flex items-center gap-1.5 opacity-80 ${isMe ? 'text-text-on-primary' : 'text-text-tertiary'}`}>
+              <Mic size={12} />
+              <span className="text-xs">{up.error ? 'Lỗi tải lên' : `Đang tải ${Math.round(up.progress)}%`}</span>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className={`${voiceClass} cursor-pointer`} onClick={onToggleVoice}>
+        <div className={btnClass}>
+          {isPlaying ? <Pause size={18} fill="currentColor" /> : <Play size={18} className="ml-0.5" fill="currentColor" />}
+        </div>
+        <div className="flex-1">
+          <div className="text-sm font-bold mb-0.5">Tin nhắn thoại</div>
+          <div className={`flex items-center gap-1.5 opacity-80 ${isMe ? 'text-text-on-primary' : 'text-text-tertiary'}`}>
+            <Mic size={12} />
+            <span className="text-xs">{durationStr ?? 'Click để nghe'}</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col min-w-0 w-full">
+      <div className="whitespace-pre-wrap break-all">
+        {renderTextWithMentions(message.data.content, isMe)}
+      </div>
+      {message.data.isEdited && !message.data.isRecalled && (
+        <span className="text-xs opacity-70 mt-0.5">(đã chỉnh sửa)</span>
+      )}
+      {(() => {
+        const url = extractFirstUrl(message.data.content);
+        if (!url) return null;
+        return (
+          <LinkPreviewCard
+            url={url}
+            compact
+            className="mt-2"
+          />
+        );
+      })()}
+    </div>
+  );
+};
+
+export const MessageContent = React.memo(MessageContentInner);

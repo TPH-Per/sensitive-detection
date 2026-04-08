@@ -1,0 +1,1 @@
+﻿Initial adb state reproduced: no devices/emulators found before emulator boot.

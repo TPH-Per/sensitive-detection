@@ -1,0 +1,202 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+
+    function isEmailVerified() {
+      return request.auth.token.email_verified == true;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.status == 'active' &&
+        isEmailVerified();
+    }
+
+    function isNotBanned() {
+      return isAuthenticated() &&
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.status == 'active';
+    }
+
+    function changed() {
+      return request.resource.data.diff(resource.data).affectedKeys();
+    }
+
+    function theyBlockedMyView(theirId) {
+      return isAuthenticated() &&
+        exists(/databases/$(database)/documents/users/$(theirId)/blockedUsers/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(theirId)/blockedUsers/$(request.auth.uid)).data.blockViewMyActivity == true;
+    }
+
+    function iHideTheirActivity(theirId) {
+      return isAuthenticated() &&
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)/blockedUsers/$(theirId)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)/blockedUsers/$(theirId)).data.hideTheirActivity == true;
+    }
+
+    function isContentBlocked(contentOwnerId) {
+      return theyBlockedMyView(contentOwnerId) || iHideTheirActivity(contentOwnerId);
+    }
+
+    function isBlockedEitherWay(otherUserId) {
+      return isAuthenticated() && (
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)/blockedUsers/$(otherUserId)) ||
+        exists(/databases/$(database)/documents/users/$(otherUserId)/blockedUsers/$(request.auth.uid))
+      );
+    }
+
+    function isFriend(userId) {
+      return isAuthenticated() && exists(/databases/$(database)/documents/users/$(userId)/friends/$(request.auth.uid));
+    }
+
+    // Quản lý người dùng
+    match /users/{userId} {
+      match /private/fcm {
+        allow read, write: if isOwner(userId);
+      }
+
+      match /private/settings {
+        allow read, write: if isOwner(userId);
+      }
+
+      allow read: if isAuthenticated() && (isOwner(userId) || isNotBanned());
+      allow create: if isAuthenticated() && isOwner(userId);
+      allow update: if isAuthenticated() && (isAdmin() || (isOwner(userId) && !changed().hasAny(['role', 'status'])));
+      allow delete: if isAdmin() || isOwner(userId);
+
+      // Quan hệ bạn bè
+      match /friends/{friendId} {
+        allow read: if isAuthenticated() && (isOwner(userId) || isOwner(friendId));
+        allow write: if isAuthenticated() && (isOwner(userId) || isOwner(friendId));
+      }
+
+      // Danh sách chặn
+      match /blockedUsers/{blockedUid} {
+        allow read: if isAuthenticated() && (isOwner(userId) || isOwner(blockedUid));
+        allow write: if isOwner(userId);
+      }
+
+      // Fan-out feed
+      match /feeds/{feedId} {
+        allow read: if isAuthenticated() && isOwner(userId);
+        allow write: if isOwner(userId) || isAdmin();
+      }
+    }
+
+    // Lời mời kết bạn
+    match /friendRequests/{requestId} {
+      allow read: if isAuthenticated() && (
+        resource.data.senderId == request.auth.uid ||
+        resource.data.receiverId == request.auth.uid
+      );
+      allow create: if isNotBanned() &&
+        request.resource.data.senderId == request.auth.uid &&
+        request.resource.data.senderId != request.resource.data.receiverId &&
+        !isBlockedEitherWay(request.resource.data.receiverId);
+      allow update, delete: if isAuthenticated() && (
+        resource.data.senderId == request.auth.uid ||
+        resource.data.receiverId == request.auth.uid
+      );
+    }
+
+    // Bài viết
+    match /posts/{postId} {
+      allow read: if isNotBanned() && (
+        isAdmin() || (
+          !isContentBlocked(resource.data.authorId) &&
+          resource.data.status != 'deleted' && (
+            resource.data.authorId == request.auth.uid ||
+            (resource.data.visibility == 'friends' && isFriend(resource.data.authorId))
+          )
+        )
+      );
+
+      allow create: if isNotBanned() && request.resource.data.authorId == request.auth.uid;
+      allow update: if isNotBanned() && (
+        isAdmin() ||
+        resource.data.authorId == request.auth.uid ||
+        changed().hasOnly(['commentCount', 'updatedAt'])
+      );
+      allow delete: if isAdmin() || (resource.data.authorId == request.auth.uid);
+
+      // Cảm xúc bài viết
+      match /reactions/{reactorId} {
+        allow read: if isNotBanned() && (
+          isOwner(get(/databases/$(database)/documents/posts/$(postId)).data.authorId) ||
+          reactorId == request.auth.uid ||
+          isFriend(get(/databases/$(database)/documents/posts/$(postId)).data.authorId)
+        );
+        allow write: if isNotBanned() &&
+          reactorId == request.auth.uid &&
+          !isContentBlocked(get(/databases/$(database)/documents/posts/$(postId)).data.authorId);
+      }
+    }
+
+    // Bình luận
+    match /comments/{commentId} {
+      allow read: if isNotBanned() &&
+        'postId' in resource.data && (
+          isAdmin() || (
+            !isContentBlocked(get(/databases/$(database)/documents/posts/$(resource.data.postId)).data.authorId) &&
+            resource.data.status != 'deleted' && (
+              isOwner(get(/databases/$(database)/documents/posts/$(resource.data.postId)).data.authorId) ||
+              resource.data.authorId == request.auth.uid ||
+              isFriend(get(/databases/$(database)/documents/posts/$(resource.data.postId)).data.authorId)
+            )
+          )
+        );
+
+      allow create: if isNotBanned() &&
+        request.resource.data.authorId == request.auth.uid &&
+        !isContentBlocked(get(/databases/$(database)/documents/posts/$(request.resource.data.postId)).data.authorId);
+
+      allow update: if isNotBanned() && (
+        isAdmin() ||
+        resource.data.authorId == request.auth.uid ||
+        (request.resource.data.status == 'deleted' && (
+          get(/databases/$(database)/documents/posts/$(resource.data.postId)).data.authorId == request.auth.uid ||
+          (resource.data.parentId != null && get(/databases/$(database)/documents/comments/$(resource.data.parentId)).data.authorId == request.auth.uid)
+        )) ||
+        changed().hasOnly(['replyCount', 'updatedAt', 'replyToUserId', 'replyToId'])
+      );
+      allow delete: if isAdmin() ||
+        resource.data.authorId == request.auth.uid ||
+        get(/databases/$(database)/documents/posts/$(resource.data.postId)).data.authorId == request.auth.uid;
+
+      // Cảm xúc bình luận
+      match /reactions/{reactorId} {
+        allow read: if isNotBanned() && (
+          isOwner(get(/databases/$(database)/documents/comments/$(commentId)).data.authorId) ||
+          reactorId == request.auth.uid ||
+          isFriend(get(/databases/$(database)/documents/comments/$(commentId)).data.authorId)
+        );
+        allow write: if isNotBanned() &&
+          reactorId == request.auth.uid &&
+          !isContentBlocked(get(/databases/$(database)/documents/comments/$(commentId)).data.authorId);
+      }
+    }
+
+    // Thông báo
+    match /notifications/{notificationId} {
+      allow read: if isOwner(resource.data.receiverId);
+      allow update: if isOwner(resource.data.receiverId) && changed().hasOnly(['isRead', 'updatedAt']);
+      allow delete: if isOwner(resource.data.receiverId) || isAdmin() || resource.data.actorId == request.auth.uid;
+    }
+
+    // Báo cáo vi phạm
+    match /reports/{reportId} {
+      allow create: if isNotBanned() && request.resource.data.reporterId == request.auth.uid;
+      allow read, update, delete: if isAdmin() || resource.data.reporterId == request.auth.uid;
+    }
+  }
+}

@@ -1,0 +1,3154 @@
+[
+  {
+    "code": "KHA",
+    "name": "Đại Học Kinh Tế Quốc Dân"
+  },
+  {
+    "code": "BKA",
+    "name": "Đại Học Bách Khoa Hà Nội"
+  },
+  {
+    "code": "HTC",
+    "name": "Học Viện Tài chính"
+  },
+  {
+    "code": "NHH",
+    "name": "Học Viện Ngân Hàng"
+  },
+  {
+    "code": "NTH",
+    "name": "Trường Đại học Ngoại thương"
+  },
+  {
+    "code": "QSB",
+    "name": "Trường Đại Học Bách Khoa HCM"
+  },
+  {
+    "code": "YHB",
+    "name": "Trường Đại Học Y Hà Nội"
+  },
+  {
+    "code": "BVH",
+    "name": "Học Viện Công Nghệ Bưu Chính Viễn Thông"
+  },
+  {
+    "code": "SPH",
+    "name": "Trường Đại Học Sư Phạm Hà Nội"
+  },
+  {
+    "code": "TMU",
+    "name": "Trường Đại Học Thương Mại"
+  },
+  {
+    "code": "SPS",
+    "name": "Trường Đại Học Sư Phạm TPHCM"
+  },
+  {
+    "code": "YDS",
+    "name": "Đại Học Y Dược TPHCM"
+  },
+  {
+    "code": "QHI",
+    "name": "Trường Đại Học Công Nghệ – Đại Học Quốc Gia Hà Nội"
+  },
+  {
+    "code": "HNM",
+    "name": "Trường Đại học Thủ Đô Hà Nội"
+  },
+  {
+    "code": "GHA",
+    "name": "Trường Đại Học Giao Thông Vận Tải"
+  },
+  {
+    "code": "YTB",
+    "name": "Trường Đại Học Y Dược Thái Bình"
+  },
+  {
+    "code": "KMA",
+    "name": "Học Viện Kỹ Thuật Mật Mã"
+  },
+  {
+    "code": "DCN",
+    "name": "Đại Học Công Nghiệp Hà Nội"
+  },
+  {
+    "code": "YPB",
+    "name": "Trường Đại Học Y Dược Hải Phòng"
+  },
+  {
+    "code": "IUH",
+    "name": "Trường Đại Học Công Nghiệp TPHCM"
+  },
+  {
+    "code": "HPN",
+    "name": "Học Viện Phụ Nữ Việt Nam"
+  },
+  {
+    "code": "DKH",
+    "name": "Trường Đại Học Dược Hà Nội"
+  },
+  {
+    "code": "ANH",
+    "name": "Học Viện An Ninh Nhân Dân"
+  },
+  {
+    "code": "DKY",
+    "name": "Trường Đại Học Kỹ Thuật Y Tế Hải Dương"
+  },
+  {
+    "code": "GTS",
+    "name": "Trường Đại Học Giao Thông Vận Tải TPHCM"
+  },
+  {
+    "code": "HYD",
+    "name": "Học Viện Y Dược Học Cổ Truyền Việt Nam"
+  },
+  {
+    "code": "CSH",
+    "name": "Học Viện Cảnh Sát Nhân Dân"
+  },
+  {
+    "code": "DKK",
+    "name": "Trường Đại Học Kinh Tế Kỹ Thuật Công Nghiệp"
+  },
+  {
+    "code": "HUIT",
+    "name": "Trường Đại Học Công Thương TPHCM"
+  },
+  {
+    "code": "LAH",
+    "name": "Trường Sĩ Quan Lục Quân 1"
+  },
+  {
+    "code": "HQH",
+    "name": "Học Viện Hải Quân"
+  },
+  {
+    "code": "HHK",
+    "name": "Học Viện Hàng không Việt Nam"
+  },
+  {
+    "code": "PKA",
+    "name": "Đại Học Phenikaa"
+  },
+  {
+    "code": "PKH",
+    "name": "Học Viện Phòng Không – Không Quân"
+  },
+  {
+    "code": "CSS",
+    "name": "Trường Đại Học Cảnh Sát Nhân Dân"
+  },
+  {
+    "code": "TTH",
+    "name": "Trường Sĩ Quan Thông Tin"
+  },
+  {
+    "code": "NHF",
+    "name": "Trường Đại Học Hà Nội"
+  },
+  {
+    "code": "KQH",
+    "name": "Học Viện Kỹ Thuật Quân Sự"
+  },
+  {
+    "code": "YTC",
+    "name": "Trường Đại Học Y Tế Công Cộng"
+  },
+  {
+    "code": "HQT",
+    "name": "Học Viện Ngoại Giao"
+  },
+  {
+    "code": "ANS",
+    "name": "Trường Đại Học An Ninh Nhân Dân"
+  },
+  {
+    "code": "YCT",
+    "name": "Trường Đại Học Y Dược Cần Thơ"
+  },
+  {
+    "code": "TDM",
+    "name": "Trường Đại học Thủ Dầu Một"
+  },
+  {
+    "code": "TYS",
+    "name": "Trường Đại Học Y Khoa Phạm Ngọc Thạch"
+  },
+  {
+    "code": "DTL",
+    "name": "Trường Đại Học Thăng Long"
+  },
+  {
+    "code": "TLA",
+    "name": "Trường Đại Học Thủy Lợi"
+  },
+  {
+    "code": "QST",
+    "name": "Trường Đại Học Khoa Học Tự Nhiên TPHCM"
+  },
+  {
+    "code": "VHH",
+    "name": "Trường Đại Học Văn Hóa Hà Nội"
+  },
+  {
+    "code": "DTT",
+    "name": "Trường Đại Học Tôn Đức Thắng"
+  },
+  {
+    "code": "HVN",
+    "name": "Học Viện Nông Nghiệp Việt Nam"
+  },
+  {
+    "code": "QHX",
+    "name": "Trường Đại Học Khoa Học Xã Hội và Nhân Văn Hà Nội"
+  },
+  {
+    "code": "LPH",
+    "name": "Trường Đại Học Luật Hà Nội"
+  },
+  {
+    "code": "QHF",
+    "name": "Trường Đại Học Ngoại Ngữ"
+  },
+  {
+    "code": "HBT",
+    "name": "Học viện Báo chí và Tuyên truyền"
+  },
+  {
+    "code": "QHT",
+    "name": "Trường Đại Học Khoa Học Tự Nhiên Hà Nội"
+  },
+  {
+    "code": "QHE",
+    "name": "Trường Đại Học Kinh Tế"
+  },
+  {
+    "code": "QSX",
+    "name": "Trường Đại Học Khoa Học Xã Hội và Nhân Văn TPHCM"
+  },
+  {
+    "code": "DTS",
+    "name": "Đại Học Sư Phạm Thái Nguyên"
+  },
+  {
+    "code": "LCH",
+    "name": "Trường Sĩ Quan Chính Trị"
+  },
+  {
+    "code": "TCT",
+    "name": "Đại Học Cần Thơ"
+  },
+  {
+    "code": "DKS",
+    "name": "Trường Đại học Kiểm Sát"
+  },
+  {
+    "code": "BPH",
+    "name": "Học Viện Biên Phòng"
+  },
+  {
+    "code": "QHL",
+    "name": "Trường Đại học Luật – ĐHQG Hà Nội"
+  },
+  {
+    "code": "DHS",
+    "name": "Trường Đại Học Sư Phạm Huế"
+  },
+  {
+    "code": "QSC",
+    "name": "Trường Đại Học Công Nghệ Thông Tin"
+  },
+  {
+    "code": "SGD",
+    "name": "Trường Đại Học Sài Gòn"
+  },
+  {
+    "code": "NQH",
+    "name": "Học Viện Khoa Học Quân Sự"
+  },
+  {
+    "code": "NTS",
+    "name": "Trường Đại học Ngoại thương"
+  },
+  {
+    "code": "HTA",
+    "name": "Học viện Tòa án"
+  },
+  {
+    "code": "DDS",
+    "name": "Trường Đại Học Sư Phạm"
+  },
+  {
+    "code": "SP2",
+    "name": "Trường Đại Học Sư Phạm Hà Nội 2"
+  },
+  {
+    "code": "QHS",
+    "name": "Trường Đại Học Giáo Dục"
+  },
+  {
+    "code": "VHS",
+    "name": "Trường Đại Học Văn Hóa TPHCM"
+  },
+  {
+    "code": "SPK",
+    "name": "Trường Đại Học Công nghệ Kỹ thuật TP HCM"
+  },
+  {
+    "code": "HTN",
+    "name": "Học Viện Thanh Thiếu Niên Việt Nam"
+  },
+  {
+    "code": "YQH",
+    "name": "Học Viện Quân Y"
+  },
+  {
+    "code": "QSK",
+    "name": "Trường Đại học Kinh Tế Luật TPHCM"
+  },
+  {
+    "code": "HEH",
+    "name": "Học Viện Hậu Cần"
+  },
+  {
+    "code": "LPS",
+    "name": "Trường Đại Học Luật TPHCM"
+  },
+  {
+    "code": "DDF",
+    "name": "Trường Đại Học Ngoại Ngữ Đà Nẵng"
+  },
+  {
+    "code": "KSA",
+    "name": "Đại Học Kinh Tế TPHCM"
+  },
+  {
+    "code": "QHY",
+    "name": "Trường Đại học Y Dược"
+  },
+  {
+    "code": "DDK",
+    "name": "Trường Đại Học Bách Khoa Đà Nẵng"
+  },
+  {
+    "code": "DHF",
+    "name": "Trường Đại Học Ngoại Ngữ Huế"
+  },
+  {
+    "code": "DMS",
+    "name": "Trường Đại Học Tài Chính Marketing"
+  },
+  {
+    "code": "GSA",
+    "name": "Trường Đại Học Giao Thông Vận Tải"
+  },
+  {
+    "code": "TSN",
+    "name": "Trường Đại Học Nha Trang"
+  },
+  {
+    "code": "LBH",
+    "name": "Trường Sĩ Quan Lục Quân 2"
+  },
+  {
+    "code": "BVS",
+    "name": "Học Viện Công Nghệ Bưu Chính Viễn Thông"
+  },
+  {
+    "code": "YKV",
+    "name": "Trường Đại Học Y Khoa Vinh"
+  },
+  {
+    "code": "YDN",
+    "name": "Trường Đại học Kỹ thuật Y Dược Đà Nẵng"
+  },
+  {
+    "code": "DTY",
+    "name": "Trường Đại Học Y Dược Thái Nguyên"
+  },
+  {
+    "code": "DHY",
+    "name": "Trường Đại Học Y Dược Huế"
+  },
+  {
+    "code": "DDY",
+    "name": "Trường Y Dược Đà Nẵng"
+  },
+  {
+    "code": "KTS",
+    "name": "Trường Đại Học Kiến Trúc TPHCM"
+  },
+  {
+    "code": "HCA",
+    "name": "Học Viện Chính Trị Công An Nhân Dân"
+  },
+  {
+    "code": "QSY",
+    "name": "Trường Đại học Khoa học sức khỏe TPHCM"
+  },
+  {
+    "code": "QSQ",
+    "name": "Trường Đại Học Quốc Tế"
+  },
+  {
+    "code": "THV",
+    "name": "Trường Đại Học Hùng Vương"
+  },
+  {
+    "code": "THP",
+    "name": "Trường Đại Học Hải Phòng"
+  },
+  {
+    "code": "HCP",
+    "name": "Học Viện Chính Sách và Phát Triển"
+  },
+  {
+    "code": "MHN",
+    "name": "Trường Đại Học Mở Hà Nội"
+  },
+  {
+    "code": "LDA",
+    "name": "Trường Đại Học Công Đoàn"
+  },
+  {
+    "code": "HHA",
+    "name": "Trường Đại Học Hàng Hải Việt Nam"
+  },
+  {
+    "code": "KTA",
+    "name": "Trường Đại Học Kiến Trúc Hà Nội"
+  },
+  {
+    "code": "TDV",
+    "name": "Trường Đại Học Vinh"
+  },
+  {
+    "code": "QSA",
+    "name": "Trường Đại Học An Giang"
+  },
+  {
+    "code": "HCH",
+    "name": "Học Viện Hành Chính và Quản trị công"
+  },
+  {
+    "code": "SPD",
+    "name": "Trường Đại Học Đồng Tháp"
+  },
+  {
+    "code": "QHK",
+    "name": "Trường Khoa học liên ngành và Nghệ thuật Hà Nội"
+  },
+  {
+    "code": "TTN",
+    "name": "Trường Đại Học Tây Nguyên"
+  },
+  {
+    "code": "DQN",
+    "name": "Trường Đại Học Quy Nhơn"
+  },
+  {
+    "code": "DHC",
+    "name": "Khoa Giáo Dục Thể Chất Huế"
+  },
+  {
+    "code": "GNT",
+    "name": "Trường Đại Học Sư Phạm Nghệ Thuật Trung Ương"
+  },
+  {
+    "code": "DDQ",
+    "name": "Trường Đại Học Kinh Tế – Đại Học Đà Nẵng"
+  },
+  {
+    "code": "DTF",
+    "name": "Trường Ngoại Ngữ Thái Nguyên"
+  },
+  {
+    "code": "HLU",
+    "name": "Trường Đại Học Hạ Long"
+  },
+  {
+    "code": "DKT",
+    "name": "Trường Đại Học Hải Dương"
+  },
+  {
+    "code": "DQB",
+    "name": "Trường Đại Học Quảng Bình"
+  },
+  {
+    "code": "DPQ",
+    "name": "Trường Đại Học Phạm Văn Đồng"
+  },
+  {
+    "code": "HHT",
+    "name": "Trường Đại Học Hà Tĩnh"
+  },
+  {
+    "code": "DMT",
+    "name": "Trường Đại học Tài Nguyên và Môi Trường Hà Nội"
+  },
+  {
+    "code": "HCS",
+    "name": "Học Viện Hành Chính Và Quản Trị Công"
+  },
+  {
+    "code": "NHS",
+    "name": "Trường Đại Học Ngân Hàng TPHCM"
+  },
+  {
+    "code": "DLX",
+    "name": "Trường Đại Học Lao Động – Xã Hội"
+  },
+  {
+    "code": "DBL",
+    "name": "Trường Đại Học Bạc Liêu"
+  },
+  {
+    "code": "DQU",
+    "name": "Trường Đại Học Quảng Nam"
+  },
+  {
+    "code": "DLS",
+    "name": "Trường Đại Học Lao Động – Xã Hội"
+  },
+  {
+    "code": "DPY",
+    "name": "Trường Đại Học Phú Yên"
+  },
+  {
+    "code": "DDP",
+    "name": "Phân Hiệu Đại Học Đà Nẵng tại Kon Tum"
+  },
+  {
+    "code": "TDH",
+    "name": "Trường Đại Học Sư Phạm Thể Dục Thể Thao Hà Nội"
+  },
+  {
+    "code": "KCC",
+    "name": "Trường Đại học Kỹ Thuật Công Nghệ Cần Thơ"
+  },
+  {
+    "code": "QHQ",
+    "name": "Trường Quốc Tế"
+  },
+  {
+    "code": "KCN",
+    "name": "Trường Đại Học Khoa Học Và Công Nghệ Hà Nội"
+  },
+  {
+    "code": "DCV",
+    "name": "Trường Đại học Công nghiệp Vinh"
+  },
+  {
+    "code": "DVT",
+    "name": "Đại Học Trà Vinh"
+  },
+  {
+    "code": "NLS",
+    "name": "Trường Đại Học Nông Lâm TPHCM"
+  },
+  {
+    "code": "HVC",
+    "name": "Học viện cán bộ TPHCM"
+  },
+  {
+    "code": "XDA",
+    "name": "Trường Đại Học Xây Dựng Hà Nội"
+  },
+  {
+    "code": "SKH",
+    "name": "Trường Đại Học Sư Phạm Kỹ Thuật Hưng Yên"
+  },
+  {
+    "code": "MBS",
+    "name": "Trường Đại Học Mở TPHCM"
+  },
+  {
+    "code": "FBU",
+    "name": "Trường Đại Học Tài Chính Ngân Hàng Hà Nội"
+  },
+  {
+    "code": "GTA",
+    "name": "Trường Đại học Công nghệ Giao thông vận tải"
+  },
+  {
+    "code": "MDA",
+    "name": "Trường Đại Học Mỏ Địa Chất"
+  },
+  {
+    "code": "DDL",
+    "name": "Trường Đại Học Điện Lực"
+  },
+  {
+    "code": "TDS",
+    "name": "Trường Đại Học Thể Dục Thể Thao TPHCM"
+  },
+  {
+    "code": "DPD",
+    "name": "Trường Đại Học Phương Đông"
+  },
+  {
+    "code": "VLU",
+    "name": "Trường Đại Học Sư Phạm Kỹ Thuật Vĩnh Long"
+  },
+  {
+    "code": "KTD",
+    "name": "Trường Đại Học Kiến Trúc Đà Nẵng"
+  },
+  {
+    "code": "DQK",
+    "name": "Trường Đại Học Kinh Doanh và Công Nghệ Hà Nội"
+  },
+  {
+    "code": "DTK",
+    "name": "Trường Đại Học Kỹ Thuật Công Nghiệp Thái Nguyên"
+  },
+  {
+    "code": "STS",
+    "name": "Trường Đại Học Sư Phạm Thể Dục Thể Thao TPHCM"
+  },
+  {
+    "code": "UKH",
+    "name": "Trường Đại học Khánh Hòa"
+  },
+  {
+    "code": "DSK",
+    "name": "Trường Đại học Sư phạm Kỹ thuật"
+  },
+  {
+    "code": "NHB",
+    "name": "Học Viện Ngân Hàng"
+  },
+  {
+    "code": "DHI",
+    "name": "Khoa Quốc tế"
+  },
+  {
+    "code": "CMC",
+    "name": "Trường Đại Học CMC"
+  },
+  {
+    "code": "NTT",
+    "name": "Trường Đại Học Nguyễn Tất Thành"
+  },
+  {
+    "code": "DHK",
+    "name": "Trường Đại Học Kinh Tế"
+  },
+  {
+    "code": "DHD",
+    "name": "Trường Du Lịch"
+  },
+  {
+    "code": "KGH",
+    "name": "Trường Sĩ Quan Không Quân"
+  },
+  {
+    "code": "DTC",
+    "name": "Trường Đại học Công Nghệ Thông Tin và Truyền Thông Thái Nguyên"
+  },
+  {
+    "code": "HGH",
+    "name": "Trường Sĩ Quan Phòng Hóa"
+  },
+  {
+    "code": "TGH",
+    "name": "Trường Sĩ Quan Tăng"
+  },
+  {
+    "code": "HVQ",
+    "name": "Học Viện Quản Lý Giáo Dục"
+  },
+  {
+    "code": "DDT",
+    "name": "Đại Học Duy Tân"
+  },
+  {
+    "code": "DNC",
+    "name": "Trường Đại học Nam Cần Thơ"
+  },
+  {
+    "code": "HIU",
+    "name": "Trường Đại Học Quốc Tế Hồng Bàng"
+  },
+  {
+    "code": "TTU",
+    "name": "Trường Đại học Tân Tạo"
+  },
+  {
+    "code": "TTD",
+    "name": "Trường Đại Học Thể Dục Thể Thao Đà Nẵng"
+  },
+  {
+    "code": "DCL",
+    "name": "Trường Đại Học Cửu Long"
+  },
+  {
+    "code": "DVL",
+    "name": "Trường Đại Học Văn Lang"
+  },
+  {
+    "code": "DPC",
+    "name": "Trường Đại Học Phan Châu Trinh"
+  },
+  {
+    "code": "UKB",
+    "name": "Trường Đại Học Kinh Bắc"
+  },
+  {
+    "code": "ETU",
+    "name": "Trường Đại Học Hòa Bình"
+  },
+  {
+    "code": "DDN",
+    "name": "Trường Đại Học Đại Nam"
+  },
+  {
+    "code": "VTT",
+    "name": "Trường Đại Học Võ Trường Toản"
+  },
+  {
+    "code": "DAD",
+    "name": "Trường Đại Học Đông Á"
+  },
+  {
+    "code": "SNH",
+    "name": "Trường Sĩ Quan Công Binh"
+  },
+  {
+    "code": "DCH",
+    "name": "Trường Sĩ Quan Đặc Công"
+  },
+  {
+    "code": "HCB",
+    "name": "Học viện Kỹ thuật và Công nghệ an ninh"
+  },
+  {
+    "code": "HCN",
+    "name": "Học viện Kỹ thuật và Công nghệ an ninh"
+  },
+  {
+    "code": "PBH",
+    "name": "Trường Sĩ Quan Pháo Binh"
+  },
+  {
+    "code": "KSV",
+    "name": "Đại học Kinh Tế TPHCM"
+  },
+  {
+    "code": "QHD",
+    "name": "Trường Quản Trị và Kinh Doanh"
+  },
+  {
+    "code": "VGU",
+    "name": "Trường Đại Học Việt Đức"
+  },
+  {
+    "code": "TLS",
+    "name": "Trường Đại Học Thủy Lợi"
+  },
+  {
+    "code": "SDU",
+    "name": "Trường Đại học Sao Đỏ"
+  },
+  {
+    "code": "PCS",
+    "name": "Trường Đại Học Phòng Cháy Chữa Cháy"
+  },
+  {
+    "code": "PCH",
+    "name": "Trường Đại Học Phòng Cháy Chữa Cháy"
+  },
+  {
+    "code": "NLN",
+    "name": "Phân hiệu Đại học Nông Lâm TPHCM tại Ninh Thuận"
+  },
+  {
+    "code": "DTD",
+    "name": "Trường Đại Học Tây Đô"
+  },
+  {
+    "code": "DKC",
+    "name": "Trường Đại học Công Nghệ TPHCM"
+  },
+  {
+    "code": "DDU",
+    "name": "Trường Đại Học Đông Đô"
+  },
+  {
+    "code": "DLH",
+    "name": "Trường Đại Học Lạc Hồng"
+  },
+  {
+    "code": "DDB",
+    "name": "Trường Đại Học Thành Đông"
+  },
+  {
+    "code": "DHA",
+    "name": "Trường Đại học Luật Huế"
+  },
+  {
+    "code": "DYD",
+    "name": "Trường Đại Học Yersin Đà Lạt"
+  },
+  {
+    "code": "TDD",
+    "name": "Trường Đại học Thành Đô"
+  },
+  {
+    "code": "DBD",
+    "name": "Trường Đại Học Bình Dương"
+  },
+  {
+    "code": "DTV",
+    "name": "Trường Đại Học Lương Thế Vinh"
+  },
+  {
+    "code": "VJU",
+    "name": "Trường Đại học Việt Nhật"
+  },
+  {
+    "code": "BVU",
+    "name": "Trường Đại Học Bà Rịa – Vũng Tàu"
+  },
+  {
+    "code": "DHN",
+    "name": "Trường Đại Học Nghệ Thuật Huế"
+  },
+  {
+    "code": "MIT",
+    "name": "Trường Đại học Công nghệ Miền Đông"
+  },
+  {
+    "code": "FPT",
+    "name": "Trường Đại Học FPT"
+  },
+  {
+    "code": "DKB",
+    "name": "Trường Đại Học Kinh Tế Kỹ Thuật Bình Dương"
+  },
+  {
+    "code": "UEF",
+    "name": "Trường Đại Học Kinh Tế Tài Chính TPHCM"
+  },
+  {
+    "code": "DFA",
+    "name": "Trường Đại học Tài chính Quản trị kinh doanh"
+  },
+  {
+    "code": "TTG",
+    "name": "Trường Đại Học Tiền Giang"
+  },
+  {
+    "code": "DTE",
+    "name": "Trường Đại học Kinh tế Quản trị kinh doanh Thái Nguyên"
+  },
+  {
+    "code": "PVU",
+    "name": "Trường Đại Học Dầu Khí Việt Nam"
+  },
+  {
+    "code": "DNT",
+    "name": "Trường Đại Học Ngoại Ngữ Tin Học TPHCM"
+  },
+  {
+    "code": "SKV",
+    "name": "Trường Đại Học Sư Phạm Kỹ Thuật Vinh"
+  },
+  {
+    "code": "CEA",
+    "name": "Trường Đại học Nghệ An"
+  },
+  {
+    "code": "LNH",
+    "name": "Trường Đại Học Lâm nghiệp"
+  },
+  {
+    "code": "DVH",
+    "name": "Trường Đại Học Văn Hiến"
+  },
+  {
+    "code": "DQT",
+    "name": "Trường Đại Học Quang Trung"
+  },
+  {
+    "code": "HSU",
+    "name": "Trường Đại Học Hoa Sen"
+  },
+  {
+    "code": "DPT",
+    "name": "Trường Đại Học Phan Thiết"
+  },
+  {
+    "code": "DVP",
+    "name": "Trường Đại Học Trưng Vương"
+  },
+  {
+    "code": "YDD",
+    "name": "Trường Đại Học Điều Dưỡng Nam Định"
+  },
+  {
+    "code": "THU",
+    "name": "Trường Đại học Y khoa Tokyo Việt Nam"
+  },
+  {
+    "code": "DCD",
+    "name": "Trường Đại Học Công Nghệ Đồng Nai"
+  },
+  {
+    "code": "EIU",
+    "name": "Trường Đại Học Quốc Tế Miền Đông"
+  },
+  {
+    "code": "DDV",
+    "name": "Viện nghiên cứu và đào tạo Việt Anh"
+  },
+  {
+    "code": "TDB",
+    "name": "Trường Đại Học Thể Dục Thể Thao Bắc Ninh"
+  },
+  {
+    "code": "DHE",
+    "name": "Khoa Kỹ thuật và Công nghệ"
+  },
+  {
+    "code": "DTB",
+    "name": "Trường Đại Học Thái Bình"
+  },
+  {
+    "code": "HVD",
+    "name": "Học Viện Dân Tộc"
+  },
+  {
+    "code": "DHT",
+    "name": "Trường Đại Học Khoa Học Huế"
+  },
+  {
+    "code": "DTZ",
+    "name": "Trường Đại Học Khoa Học Thái Nguyên"
+  },
+  {
+    "code": "HDT",
+    "name": "Trường Đại Học Hồng Đức"
+  },
+  {
+    "code": "DNU",
+    "name": "Trường Đại Học Đồng Nai"
+  },
+  {
+    "code": "LNS",
+    "name": "Phân hiệu Đại Học Lâm nghiệp tại Đồng Nai"
+  },
+  {
+    "code": "DTM",
+    "name": "Trường Đại học Tài Nguyên và Môi Trường TPHCM"
+  },
+  {
+    "code": "CCM",
+    "name": "Trường Đại học Công nghiệp và Thương mại Hà Nội"
+  },
+  {
+    "code": "NTU",
+    "name": "Trường Đại Học Nguyễn Trãi"
+  },
+  {
+    "code": "VUI",
+    "name": "Trường Đại Học Công Nghiệp Việt Trì"
+  },
+  {
+    "code": "QSP",
+    "name": "Phân hiệu Đại học Quốc gia TPHCM tại Bến Tre"
+  },
+  {
+    "code": "DHL",
+    "name": "Trường Đại Học Nông Lâm Huế"
+  },
+  {
+    "code": "DTQ",
+    "name": "Khoa Quốc Tế"
+  },
+  {
+    "code": "SIU",
+    "name": "Trường Đại học Tư thục Quốc Tế Sài Gòn"
+  },
+  {
+    "code": "DCA",
+    "name": "Trường Đại học Intracom"
+  },
+  {
+    "code": "DLA",
+    "name": "Trường Đại Học Kinh Tế Công Nghiệp Long An"
+  },
+  {
+    "code": "DBH",
+    "name": "Trường Đại Học Quốc Tế Bắc Hà"
+  },
+  {
+    "code": "SKN",
+    "name": "Trường Đại Học Sư Phạm Kỹ Thuật Nam Định"
+  },
+  {
+    "code": "NLG",
+    "name": "Phân hiệu Đại học Nông Lâm TPHCM tại Gia Lai"
+  },
+  {
+    "code": "DTN",
+    "name": "Trường Đại Học Nông Lâm Thái Nguyên"
+  },
+  {
+    "code": "UMT",
+    "name": "Trường Đại học Quản lý và công nghệ TPHCM"
+  },
+  {
+    "code": "DCQ",
+    "name": "Trường Đại Học Công Nghệ và Quản Lý Hữu Nghị"
+  },
+  {
+    "code": "DHQ",
+    "name": "Phân Hiệu Đại Học Huế tại Quảng Trị"
+  },
+  {
+    "code": "TBD",
+    "name": "Trường Đại Học Thái Bình Dương"
+  },
+  {
+    "code": "DHV",
+    "name": "Trường Đại học Hùng Vương TPHCM"
+  },
+  {
+    "code": "DVB",
+    "name": "Trường Đại Học Kinh tế công nghệ Thái Nguyên"
+  },
+  {
+    "code": "DPX",
+    "name": "Trường Đại Học Phú Xuân"
+  },
+  {
+    "code": "HPU",
+    "name": "Trường Đại học Quản lý và Công nghệ Hải Phòng"
+  },
+  {
+    "code": "MTU",
+    "name": "Trường Đại Học Xây Dựng Miền Tây"
+  },
+  {
+    "code": "VHD",
+    "name": "Trường Đại Học Công Nghiệp Việt"
+  },
+  {
+    "code": "LNA",
+    "name": "Phân hiệu Đại học Lâm nghiệp tỉnh Gia Lai"
+  },
+  {
+    "code": "NHP",
+    "name": "Học Viện Ngân Hàng"
+  },
+  {
+    "code": "UFA",
+    "name": "Trường Đại học Tài Chính Kế Toán"
+  },
+  {
+    "code": "GDU",
+    "name": "Trường Đại Học Gia Định"
+  },
+  {
+    "code": "DDM",
+    "name": "Trường Đại Học Công Nghiệp Quảng Ninh"
+  },
+  {
+    "code": "XDT",
+    "name": "Trường Đại Học Xây Dựng Miền Trung"
+  },
+  {
+    "code": "DSG",
+    "name": "Trường Đại Học Công Nghệ Sài Gòn"
+  },
+  {
+    "code": "XDN",
+    "name": "Phân hiệu Đại học Xây dựng miền Trung tại Đà Nẵng"
+  },
+  {
+    "code": "DBG",
+    "name": "Trường Đại học Nông Lâm Bắc Giang"
+  },
+  {
+    "code": "TTB",
+    "name": "Trường Đại Học Tây Bắc"
+  },
+  {
+    "code": "TDL",
+    "name": "Trường Đại Học Đà Lạt"
+  },
+  {
+    "code": "DTP",
+    "name": "Phân Hiệu Đại Học Thái Nguyên Tại Lào Cai"
+  },
+  {
+    "code": "TQU",
+    "name": "Trường Đại học Tân Trào"
+  },
+  {
+    "code": "TKG",
+    "name": "Trường Đại học Kiên Giang"
+  },
+  {
+    "code": "DVD",
+    "name": "Trường Đại Học Văn Hóa, Thể Thao Và Du Lịch Thanh Hóa"
+  },
+  {
+    "code": "DTG",
+    "name": "Phân hiệu Đại học Thái Nguyên tại Hà Giang"
+  },
+  {
+    "code": "DNB",
+    "name": "Trường Đại Học Hoa Lư"
+  },
+  {
+    "code": "LBS",
+    "name": "Trường Đại học Nguyễn Huệ"
+  },
+  {
+    "code": "HVA",
+    "name": "Học Viện Âm Nhạc Huế"
+  },
+  {
+    "code": "NVH",
+    "name": "Học Viện Âm Nhạc Quốc Gia Việt Nam"
+  },
+  {
+    "code": "NVS",
+    "name": "Nhạc Viện TPHCM"
+  },
+  {
+    "code": "DVX",
+    "name": "Trường Đại Học Công Nghệ Vạn Xuân"
+  },
+  {
+    "code": "DHH",
+    "name": "Trường Đại Học Hà Hoa Tiên"
+  },
+  {
+    "code": "MTC",
+    "name": "Trường Đại Học Mỹ Thuật Công Nghiệp"
+  },
+  {
+    "code": "MTS",
+    "name": "Trường Đại Học Mỹ Thuật TPHCM"
+  },
+  {
+    "code": "MTH",
+    "name": "Trường Đại Học Mỹ Thuật Việt Nam"
+  },
+  {
+    "code": "YHT",
+    "name": "Phân hiệu Đại học Y Hà Nội tại Thanh Hóa"
+  },
+  {
+    "code": "RMU",
+    "name": "Trường Đại Học Quốc Tế RMIT Việt Nam"
+  },
+  {
+    "code": "RHM",
+    "name": "Trường Đại Học Răng – Hàm – Mặt"
+  },
+  {
+    "code": "SKD",
+    "name": "Trường Đại Học Sân Khấu Điện Ảnh Hà Nội"
+  },
+  {
+    "code": "CIV",
+    "name": "Học viện Công giáo Việt Nam"
+  },
+  {
+    "code": "ZNH",
+    "name": "Trường Đại học Văn hóa Nghệ thuật Quân đội"
+  },
+  {
+    "code": "LCDF",
+    "name": "Học viện Thiết kế và Thời trang London Hà Nội"
+  },
+  {
+    "code": "DNV",
+    "name": "Trường Đại học Nội vụ Hà Nội"
+  },
+  {
+    "code": "VPH",
+    "name": "Trường Sĩ Quan Kĩ Thuật Quân Sự"
+  },
+  {
+    "code": "DSD",
+    "name": "Trường Đại Học Sân Khấu Điện Ảnh TPHCM"
+  },
+  {
+    "code": "DDA",
+    "name": "Trường Đại Học Công Nghệ Đông Á"
+  },
+  {
+    "code": "BUV",
+    "name": "Trường Đại Học Anh Quốc Việt Nam"
+  },
+  {
+    "code": "BMU",
+    "name": "Trường Đại học Y Dược Buôn Ma Thuột"
+  },
+  {
+    "code": "DDG",
+    "name": "Khoa Giáo dục thể chất Đà Nẵng"
+  },
+  {
+    "code": "VKU",
+    "name": "Trường Đại học Công nghệ Thông tin và Truyền thông Việt Hàn"
+  },
+  {
+    "code": "CDD0209",
+    "name": "Trường Cao Đẳng Sài Gòn"
+  },
+  {
+    "code": "CDT026",
+    "name": "Trường Cao đẳng Giao thông vận tải trung ương VI"
+  },
+  {
+    "code": "CDD0229",
+    "name": "Trường Cao đẳng Bách khoa Nam Sài Gòn"
+  },
+  {
+    "code": "CDD0410",
+    "name": "Trường Cao Đẳng Công Nghệ Ngoại Thương"
+  },
+  {
+    "code": "CDD0216",
+    "name": "Trường Cao đẳng Sài Gòn Gia Định"
+  },
+  {
+    "code": "CBK1",
+    "name": "Trường Cao đẳng Y Khoa Phạm Ngọc Thạch"
+  },
+  {
+    "code": "CDT1701",
+    "name": "Trường Cao đẳng Than Khoáng sản Việt Nam"
+  },
+  {
+    "code": "CDT2104",
+    "name": "Trường Cao đẳng Hàng hải và Đường thủy I"
+  },
+  {
+    "code": "CDD1904",
+    "name": "Trường Cao đẳng Dược Hà Nội"
+  },
+  {
+    "code": "CDT0308",
+    "name": "Trường Cao đẳng Du lịch Hải Phòng"
+  },
+  {
+    "code": "CDT0302",
+    "name": "Trường Cao đẳng Giao thông vận tải trung ương II"
+  },
+  {
+    "code": "D08",
+    "name": "Trường Cao đẳng Tuyên Quang"
+  },
+  {
+    "code": "CDD1908",
+    "name": "Trường Cao đẳng Y tế Bắc Ninh"
+  },
+  {
+    "code": "CDD4102",
+    "name": "Trường Cao đẳng Y Dược Sài Gòn"
+  },
+  {
+    "code": "YT02",
+    "name": "Trường Cao đẳng Y tế Đặng Văn Ngữ"
+  },
+  {
+    "code": "CDD0201",
+    "name": "Trường Cao đẳng Nghề Thành phố Hồ Chí Minh"
+  },
+  {
+    "code": "CHD",
+    "name": "Trường Cao đẳng Y Dược Hồng Đức"
+  },
+  {
+    "code": "CDT0218",
+    "name": "Trường Cao đẳng Thủ Thiêm – TP. Hồ Chí Minh"
+  },
+  {
+    "code": "CDT0110",
+    "name": "Trường Cao đẳng nghề Kỹ thuật Mỹ nghệ Việt Nam"
+  },
+  {
+    "code": "CDD4402",
+    "name": "Trường Cao đẳng nghề Công nghệ cao Đồng An"
+  },
+  {
+    "code": "CDD1909",
+    "name": "Trường Cao đẳng Y – Dược Cộng đồng"
+  },
+  {
+    "code": "C161",
+    "name": "Trường Cao đẳng Vĩnh Phúc"
+  },
+  {
+    "code": "UKH_CD",
+    "name": "Trường Đại học Khánh Hòa"
+  },
+  {
+    "code": "DCN_CD",
+    "name": "Trường Đại học Công nghiệp"
+  },
+  {
+    "code": "CT0202",
+    "name": "Trường Cao đẳng Kỹ nghệ II"
+  },
+  {
+    "code": "CDD0211",
+    "name": "Trường Cao đẳng Kỹ thuật Nguyễn Trường Tộ"
+  },
+  {
+    "code": "CDD4",
+    "name": "Trường Cao đẳng Quốc Tế Sài Gòn"
+  },
+  {
+    "code": "VLSC",
+    "name": "Trường Cao đẳng Văn Lang Sài Gòn"
+  },
+  {
+    "code": "CDD0225",
+    "name": "Trường Cao Đẳng Bình Minh Sài Gòn"
+  },
+  {
+    "code": "C0208",
+    "name": "Trường Cao đẳng An ninh mạng iSPACE"
+  },
+  {
+    "code": "CDT0113",
+    "name": "Trường Cao đẳng Giao thông vận tải Trung ương I"
+  },
+  {
+    "code": "CDT0103",
+    "name": "Trường Cao đẳng Điện lực miền Bắc"
+  },
+  {
+    "code": "CDT1601",
+    "name": "Trường Cao đẳng Công nghiệp và Thương mại"
+  },
+  {
+    "code": "CDT1203",
+    "name": "Trường Cao đẳng nghề số 1 – Bộ Quốc phòng"
+  },
+  {
+    "code": "CDD2502",
+    "name": "Trường Cao đẳng Văn hóa Nghệ thuật và Du lịch Nam Định"
+  },
+  {
+    "code": "CDD2201",
+    "name": "Trường Cao đẳng nghề Kinh tế – Kỹ thuật Tô Hiệu"
+  },
+  {
+    "code": "CDT2301",
+    "name": "Trường Cao đẳng nghề Sông Đà"
+  },
+  {
+    "code": "CDT2103",
+    "name": "Trường Cao đẳng Cơ giới Xây dựng"
+  },
+  {
+    "code": "CDD2402",
+    "name": "Trường Cao đẳng nghề Hà Nam"
+  },
+  {
+    "code": "CDD0501",
+    "name": "Trường Cao đẳng Kỹ thuật và Công nghệ tỉnh Hà Giang"
+  },
+  {
+    "code": "CDD6201",
+    "name": "Trường Cao đẳng nghề Điện Biên"
+  },
+  {
+    "code": "CDT0112",
+    "name": "Trường Cao đẳng nghề Long Biên"
+  },
+  {
+    "code": "CDD0115",
+    "name": "Trường Cao đẳng Ngoại ngữ và Công nghệ Hà Nội"
+  },
+  {
+    "code": "CDD0402",
+    "name": "Trường Cao đẳng nghề Hoa Sen"
+  },
+  {
+    "code": "CDT119",
+    "name": "Trường Cao đẳng Ngoại ngữ Hà Nội"
+  },
+  {
+    "code": "CDD1301",
+    "name": "Trường Cao đẳng Y Dược Pasteur Yên Bái"
+  },
+  {
+    "code": "CDT1507",
+    "name": "Trường Cao đẳng Y Dược Phú Thọ"
+  },
+  {
+    "code": "CDD1803",
+    "name": "Trường Cao đẳng Ngô Gia Tự Bắc Giang"
+  },
+  {
+    "code": "CDD0304",
+    "name": "Trường Cao đẳng nghề Công nghiệp Hải Phòng"
+  },
+  {
+    "code": "CDD0305",
+    "name": "Trường Cao đẳng nghề Bách nghệ Hải Phòng"
+  },
+  {
+    "code": "CDHD2101",
+    "name": "Trường Cao đẳng nghề Hải Dương"
+  },
+  {
+    "code": "CDD1401",
+    "name": "Trường Cao đẳng Kỹ thuật công nghệ Sơn La"
+  },
+  {
+    "code": "CDD2601",
+    "name": "Trường Cao đẳng nghề Thái Bình"
+  },
+  {
+    "code": "CDD1701",
+    "name": "Trường Cao đẳng nghề Việt – Hàn Quảng Ninh"
+  },
+  {
+    "code": "CDT1502",
+    "name": "Trường Cao đẳng Công Thương Phú Thọ"
+  },
+  {
+    "code": "063",
+    "name": "Trường Cao đẳng nghề Phú Thọ"
+  },
+  {
+    "code": "CTM1",
+    "name": "Trường Cao đẳng Thương mại và Du lịch Thái Nguyên"
+  },
+  {
+    "code": "CDT0306",
+    "name": "Trường Cao đẳng VMU"
+  },
+  {
+    "code": "CDT0124",
+    "name": "Trường Cao đẳng Nghề Kỹ thuật và Nghiệp vụ Hà Nội"
+  },
+  {
+    "code": "CDT0104",
+    "name": "Trường Cao đẳng nghề Kỹ thuật Công nghệ"
+  },
+  {
+    "code": "CDD0101",
+    "name": "Trường Cao đẳng nghề Công nghiệp Hà Nội"
+  },
+  {
+    "code": "CT0105",
+    "name": "Trường Cao đẳng nghề Cơ điện Hà Nội"
+  },
+  {
+    "code": "CDT2701",
+    "name": "Trường Cao đẳng nghề Cơ điện xây dựng Việt Xô"
+  },
+  {
+    "code": "CDD1001",
+    "name": "Trường Cao đẳng nghề Lạng Sơn"
+  },
+  {
+    "code": "CDD03051",
+    "name": "Trường Cao đẳng nghề Lao động – Xã hội Hải Phòng"
+  },
+  {
+    "code": "CDT0307",
+    "name": "Trường Cao đẳng Kinh tế và Công nghệ thực phẩm"
+  },
+  {
+    "code": "HFH2",
+    "name": "Trường Cao đẳng Hậu cần 2"
+  },
+  {
+    "code": "HFH1",
+    "name": "Trường Cao đẳng Hậu cần 1"
+  },
+  {
+    "code": "CDD0116",
+    "name": "Trường Cao đẳng nghề Viglacera"
+  },
+  {
+    "code": "CDD0234",
+    "name": "Trường Cao đẳng Kỹ Thuật"
+  },
+  {
+    "code": "CEN",
+    "name": "Trường Cao Đẳng Cơ Điện Và Nông Nghiệp Nam Bộ"
+  },
+  {
+    "code": "CDD4403",
+    "name": "Trường Cao đẳng Việt Nam-Hàn Quốc Bình Dương"
+  },
+  {
+    "code": "CEC",
+    "name": "Trường Cao Đẳng Kinh Tế – Kỹ Thuật Cần Thơ"
+  },
+  {
+    "code": "CYC",
+    "name": "Trường Cao Đẳng Y Tế Cần Thơ"
+  },
+  {
+    "code": "CBL",
+    "name": "Trường Cao Đẳng Công Nghệ Và Kinh Tế Bảo Lộc"
+  },
+  {
+    "code": "CBY",
+    "name": "Trường Cao Đẳng Y Tế Bình Dương"
+  },
+  {
+    "code": "CDT5202",
+    "name": "Trường Cao đẳng Du lịch Vũng Tàu"
+  },
+  {
+    "code": "C94",
+    "name": "Trường Cao đẳng Kiến trúc"
+  },
+  {
+    "code": "CDD4401",
+    "name": "Trường Cao đẳng nghề Việt Nam – Singapore"
+  },
+  {
+    "code": "CDT3501",
+    "name": "Trường Cao đẳng Kỹ nghệ Dung Quất"
+  },
+  {
+    "code": "CDD4808",
+    "name": "Trường Cao đẳng Hòa Bình Xuân Lộc"
+  },
+  {
+    "code": "CDG",
+    "name": "Trường Cao đẳng Kiên Giang"
+  },
+  {
+    "code": "C43",
+    "name": "Trường Cao Đẳng Bình Phước"
+  },
+  {
+    "code": "CYV",
+    "name": "Trường Cao Đẳng Y Tế Tiền Giang"
+  },
+  {
+    "code": "CDD3501",
+    "name": "Trường Cao đẳng Y tế Đặng Thùy Trâm"
+  },
+  {
+    "code": "CDD4201",
+    "name": "Trường Cao đẳng Đà Lạt"
+  },
+  {
+    "code": "CM2",
+    "name": "Trường Cao Đẳng Sư Phạm TW Nha Trang"
+  },
+  {
+    "code": "CYM",
+    "name": "Trường Cao Đẳng Y Tế Hà Đông"
+  },
+  {
+    "code": "CCP",
+    "name": "Trường Cao Đẳng Công Thương Miền Trung"
+  },
+  {
+    "code": "CVB",
+    "name": "Trường Cao Đẳng Văn Hóa Nghệ Thuật Tây Bắc"
+  },
+  {
+    "code": "CDD3601",
+    "name": "Trường Cao đẳng Kon Tum"
+  },
+  {
+    "code": "CDT0404",
+    "name": "Trường Cao đẳng Du lịch Đà Nẵng"
+  },
+  {
+    "code": "CDD3702",
+    "name": "Trường Cao đẳng Kỹ thuật Công nghệ Quy Nhơn"
+  },
+  {
+    "code": "CDT3701",
+    "name": "Trường Cao đẳng Cơ điện – Xây dựng và Nông lâm Trung Bộ"
+  },
+  {
+    "code": "CKM",
+    "name": "Trường Cao Đẳng Miền Nam"
+  },
+  {
+    "code": "CDD0408",
+    "name": "Trường Cao đẳng Công Nghệ Y- Dược Việt Nam"
+  },
+  {
+    "code": "CDT0213",
+    "name": "Trường Cao Đẳng Xây Dựng TPHCM"
+  },
+  {
+    "code": "CM3",
+    "name": "Trường Cao Đẳng Sư Phạm Trung Ương TPHCM"
+  },
+  {
+    "code": "CKP",
+    "name": "Trường Cao Đẳng Lý Tự Trọng TPHCM"
+  },
+  {
+    "code": "CDD0801",
+    "name": "Trường Cao đẳng Lào Cai"
+  },
+  {
+    "code": "CGS",
+    "name": "Trường Cao Đẳng Giao Thông Vận Tải Trung Ương III"
+  },
+  {
+    "code": "C10",
+    "name": "Trường Cao Đẳng Lạng Sơn"
+  },
+  {
+    "code": "CLC",
+    "name": "Trường Cao Đẳng Lai Châu"
+  },
+  {
+    "code": "CGT",
+    "name": "Trường Cao Đẳng Giao Thông Vận Tải TPHCM"
+  },
+  {
+    "code": "C23",
+    "name": "Trường Cao Đẳng Sư Phạm Hòa Bình"
+  },
+  {
+    "code": "CDT0211",
+    "name": "Trường Cao Đẳng Điện Lực TPHCM"
+  },
+  {
+    "code": "CDT1901",
+    "name": "Trường Cao đẳng Cơ điện và Xây dựng Bắc Ninh"
+  },
+  {
+    "code": "CDT3301",
+    "name": "Trường Cao đẳng Du lịch Huế"
+  },
+  {
+    "code": "CM1",
+    "name": "Trường Cao Đẳng Sư Phạm Trung Ương"
+  },
+  {
+    "code": "CDD0130",
+    "name": "Trường Cao Đẳng Thương Mại Và Du Lịch Hà Nội"
+  },
+  {
+    "code": "CYZ",
+    "name": "Trường Cao Đẳng Y Tế Hà Nội"
+  },
+  {
+    "code": "D20",
+    "name": "Trường Cao Đẳng Cộng Đồng Hà Tây"
+  },
+  {
+    "code": "CDP",
+    "name": "Trường Cao Đẳng Nông Lâm Đông Bắc"
+  },
+  {
+    "code": "CNC",
+    "name": "Trường Cao Đẳng Ngoại Ngữ – Công Nghệ Việt Nhật"
+  },
+  {
+    "code": "CTE",
+    "name": "Trường Cao Đẳng Thống Kê"
+  },
+  {
+    "code": "CPN",
+    "name": "Trường Cao Đẳng Phương Đông – Đà Nẵng"
+  },
+  {
+    "code": "C25",
+    "name": "Trường Cao Đẳng Sư Phạm Nam Định"
+  },
+  {
+    "code": "CYF",
+    "name": "Trường Cao Đẳng Y Tế Hải Phòng"
+  },
+  {
+    "code": "CYS",
+    "name": "Trường Cao Đẳng Dược Trung Ương"
+  },
+  {
+    "code": "C19",
+    "name": "Trường Cao Đẳng Sư Phạm Bắc Ninh"
+  },
+  {
+    "code": "CNN",
+    "name": "Trường Cao Đẳng Nông Nghiệp Nam Bộ"
+  },
+  {
+    "code": "CDD0206",
+    "name": "Trường Cao đẳng Quốc tế TPHCM"
+  },
+  {
+    "code": "CDD0212",
+    "name": "Trường Cao Đẳng Kinh Tế TPHCM"
+  },
+  {
+    "code": "CPL",
+    "name": "Trường Cao Đẳng Kinh Tế Kỹ Thuật TP HCM"
+  },
+  {
+    "code": "CDT0131",
+    "name": "Trường Cao Đẳng Truyền Hình Việt Nam"
+  },
+  {
+    "code": "CCK",
+    "name": "Trường Cao Đẳng Kinh Tế Công Nghiệp Hà Nội"
+  },
+  {
+    "code": "CSG",
+    "name": "Trường Cao Đẳng Đại Việt Sài Gòn"
+  },
+  {
+    "code": "CCS",
+    "name": "Trường Cao Đẳng Công Nghệ TPHCM"
+  },
+  {
+    "code": "CKC",
+    "name": "Trường Cao Đẳng Kỹ Thuật Cao Thắng"
+  },
+  {
+    "code": "CDC",
+    "name": "Trường Cao đẳng Công Nghệ Thông Tin TPHCM"
+  },
+  {
+    "code": "CPS",
+    "name": "Trường Cao Đẳng Phát Thanh Truyền Hình II"
+  },
+  {
+    "code": "CES",
+    "name": "Trường Cao Đẳng Công Thương TPHCM"
+  },
+  {
+    "code": "CDT0209",
+    "name": "Trường Cao Đẳng Kinh Tế Đối Ngoại"
+  },
+  {
+    "code": "CDD1204",
+    "name": "Trường Cao đẳng Công thương Việt Nam"
+  },
+  {
+    "code": "CBT",
+    "name": "Trường Cao Đẳng Công Nghệ và Thương Mại Hà Nội"
+  },
+  {
+    "code": "CLH",
+    "name": "Trường Cao Đẳng Điện Tử"
+  },
+  {
+    "code": "CDT",
+    "name": "Trường Cao Đẳng Xây Dựng Công Trình Đô Thị"
+  },
+  {
+    "code": "C55",
+    "name": "Trường Cao Đẳng Cần Thơ"
+  },
+  {
+    "code": "CCO",
+    "name": "Trường Cao Đẳng Công Nghệ Thủ Đức"
+  },
+  {
+    "code": "CDH",
+    "name": "Trường Cao Đẳng Du Lịch Hà Nội"
+  },
+  {
+    "code": "CYE",
+    "name": "Trường Cao Đẳng Y Tế Thái Bình"
+  },
+  {
+    "code": "CDD3102",
+    "name": "Trường Cao đẳng Kỹ thuật Công – Nông nghiệp Quảng Bình"
+  },
+  {
+    "code": "CDD0227",
+    "name": "Trường Cao đẳng Quốc tế Kent"
+  },
+  {
+    "code": "CET",
+    "name": "Trường Cao Đẳng Kinh Tế-Công Nghệ TPHCM"
+  },
+  {
+    "code": "CVN",
+    "name": "Trường Cao Đẳng Văn Hóa Nghệ Thuật TPHCM"
+  },
+  {
+    "code": "CVS",
+    "name": "Trường Cao Đẳng Văn Hóa Nghệ Thuật và Du Lịch Sài Gòn"
+  },
+  {
+    "code": "CDT0207",
+    "name": "Trường Cao đẳng Hàng hải và Đường thủy II"
+  },
+  {
+    "code": "CCZ1",
+    "name": "Trường Cao đẳng Đại Việt Cần Thơ"
+  },
+  {
+    "code": "CKN",
+    "name": "Trường Cao Đẳng Việt Mỹ"
+  },
+  {
+    "code": "D42",
+    "name": "Trường Cao đẳng Du lịch Sài Gòn"
+  },
+  {
+    "code": "CDT0120",
+    "name": "Trường Cao đẳng Tây Đô"
+  },
+  {
+    "code": "CCD1902",
+    "name": "Trường Cao đẳng Công nghiệp Bắc Ninh"
+  },
+  {
+    "code": "CDD2303",
+    "name": "Trường Cao đẳng Kỹ thuật Công nghệ Hòa Bình"
+  },
+  {
+    "code": "CDD0308",
+    "name": "Trường Cao đẳng Công nghệ Bách khoa Hà Nội"
+  },
+  {
+    "code": "CBC",
+    "name": "Trường Cao Đẳng Bán Công Công Nghệ và Quản Trị Doanh Nghiệp"
+  },
+  {
+    "code": "CDD0121",
+    "name": "Trường Cao đẳng Kinh tế Công nghệ Hà Nội"
+  },
+  {
+    "code": "CXH",
+    "name": "Trường Cao Đẳng Xây Dựng Số 1"
+  },
+  {
+    "code": "C13",
+    "name": "Trường Cao đẳng Yên Bái"
+  },
+  {
+    "code": "039",
+    "name": "Trường Cao đẳng nghề Trà Vinh"
+  },
+  {
+    "code": "CDD4805",
+    "name": "Trường Cao đẳng nghề Công nghệ cao Đồng Nai"
+  },
+  {
+    "code": "CDT4804",
+    "name": "Trường Cao đẳng nghề Cơ giới và Thủy lợi"
+  },
+  {
+    "code": "CDV",
+    "name": "Trường Cao Đẳng Viễn Đông"
+  },
+  {
+    "code": "CBV",
+    "name": "Trường Cao Đẳng Bách Việt"
+  },
+  {
+    "code": "CCI",
+    "name": "Trường Cao Đẳng Công Nghiệp In"
+  },
+  {
+    "code": "CDD4202",
+    "name": "Trường Cao đẳng Kinh tế – Kỹ thuật Lâm Đồng"
+  },
+  {
+    "code": "CHN",
+    "name": "Trường Cao Đẳng Cộng Đồng Hà Nội"
+  },
+  {
+    "code": "CDD5901",
+    "name": "Trường Cao đẳng nghề Sóc Trăng"
+  },
+  {
+    "code": "CDS",
+    "name": "Trường Cao Đẳng Công Nghệ và Quản Trị Sonadezi"
+  },
+  {
+    "code": "CMY",
+    "name": "Trường Cao Đẳng Y Tế Cà Mau"
+  },
+  {
+    "code": "CHH",
+    "name": "Trường Cao Đẳng Hàng Hải I"
+  },
+  {
+    "code": "YTV",
+    "name": "Trường Cao Đẳng Y Tế Trà Vinh"
+  },
+  {
+    "code": "CMS",
+    "name": "Trường Cao Đẳng Thương Mại"
+  },
+  {
+    "code": "CYH",
+    "name": "Trường Cao Đẳng Y Tế Hà Nam"
+  },
+  {
+    "code": "CYR",
+    "name": "Trường Cao Đẳng Y Tế Bình Định"
+  },
+  {
+    "code": "CYU",
+    "name": "Trường Cao Đẳng Y Tế Quảng Nam"
+  },
+  {
+    "code": "C46",
+    "name": "Trường Cao Đẳng Sư Phạm Tây Ninh"
+  },
+  {
+    "code": "CYG",
+    "name": "Trường Cao Đẳng Y Tế Kiên Giang"
+  },
+  {
+    "code": "CNT",
+    "name": "Trường Cao Đẳng Nghệ Thuật Hà Nội"
+  },
+  {
+    "code": "QPH",
+    "name": "Trường Cao Đẳng Công Nghiệp Quốc Phòng"
+  },
+  {
+    "code": "CYD",
+    "name": "Trường Cao Đẳng Y Tế Đồng Nai"
+  },
+  {
+    "code": "CDD4803",
+    "name": "Trường Cao đẳng Kỹ thuật Đồng Nai"
+  },
+  {
+    "code": "CDD5204",
+    "name": "Trường Cao đẳng Quốc tế Vabis"
+  },
+  {
+    "code": "CDT3401",
+    "name": "Trường Cao đẳng Công nghệ – Kinh tế và Thủy lợi miền Trung"
+  },
+  {
+    "code": "CDD2901",
+    "name": "Trường Cao đẳng Việt Đức Nghệ An"
+  },
+  {
+    "code": "CDT2901",
+    "name": "Trường Cao đẳng Giao thông vận tải Trung ương IV"
+  },
+  {
+    "code": "CDD6301",
+    "name": "Trường Cao đẳng Cộng đồng Đắk Nông"
+  },
+  {
+    "code": "CDD0403",
+    "name": "Trường Cao đẳng nghề Nguyễn Văn Trỗi"
+  },
+  {
+    "code": "CDD0401",
+    "name": "Trường Cao đẳng nghề Đà Nẵng"
+  },
+  {
+    "code": "CVL",
+    "name": "Trường Cao Đẳng Văn Hóa Nghệ Thuật Đăk Lăk"
+  },
+  {
+    "code": "CNV",
+    "name": "Trường Cao Đẳng Văn Hóa Nghệ Thuật Việt Bắc"
+  },
+  {
+    "code": "CVY",
+    "name": "Trường Cao Đẳng Văn Hóa Nghệ Thuật Du Lịch Yên Bái"
+  },
+  {
+    "code": "CKB",
+    "name": "Trường Cao Đẳng Bách Khoa Đà Nẵng"
+  },
+  {
+    "code": "CLT",
+    "name": "Trường Cao Đẳng Lương Thực Thực Phẩm"
+  },
+  {
+    "code": "CDT2108",
+    "name": "Trường Cao Đẳng Du Lịch và Công Thương"
+  },
+  {
+    "code": "CDD3403",
+    "name": "Trường Cao đẳng Quảng Nam"
+  },
+  {
+    "code": "D50",
+    "name": "Trường Cao Đẳng Cộng Đồng Đồng Tháp"
+  },
+  {
+    "code": "CLY",
+    "name": "Trường Cao Đẳng Y Tế Lâm Đồng"
+  },
+  {
+    "code": "BKC",
+    "name": "Trường Cao đẳng Bách Khoa Sài Gòn"
+  },
+  {
+    "code": "CDD4806",
+    "name": "Trường Cao đẳng Lê Quý Đôn"
+  },
+  {
+    "code": "CDT0402",
+    "name": "Trường Cao đẳng Giao thông vận tải Trung ương V"
+  },
+  {
+    "code": "CYA",
+    "name": "Trường Cao Đẳng Y Tế Đồng Tháp"
+  },
+  {
+    "code": "CCZ",
+    "name": "Trường Cao đẳng Đại Việt Đà Nẵng"
+  },
+  {
+    "code": "CDT4403",
+    "name": "Trường Cao đẳng Công nghệ và Nông lâm Nam Bộ"
+  },
+  {
+    "code": "CBM",
+    "name": "Trường Cao Đẳng Y Tế Bạch Mai"
+  },
+  {
+    "code": "C111",
+    "name": "Trường Cao đẳng Bắc Kạn"
+  },
+  {
+    "code": "CCE",
+    "name": "Trường Cao Đẳng Kỹ Thuật Công Nghiệp"
+  },
+  {
+    "code": "CDD5102",
+    "name": "Trường Cao đẳng Y tế An Giang"
+  },
+  {
+    "code": "CDD0122",
+    "name": "Trường Cao đẳng Y Hà Nội"
+  },
+  {
+    "code": "CDD13011",
+    "name": "Trường Cao đẳng Y dược Pasteur TPHCM"
+  },
+  {
+    "code": "D76",
+    "name": "Trường Cao đẳng Công thương Hà Nội"
+  },
+  {
+    "code": "C54",
+    "name": "Trường Cao Đẳng Sư Phạm Kiên Giang"
+  },
+  {
+    "code": "CYT",
+    "name": "Trường Cao Đẳng Y Tế Thanh Hóa"
+  },
+  {
+    "code": "CYL",
+    "name": "Trường Cao Đẳng Y Tế Lạng Sơn"
+  },
+  {
+    "code": "CYP",
+    "name": "Trường Cao Đẳng Y Tế Phú Thọ"
+  },
+  {
+    "code": "CYK",
+    "name": "Trường Cao Đẳng Y Tế Khánh Hòa"
+  },
+  {
+    "code": "YPY",
+    "name": "Trường Cao đẳng Y tế Phú Yên"
+  },
+  {
+    "code": "CYB",
+    "name": "Trường Cao Đẳng Y Tế Bạc Liêu"
+  },
+  {
+    "code": "CDD4004",
+    "name": "Trường Cao đẳng Y tế Đắk Lắk"
+  },
+  {
+    "code": "CYN",
+    "name": "Trường Cao Đẳng Y Tế Hà Tĩnh"
+  },
+  {
+    "code": "CDD2810",
+    "name": "Trường Cao đẳng Y – Dược Hợp Lực, Thanh Hóa"
+  },
+  {
+    "code": "CNY",
+    "name": "Trường Cao Đẳng Y Tế Ninh Bình"
+  },
+  {
+    "code": "CYY",
+    "name": "Trường Cao Đẳng Y Tế Huế"
+  },
+  {
+    "code": "YSL",
+    "name": "Trường Cao Đẳng Y Tế Sơn La"
+  },
+  {
+    "code": "CCV",
+    "name": "Trường Cao Đẳng Công Nghiệp Việt Đức"
+  },
+  {
+    "code": "CXD",
+    "name": "Trường Cao Đẳng Công Nghệ và Kinh Tế Công Nghiệp"
+  },
+  {
+    "code": "CCX",
+    "name": "Trường Cao Đẳng Công Nghiệp và Xây Dựng"
+  },
+  {
+    "code": "CTH",
+    "name": "Trường Cao Đẳng Kinh Tế – Kỹ Thuật Thương Mại"
+  },
+  {
+    "code": "CDD5203",
+    "name": "Trường Cao đẳng Kỹ thuật Công nghệ Bà Rịa – Vũng Tàu"
+  },
+  {
+    "code": "CDT3503",
+    "name": "Trường Cao đẳng Quảng Ngãi"
+  },
+  {
+    "code": "CCY",
+    "name": "Trường Cao Đẳng Công Nghiệp Hưng Yên"
+  },
+  {
+    "code": "CDD4101",
+    "name": "Trường Cao đẳng Kỹ thuật Công nghệ Nha Trang"
+  },
+  {
+    "code": "CDD6002",
+    "name": "Trường Cao đẳng Kinh tế – Kỹ thuật Bạc Liêu"
+  },
+  {
+    "code": "CDT4801",
+    "name": "Trường Cao đẳng Công nghệ Quốc tế LILAMA-2"
+  },
+  {
+    "code": "CDT5601",
+    "name": "Trường Cao đẳng Đồng Khởi"
+  },
+  {
+    "code": "C56",
+    "name": "Trường Cao Đẳng Bến Tre"
+  },
+  {
+    "code": "CDD3401",
+    "name": "Trường Cao đẳng Thaco"
+  },
+  {
+    "code": "CVV",
+    "name": "Trường Cao Đẳng Văn Hóa Nghệ Thuật Nghệ An"
+  },
+  {
+    "code": "CDD3001",
+    "name": "Trường Cao đẳng nghề Việt-Đức Hà Tĩnh"
+  },
+  {
+    "code": "CCH",
+    "name": "Trường Cao Đẳng Công Nghiệp Huế"
+  },
+  {
+    "code": "C26",
+    "name": "Trường Cao Đẳng Sư Phạm Thái Bình"
+  },
+  {
+    "code": "CDB",
+    "name": "Trường Cao Đẳng Kinh Tế Kỹ Thuật Điện Biên"
+  },
+  {
+    "code": "CDD0409",
+    "name": "Trường Cao đẳng Văn hóa – Nghệ thuật Đà Nẵng"
+  },
+  {
+    "code": "CDT3001",
+    "name": "Trường Cao đẳng nghề Công nghệ Hà Tĩnh"
+  },
+  {
+    "code": "D64",
+    "name": "Trường Cao Đẳng Cộng Đồng Hậu Giang"
+  },
+  {
+    "code": "CDT4803",
+    "name": "Trường Cao đẳng Thống kê II"
+  },
+  {
+    "code": "CDD5401",
+    "name": "Trường Cao đẳng nghề Kiên Giang"
+  },
+  {
+    "code": "CDD35021",
+    "name": "Trường Cao đẳng nghề Việt Nam-Hàn Quốc Quảng Ngãi"
+  },
+  {
+    "code": "CDD3502",
+    "name": "Trường Cao đẳng nghề Cơ giới Quảng Ngãi"
+  },
+  {
+    "code": "CDT2904",
+    "name": "Trường Cao đẳng nghề Kinh tế – Kỹ thuật số 1 Nghệ An"
+  },
+  {
+    "code": "CDN",
+    "name": "Trường Cao Đẳng Mỹ Thuật Trang Trí Đồng Nai"
+  },
+  {
+    "code": "CDD5501",
+    "name": "Trường Cao đẳng nghề Cần Thơ"
+  },
+  {
+    "code": "CDT5201",
+    "name": "Trường Cao đẳng Dầu khí"
+  },
+  {
+    "code": "C52",
+    "name": "Trường Cao Đẳng Sư Phạm Bà Rịa – Vũng Tàu"
+  },
+  {
+    "code": "CDD5505",
+    "name": "Trường Cao đẳng Văn hoá Nghệ thuật Cần Thơ"
+  },
+  {
+    "code": "D61",
+    "name": "Trường Cao Đẳng Cộng Đồng Cà Mau"
+  },
+  {
+    "code": "CDD5101",
+    "name": "Trường Cao đẳng nghề An Giang"
+  },
+  {
+    "code": "CDT4103",
+    "name": "Trường Cao đẳng Du lịch Nha Trang"
+  },
+  {
+    "code": "CDD4002",
+    "name": "Trường Cao đẳng Kỹ thuật Đắk Lắk"
+  },
+  {
+    "code": "CNB",
+    "name": "Trường Cao Đẳng Văn Hóa Nghệ Thuật Thái Bình"
+  },
+  {
+    "code": "CND",
+    "name": "Trường Cao Đẳng Công Nghiệp Nam Định"
+  },
+  {
+    "code": "CDT0407",
+    "name": "Trường Cao Đẳng Kinh Tế – Kế Hoạch Đà Nẵng"
+  },
+  {
+    "code": "CNH",
+    "name": "Trường Cao Đẳng Công Nghệ Hà Nội"
+  },
+  {
+    "code": "CDD1910",
+    "name": "Trường Cao đẳng Lý Thái Tổ"
+  },
+  {
+    "code": "CDD0406",
+    "name": "Trường Cao đẳng nghề Việt"
+  },
+  {
+    "code": "CPT",
+    "name": "Trường Cao Đẳng Phát Thanh Truyền Hình I"
+  },
+  {
+    "code": "C57",
+    "name": "Trường Cao Đẳng Sư Phạm Vĩnh Long"
+  },
+  {
+    "code": "C59",
+    "name": "Trường Cao Đẳng Sư Phạm Sóc Trăng"
+  },
+  {
+    "code": "CST",
+    "name": "Trường Cao Đẳng Cộng Đồng Sóc Trăng"
+  },
+  {
+    "code": "C32",
+    "name": "Trường Cao Đẳng Sư Phạm Quảng Trị"
+  },
+  {
+    "code": "C40",
+    "name": "Trường Cao Đẳng Sư Phạm Đăk Lăk"
+  },
+  {
+    "code": "CCB",
+    "name": "Trường Cao Đẳng Công Nghiệp Thái Nguyên"
+  },
+  {
+    "code": "CLA",
+    "name": "Trường Cao Đẳng Cộng Đồng Lào Cai"
+  },
+  {
+    "code": "D57",
+    "name": "Trường Cao Đẳng Vĩnh Long"
+  },
+  {
+    "code": "CSB",
+    "name": "Trường Cao Đẳng Kinh Tế, Kỹ Thuật Và Thủy Sản"
+  },
+  {
+    "code": "CYX",
+    "name": "Trường Cao Đẳng Bình Thuận"
+  },
+  {
+    "code": "C62",
+    "name": "Trường Cao Đẳng Sư Phạm Điện Biên"
+  },
+  {
+    "code": "C14",
+    "name": "Trường Cao Đẳng Sơn La"
+  },
+  {
+    "code": "CGD",
+    "name": "Trường Cao Đẳng Giao Thông Vận Tải II"
+  },
+  {
+    "code": "CLD",
+    "name": "Trường Cao Đẳng Điện Lực Miền Trung"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT chuyên Hà Nội - Amsterdam"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT chuyên Nguyễn Huệ"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT chuyên Chu Văn An"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT chuyên Sơn Tây"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT chuyên Đại học Sư phạm Hà Nội"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT chuyên Ngoại ngữ"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT chuyên Khoa học Tự nhiên"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT chuyên Khoa học Xã hội và Nhân văn"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Nguyễn Trãi - Ba Đình"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Phạm Hồng Thái"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Phan Đình Phùng"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Thăng Long"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Trần Phú - Hoàn Kiếm"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Việt Đức"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Kim Liên"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Lê Quý Đôn - Đống Đa"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Quang Trung - Đống Đa"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Trần Hưng Đạo - Thanh Xuân"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Cao Bá Quát - Gia Lâm"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Vân Nội"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Xuân Đỉnh"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Khoa học Giáo dục"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Lương Thế Vinh"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Đinh Tiên Hoàng - Ba Đình"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT chuyên Trần Đại Nghĩa"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT chuyên Lê Hồng Phong"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT chuyên Lê Quý Đôn"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT chuyên Hùng Vương"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Trưng Vương"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Lê Quý Đôn"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Nguyễn Thị Minh Khai"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Marie Curie"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Mạc Đĩnh Chi"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Võ Thị Sáu"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Gia Định"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Nguyễn Thượng Hiền"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Trần Phú"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Nguyễn Hữu Huân"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Bình Chánh"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Củ Chi"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Quang Trung"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Nguyễn Hữu Cầu"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Phan Châu Trinh"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Trần Phú"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Nguyễn Trãi"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT chuyên Quốc học – Huế"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT chuyên Khoa học Huế"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Hai Bà Trưng"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Nguyễn Huệ"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Nguyễn Trường Tộ"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Đặng Huy Trứ"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Châu Văn Liêm"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Chuyên Bắc Ninh"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Chuyên Bắc Giang"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Thuận Thành số 1"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Chuyên Bắc Ninh"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Chuyên Bắc Giang"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Thuận Thành số 1"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Chuyên Bến Tre"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Phan Châu Trinh"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Trần Phú"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Nguyễn Trãi"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Chuyên Lê Hồng Phong"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Nguyễn Trãi"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Nghĩa Hưng B"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT A Hải Hậu"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Chuyên Biên Hòa"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Nam Lý"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Chuyên Lương Văn Tụy"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Chuyên Hưng Yên"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Chuyên Thái Bình"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Nguyễn Đức Cảnh"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Lê Quý Đôn"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Nguyễn Du"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Thái Ninh"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Tây Tiền Hải"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Chuyên Lê Quý Đôn"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Chuyên Lê Hồng Phong"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Nguyễn Trãi"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Nghĩa Hưng B"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT A Hải Hậu"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Chuyên Biên Hòa"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Nam Lý"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Chuyên Lương Văn Tụy"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Chuyên Lê Hồng Phong"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Nguyễn Trãi"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Nghĩa Hưng B"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT A Hải Hậu"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Chuyên Biên Hòa"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Nam Lý"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Chuyên Lương Văn Tụy"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Chuyên Hưng Yên"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Chuyên Thái Bình"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Nguyễn Đức Cảnh"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Lê Quý Đôn"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Nguyễn Du"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Thái Ninh"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Tây Tiền Hải"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Tĩnh Gia 1"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Tĩnh Gia 2"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Chuyên Lam Sơn"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT chuyên Bến Tre"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT chuyên Nguyễn Thiện Thành"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT chuyên Nguyễn Bỉnh Khiêm"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Châu Văn Liêm"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Chuyên Bắc Ninh"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Chuyên Bắc Giang"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Thuận Thành số 1"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Chuyên Bắc Ninh"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Chuyên Bắc Giang"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Thuận Thành số 1"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Chuyên Bến Tre"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Phan Châu Trinh"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Trần Phú"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Nguyễn Trãi"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Chuyên Lê Hồng Phong"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Nguyễn Trãi"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Nghĩa Hưng B"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT A Hải Hậu"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Chuyên Biên Hòa"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Nam Lý"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Chuyên Lương Văn Tụy"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT chuyên Hà Nội - Amsterdam"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT chuyên Nguyễn Huệ"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT chuyên Chu Văn An"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT chuyên Sơn Tây"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT chuyên Đại học Sư phạm Hà Nội"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT chuyên Ngoại ngữ"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT chuyên Khoa học Tự nhiên"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT chuyên Khoa học Xã hội và Nhân văn"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Nguyễn Trãi - Ba Đình"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Phạm Hồng Thái"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Phan Đình Phùng"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Thăng Long"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Trần Phú - Hoàn Kiếm"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Việt Đức"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Kim Liên"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Lê Quý Đôn - Đống Đa"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Quang Trung - Đống Đa"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Trần Hưng Đạo - Thanh Xuân"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Cao Bá Quát - Gia Lâm"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Vân Nội"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Xuân Đỉnh"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Khoa học Giáo dục"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Lương Thế Vinh"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Đinh Tiên Hoàng - Ba Đình"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT chuyên Trần Đại Nghĩa"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT chuyên Lê Hồng Phong"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT chuyên Lê Quý Đôn"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT chuyên Hùng Vương"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Trưng Vương"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Lê Quý Đôn"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Nguyễn Thị Minh Khai"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Marie Curie"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Mạc Đĩnh Chi"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Võ Thị Sáu"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Gia Định"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Nguyễn Thượng Hiền"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Trần Phú"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Nguyễn Hữu Huân"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Bình Chánh"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Củ Chi"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Quang Trung"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Nguyễn Hữu Cầu"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT chuyên Quốc học – Huế"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT chuyên Khoa học Huế"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Hai Bà Trưng"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Nguyễn Huệ"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Nguyễn Trường Tộ"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Đặng Huy Trứ"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Chuyên Hưng Yên"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Chuyên Thái Bình"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Nguyễn Đức Cảnh"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Lê Quý Đôn"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Nguyễn Du"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Thái Ninh"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Tây Tiền Hải"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Chuyên Lê Hồng Phong"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Nguyễn Trãi"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Nghĩa Hưng B"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT A Hải Hậu"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Chuyên Biên Hòa"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Nam Lý"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Chuyên Lương Văn Tụy"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Chuyên Lê Hồng Phong"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Nguyễn Trãi"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Nghĩa Hưng B"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT A Hải Hậu"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Chuyên Biên Hòa"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Nam Lý"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Chuyên Lương Văn Tụy"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Chuyên Hưng Yên"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Chuyên Thái Bình"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Nguyễn Đức Cảnh"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Lê Quý Đôn"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Nguyễn Du"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Thái Ninh"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Tây Tiền Hải"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Tĩnh Gia 1"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Tĩnh Gia 2"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT Chuyên Lam Sơn"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT chuyên Bến Tre"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT chuyên Nguyễn Thiện Thành"
+  },
+  {
+    "code": null,
+    "name": "Trường THPT chuyên Nguyễn Bỉnh Khiêm"
+  }
+]
