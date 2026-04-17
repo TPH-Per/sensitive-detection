@@ -178,24 +178,6 @@ export const messageActionService = {
             }
 
             await update(ref(rtdb), coreUpdates);
-
-            if (payload?.status === 'missed') {
-                try {
-                    const memberIds = Object.keys(conv.members || {});
-                    const unreadUpdates: Record<string, any> = {};
-
-                    memberIds
-                        .filter(mId => mId !== msgData.senderId)
-                        .forEach(mId => {
-                            unreadUpdates[`user_chats/${mId}/${convId}/unreadCount`] = increment(1);
-                        });
-
-                    if (Object.keys(unreadUpdates).length > 0) {
-                        await update(ref(rtdb), unreadUpdates);
-                    }
-                } catch {
-                }
-            }
         } catch (error) {
             console.error('[rtdbMessageService] Lỗi updateMessageContent:', error);
             throw error;

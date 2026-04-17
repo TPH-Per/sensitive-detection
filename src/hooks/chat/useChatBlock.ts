@@ -38,7 +38,7 @@ export const useChatBlock = ({
   );
 
   const isBlockedByMe = !!myBlockOptions;
-  const isMessageBlockedByMe = !!(myBlockOptions?.blockMessages || myBlockOptions?.blockCalls);
+  const isMessageBlockedByMe = !!myBlockOptions?.blockMessages;
   const isCallBlockedByMe = !!myBlockOptions?.blockCalls;
 
   const isBlocked = isMessageBlockedByMe || isMessageBlockedByPartner || partnerStatus === UserStatus.BANNED;

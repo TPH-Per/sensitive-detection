@@ -111,9 +111,6 @@ export async function updateConversationAfterMessage(
             updates[`user_chats/${memberId}/${convId}/lastMsgTimestamp`] = now;
             updates[`user_chats/${memberId}/${convId}/updatedAt`] = now;
             if (memberId !== senderId) {
-                if (!isSilentMessage) {
-                    updates[`user_chats/${memberId}/${convId}/unreadCount`] = increment(1);
-                }
                 updates[`user_chats/${memberId}/${convId}/isArchived`] = false;
             }
         }
