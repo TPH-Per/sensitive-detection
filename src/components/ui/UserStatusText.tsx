@@ -2,6 +2,9 @@ import React from 'react';
 import { formatStatusTime } from '../../utils/dateUtils';
 import { usePresence } from '../../hooks/usePresence';
 import { useUserCache } from '../../store/userCacheStore';
+import { useAuthStore } from '../../store/authStore';
+import { useContactStore } from '../../store/contactStore';
+import { useBlockedUsers } from '../../hooks';
 
 interface UserStatusTextProps {
   userId: string;
@@ -16,12 +19,16 @@ export const UserStatusText: React.FC<UserStatusTextProps> = ({
   onlineText = 'Đang hoạt động', offlineText = 'Không hoạt động',
 }) => {
   const presence = usePresence(userId, initialStatus);
+  const currentUser = useAuthStore(state => state.user);
+  const isFriend = useContactStore(state => state.friends.some(f => f.id === userId));
+  const { isBlocked: checkBlocked } = useBlockedUsers();
   const cachedUser = useUserCache(state => state.users[userId]);
 
-  // Ưu tiên status từ cache (realtime Firestore) hơn initialStatus
   const effectiveStatus = cachedUser?.status ?? initialStatus;
 
   if (effectiveStatus === 'banned') return null;
+  const canShowStatus = userId === currentUser?.id || (isFriend && !checkBlocked(userId));
+  if (!canShowStatus) return null;
 
   const isOnline = presence && 'isOnline' in presence && presence.isOnline;
 
