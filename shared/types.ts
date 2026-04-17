@@ -184,6 +184,7 @@ export interface UserSettings {
     showOnlineStatus: boolean;
     showReadReceipts: boolean;
     defaultPostVisibility: Visibility;
+    allowMessagesFromStrangers: boolean;
     createdAt: Timestamp;
     updatedAt: Timestamp;
 }

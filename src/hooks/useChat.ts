@@ -206,6 +206,14 @@ export const useChat = () => {
 
     const selectedConvData = conversations.find(c => c.id === selectedConversationId)?.data;
     const isGroup = selectedConvData?.isGroup || false;
+    const msgs = messages[selectedConversationId] || [];
+
+    const hasUndelivered = msgs.some(m =>
+      m.data.senderId !== currentUser.id && (!m.data.deliveredTo || !m.data.deliveredTo[currentUser.id])
+    );
+    if (hasUndelivered) {
+      markAsDelivered(selectedConversationId, currentUser.id);
+    }
 
     if (!isGroup) {
       const activeParticipantIds = Object.keys(selectedConvData?.members || {});
@@ -214,12 +222,11 @@ export const useChat = () => {
       if (isMessageRequest) return;
     }
 
-    const msgs = messages[selectedConversationId] || [];
     const hasUnread = msgs.some(m =>
       m.data.senderId !== currentUser.id && (!m.data.readBy || !m.data.readBy[currentUser.id])
     );
     if (hasUnread) markAsRead(selectedConversationId, currentUser.id);
-  }, [messages, selectedConversationId, currentUser, markAsRead, conversations, friendIds, isConversationInStore]);
+  }, [messages, selectedConversationId, currentUser, markAsRead, markAsDelivered, conversations, friendIds, isConversationInStore]);
 
   useEffect(() => {
     if (!selectedConversationId || !currentUser) return;

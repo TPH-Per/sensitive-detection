@@ -131,6 +131,7 @@ export const userService = {
         showOnlineStatus: true,
         showReadReceipts: true,
         defaultPostVisibility: Visibility.FRIENDS,
+        allowMessagesFromStrangers: true,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
       });
@@ -379,6 +380,7 @@ export const userService = {
           showOnlineStatus: data.showOnlineStatus ?? true,
           showReadReceipts: data.showReadReceipts ?? true,
           defaultPostVisibility: normalizeDefaultPostVisibility(data.defaultPostVisibility),
+          allowMessagesFromStrangers: data.allowMessagesFromStrangers ?? true,
           createdAt: data.createdAt as Timestamp || Timestamp.now(),
           updatedAt: data.updatedAt as Timestamp || Timestamp.now()
         } as UserSettings;
@@ -389,6 +391,7 @@ export const userService = {
         showOnlineStatus: true,
         showReadReceipts: true,
         defaultPostVisibility: Visibility.FRIENDS,
+        allowMessagesFromStrangers: true,
         createdAt: Timestamp.now(),
         updatedAt: Timestamp.now()
       };

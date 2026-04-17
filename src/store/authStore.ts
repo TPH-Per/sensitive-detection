@@ -11,6 +11,7 @@ const DEFAULT_SETTINGS: UserSettings = {
   showOnlineStatus: true,
   showReadReceipts: true,
   defaultPostVisibility: Visibility.FRIENDS,
+  allowMessagesFromStrangers: true,
   createdAt: Timestamp.now(),
   updatedAt: Timestamp.now(),
 };

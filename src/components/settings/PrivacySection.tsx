@@ -1,5 +1,5 @@
 import React, { useCallback } from 'react';
-import { Eye, MessageCircle, Users, Lock, ChevronDown, Globe2 } from 'lucide-react';
+import { Eye, MessageCircle, Users, Lock, ChevronDown, Globe2, MessageSquare } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 import { userService } from '../../services/userService';
 import { presenceService } from '../../services/presenceService';
@@ -24,6 +24,13 @@ const PrivacySection: React.FC = () => {
     const newValue = !settings.showReadReceipts;
     updateSettings({ showReadReceipts: newValue });
     await userService.updateUserSettings(currentUser.id, { showReadReceipts: newValue });
+  }, [currentUser, settings, updateSettings]);
+
+  const handleToggleAllowMessagesFromStrangers = useCallback(async () => {
+    if (!currentUser || !settings) return;
+    const newValue = !settings.allowMessagesFromStrangers;
+    updateSettings({ allowMessagesFromStrangers: newValue });
+    await userService.updateUserSettings(currentUser.id, { allowMessagesFromStrangers: newValue });
   }, [currentUser, settings, updateSettings]);
 
   const handleChangeVisibility = useCallback(async (visibility: Visibility) => {
@@ -56,6 +63,13 @@ const PrivacySection: React.FC = () => {
         title="Thông báo đã xem"
         description="Cho phép người khác biết khi bạn đã xem tin nhắn"
         action={<Toggle enabled={settings.showReadReceipts} onToggle={handleToggleReadReceipts} />}
+      />
+
+      <SettingItem
+        icon={<MessageSquare size={18} />}
+        title="Nhận tin nhắn từ người lạ"
+        description="Cho phép người không phải bạn bè gửi tin nhắn cho bạn"
+        action={<Toggle enabled={settings.allowMessagesFromStrangers} onToggle={handleToggleAllowMessagesFromStrangers} />}
       />
 
       {/* Post visibility */}

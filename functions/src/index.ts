@@ -31,5 +31,6 @@ export { generateFriendSuggestions } from './friends/generateFriendSuggestions';
 export { onUserProfileUpdated } from './friends/onUserProfileUpdated';
 
 export { onMessageCreated } from './notifications/onMessageCreated';
+export { chatMessageGuard } from './chat/chatGuard';
 
 

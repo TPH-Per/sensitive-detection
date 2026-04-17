@@ -69,13 +69,14 @@ _Ghi chú: `id` là Document ID (UID Firebase Auth), không lưu thành field ri
 
 **1.2. Sub-collection `private/settings` (Bên trong `users/{uid}`)**
 
-| Field                   | Type        | Required/Optional | Description/Default                                        |
-| :---------------------- | :---------- | :---------------- | :--------------------------------------------------------- |
-| `showOnlineStatus`      | Boolean     | **Required**      | Trạng thái online                                          |
-| `showReadReceipts`      | Boolean     | **Required**      | Đã xem tin nhắn. Mặc định `true`                           |
-| `defaultPostVisibility` | String Enum | **Required**      | `"public"`, `"friends"`, `"private"`. Mặc định `"friends"` |
-| `createdAt`             | Timestamp   | **Required**      | Thời điểm tạo                                              |
-| `updatedAt`             | Timestamp   | **Required**      | Thời điểm cập nhật                                         |
+| Field                        | Type        | Required/Optional | Description/Default                                        |
+| :--------------------------- | :---------- | :---------------- | :--------------------------------------------------------- |
+| `showOnlineStatus`           | Boolean     | **Required**      | Trạng thái online                                          |
+| `showReadReceipts`           | Boolean     | **Required**      | Đã xem tin nhắn. Mặc định `true`                           |
+| `defaultPostVisibility`      | String Enum | **Required**      | `"public"`, `"friends"`, `"private"`. Mặc định `"friends"` |
+| `allowMessagesFromStrangers` | Boolean     | **Required**      | Nhận tin nhắn từ người lạ. Mặc định `true`                 |
+| `createdAt`                  | Timestamp   | **Required**      | Thời điểm tạo                                              |
+| `updatedAt`                  | Timestamp   | **Required**      | Thời điểm cập nhật                                         |
 
 **1.3. Sub-collection `friends` (Bên trong `users/{uid}`)**
 
@@ -87,15 +88,15 @@ _Ghi chú: `id` là Document ID (UID Firebase Auth), không lưu thành field ri
 
 **1.4. Sub-collection `blockedUsers` (Bên trong `users/{uid}`)**
 
-| Field              | Type      | Required/Optional | Description/Default                                             |
-| :----------------- | :-------- | :---------------- | :-------------------------------------------------------------- |
-| `blockedUid`          | String    | **Required**      | Document ID người bị chặn                                     |
-| `blockMessages`       | Boolean   | **Required**      | Chặn tin nhắn. Mặc định `false`                               |
-| `blockCalls`          | Boolean   | **Required**      | Chặn cuộc gọi. Mặc định `false`                               |
-| `blockViewMyActivity` | Boolean   | **Required**      | Chặn xem bài đăng của tôi. Mặc định `false`                   |
-| `hideTheirActivity`   | Boolean   | **Required**      | Ẩn hoạt động của người này. Mặc định `false`                  |
-| `createdAt`           | Timestamp | **Required**      | Thời điểm tạo                                                 |
-| `updatedAt`           | Timestamp | **Required**      | Thời điểm cập nhật                                            |
+| Field                 | Type      | Required/Optional | Description/Default                          |
+| :-------------------- | :-------- | :---------------- | :------------------------------------------- |
+| `blockedUid`          | String    | **Required**      | Document ID người bị chặn                    |
+| `blockMessages`       | Boolean   | **Required**      | Chặn tin nhắn. Mặc định `false`              |
+| `blockCalls`          | Boolean   | **Required**      | Chặn cuộc gọi. Mặc định `false`              |
+| `blockViewMyActivity` | Boolean   | **Required**      | Chặn xem bài đăng của tôi. Mặc định `false`  |
+| `hideTheirActivity`   | Boolean   | **Required**      | Ẩn hoạt động của người này. Mặc định `false` |
+| `createdAt`           | Timestamp | **Required**      | Thời điểm tạo                                |
+| `updatedAt`           | Timestamp | **Required**      | Thời điểm cập nhật                           |
 
 **1.5. Sub-collection `feeds` (Bên trong `users/{uid}` - Bảng tin Fan-out)**
 
