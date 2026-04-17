@@ -135,8 +135,8 @@ export const rtdbGroupService = {
 
             const conversation = convSnap.val() as RtdbConversation;
 
-            if (conversation.members[actorId] !== 'admin') {
-                throw new Error('Chỉ Quản trị viên mới có quyền thêm thành viên');
+            if (!conversation.members[actorId]) {
+                throw new Error('Bạn không phải là thành viên của nhóm này');
             }
 
             const currentMemberIds = Object.keys(conversation.members || {});
@@ -147,21 +147,30 @@ export const rtdbGroupService = {
 
             const updates: Record<string, any> = {};
             const now = Date.now();
+            const isAdminOrCreator = conversation.members[actorId] === 'admin' || conversation.creatorId === actorId;
+            const requiresApproval = conversation.joinApprovalMode && !isAdminOrCreator;
 
             memberIds.forEach(uid => {
                 if (!currentMemberIds.includes(uid)) {
-                    updates[`conversations/${convId}/members/${uid}`] = 'member';
-                    updates[`user_chats/${uid}/${convId}`] = {
-                        isPinned: false,
-                        isMuted: false,
-                        isArchived: false,
-                        unreadCount: 0,
-                        lastReadMsgId: null,
-                        lastMsgTimestamp: now,
-                        clearedAt: now,
-                        createdAt: now,
-                        updatedAt: now
-                    } as RtdbUserChat;
+                    if (requiresApproval) {
+                        updates[`conversations/${convId}/pendingMembers/${uid}`] = {
+                            addedBy: actorId,
+                            timestamp: now
+                        };
+                    } else {
+                        updates[`conversations/${convId}/members/${uid}`] = 'member';
+                        updates[`user_chats/${uid}/${convId}`] = {
+                            isPinned: false,
+                            isMuted: false,
+                            isArchived: false,
+                            unreadCount: 0,
+                            lastReadMsgId: null,
+                            lastMsgTimestamp: now,
+                            clearedAt: now,
+                            createdAt: now,
+                            updatedAt: now
+                        } as RtdbUserChat;
+                    }
                 }
             });
 
@@ -382,6 +391,139 @@ export const rtdbGroupService = {
             return mediaObject;
         } catch (error) {
             console.error('[rtdbGroupService] Lỗi uploadGroupAvatar:', error);
+            throw error;
+        }
+    },
+
+    /**
+     * Bật/tắt chế độ phê duyệt thành viên
+     */
+    toggleJoinApprovalMode: async (convId: string, enabled: boolean, actorId: string): Promise<void> => {
+        try {
+            const convRef = ref(rtdb, `conversations/${convId}`);
+            const convSnap = await get(convRef);
+            if (!convSnap.exists()) throw new Error('Nhóm không tồn tại');
+            const conversation = convSnap.val() as RtdbConversation;
+
+            if (conversation.members[actorId] !== 'admin' && conversation.creatorId !== actorId) {
+                throw new Error('Chỉ Quản trị viên mới có quyền đổi chế độ này');
+            }
+
+            const updates: Record<string, any> = {};
+            updates[`conversations/${convId}/joinApprovalMode`] = enabled;
+            
+            if (!enabled && conversation.pendingMembers) {
+                const now = Date.now();
+                Object.keys(conversation.pendingMembers).forEach(uid => {
+                    updates[`conversations/${convId}/members/${uid}`] = 'member';
+                    updates[`user_chats/${uid}/${convId}`] = {
+                        isPinned: false, isMuted: false, isArchived: false,
+                        unreadCount: 0, lastReadMsgId: null, lastMsgTimestamp: now,
+                        clearedAt: now, createdAt: now, updatedAt: now
+                    };
+                });
+                updates[`conversations/${convId}/pendingMembers`] = null;
+            }
+
+            updates[`conversations/${convId}/updatedAt`] = Date.now();
+            await update(ref(rtdb), updates);
+        } catch (error) {
+            console.error('[rtdbGroupService] Lỗi toggleJoinApprovalMode:', error);
+            throw error;
+        }
+    },
+
+    /**
+     * Duyệt thành viên chờ
+     */
+    approvePendingMember: async (convId: string, uid: string, actorId: string): Promise<void> => {
+        try {
+            const convRef = ref(rtdb, `conversations/${convId}`);
+            const convSnap = await get(convRef);
+            if (!convSnap.exists()) throw new Error('Nhóm không tồn tại');
+            const conversation = convSnap.val() as RtdbConversation;
+
+            if (conversation.members[actorId] !== 'admin' && conversation.creatorId !== actorId) {
+                throw new Error('Chỉ Quản trị viên mới có quyền duyệt thành viên');
+            }
+
+            if (!conversation.pendingMembers?.[uid]) return;
+
+            const currentMemberIds = Object.keys(conversation.members || {});
+            if (currentMemberIds.length >= GROUP_LIMITS.MAX_MEMBERS) {
+                throw new Error(`Nhóm đã đạt tối đa ${GROUP_LIMITS.MAX_MEMBERS} thành viên`);
+            }
+
+            const updates: Record<string, any> = {};
+            const now = Date.now();
+            
+            updates[`conversations/${convId}/members/${uid}`] = 'member';
+            updates[`conversations/${convId}/pendingMembers/${uid}`] = null;
+            updates[`user_chats/${uid}/${convId}`] = {
+                isPinned: false, isMuted: false, isArchived: false,
+                unreadCount: 0, lastReadMsgId: null, lastMsgTimestamp: now,
+                clearedAt: now, createdAt: now, updatedAt: now
+            };
+            updates[`conversations/${convId}/updatedAt`] = now;
+            
+            await update(ref(rtdb), updates);
+        } catch (error) {
+            console.error('[rtdbGroupService] Lỗi approvePendingMember:', error);
+            throw error;
+        }
+    },
+
+    /**
+     * Từ chối thành viên chờ
+     */
+    rejectPendingMember: async (convId: string, uid: string, actorId: string): Promise<void> => {
+        try {
+            const convRef = ref(rtdb, `conversations/${convId}`);
+            const convSnap = await get(convRef);
+            if (!convSnap.exists()) throw new Error('Nhóm không tồn tại');
+            const conversation = convSnap.val() as RtdbConversation;
+
+            if (conversation.members[actorId] !== 'admin' && conversation.creatorId !== actorId) {
+                throw new Error('Chỉ Quản trị viên mới có quyền từ chối thành viên');
+            }
+
+            const updates: Record<string, any> = {};
+            updates[`conversations/${convId}/pendingMembers/${uid}`] = null;
+            updates[`conversations/${convId}/updatedAt`] = Date.now();
+            
+            await update(ref(rtdb), updates);
+        } catch (error) {
+            console.error('[rtdbGroupService] Lỗi rejectPendingMember:', error);
+            throw error;
+        }
+    },
+
+    /**
+     * Chuyển quyền Trưởng nhóm
+     */
+    transferCreator: async (convId: string, currentCreatorId: string, newCreatorId: string): Promise<void> => {
+        try {
+            const convRef = ref(rtdb, `conversations/${convId}`);
+            const convSnap = await get(convRef);
+            if (!convSnap.exists()) throw new Error('Nhóm không tồn tại');
+            const conversation = convSnap.val() as RtdbConversation;
+
+            if (conversation.creatorId !== currentCreatorId) {
+                throw new Error('Chỉ Trưởng nhóm hiện tại mới có quyền chuyển nhượng');
+            }
+
+            if (!conversation.members[newCreatorId]) {
+                throw new Error('Người nhận phải là thành viên của nhóm');
+            }
+
+            const updates: Record<string, any> = {};
+            updates[`conversations/${convId}/creatorId`] = newCreatorId;
+            updates[`conversations/${convId}/members/${newCreatorId}`] = 'admin'; // Đảm bảo Trưởng nhóm luôn là admin
+            updates[`conversations/${convId}/updatedAt`] = Date.now();
+
+            await update(ref(rtdb), updates);
+        } catch (error) {
+            console.error('[rtdbGroupService] Lỗi transferCreator:', error);
             throw error;
         }
     }

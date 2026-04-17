@@ -31,6 +31,10 @@ interface ChatDetailsPanelProps {
   onRemoveMember?: (userId: string) => void;
   onPromoteToAdmin?: (userId: string) => void;
   onDemoteFromAdmin?: (userId: string) => void;
+  onTransferCreator?: (userId: string) => void;
+  onApprovePendingMember?: (userId: string) => void;
+  onRejectPendingMember?: (userId: string) => void;
+  onToggleJoinApprovalMode?: (enabled: boolean) => void;
 }
 
 type TabId = 'info' | 'members' | 'media' | 'search';
@@ -40,7 +44,8 @@ export const ChatDetailsPanel: React.FC<ChatDetailsPanelProps> = ({
   isOpen, isBlocked, onClose,
   onToggleMute, onTogglePin, onToggleBlock, onToggleArchive, onToggleMarkUnread,
   onDelete, onMemberClick, onMessageClick, onLeaveGroup, onEditGroup,
-  onAddMember, onRemoveMember, onPromoteToAdmin, onDemoteFromAdmin,
+  onAddMember, onRemoveMember, onPromoteToAdmin, onDemoteFromAdmin, onTransferCreator,
+  onApprovePendingMember, onRejectPendingMember, onToggleJoinApprovalMode,
 }) => {
   const [activeTab, setActiveTab] = useState<TabId>('info');
 
@@ -87,6 +92,31 @@ export const ChatDetailsPanel: React.FC<ChatDetailsPanelProps> = ({
               onEditGroup={onEditGroup}
               onViewProfile={() => partner && onMemberClick?.(partner.id)}
             />
+
+            {conversation.data.isGroup && (conversation.data.members[currentUserId] === 'admin' || conversation.data.creatorId === currentUserId) && (
+              <div className="py-3 border-t border-border-light">
+                <p className="px-4 py-2 text-xs font-semibold text-text-tertiary uppercase tracking-wide">
+                  Quản lý nhóm
+                </p>
+                <div className="px-4 py-2">
+                  <div className="flex items-center justify-between p-3 bg-bg-secondary rounded-xl border border-border-light">
+                    <div>
+                      <p className="text-sm font-semibold text-text-primary">Phê duyệt thành viên</p>
+                      <p className="text-[10px] text-text-tertiary mt-0.5">Yêu cầu quản trị viên duyệt người mới</p>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer ml-3 flex-shrink-0">
+                      <input 
+                        type="checkbox" 
+                        className="sr-only peer" 
+                        checked={!!conversation.data.joinApprovalMode}
+                        onChange={(e) => onToggleJoinApprovalMode?.(e.target.checked)}
+                      />
+                      <div className="relative w-10 h-5 bg-border-light peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-5 peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
+                    </label>
+                  </div>
+                </div>
+              </div>
+            )}
           </>
         );
       case 'members':
@@ -100,6 +130,10 @@ export const ChatDetailsPanel: React.FC<ChatDetailsPanelProps> = ({
             onRemoveMember={onRemoveMember}
             onPromoteToAdmin={onPromoteToAdmin}
             onDemoteFromAdmin={onDemoteFromAdmin}
+            onTransferCreator={onTransferCreator}
+            onApprovePendingMember={onApprovePendingMember}
+            onRejectPendingMember={onRejectPendingMember}
+            usersMap={usersMap}
           />
         );
       case 'media':

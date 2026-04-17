@@ -86,6 +86,8 @@ export const EditGroupModal: React.FC<EditGroupModalProps> = ({
 
   const hasChanges = groupName.trim() !== conversation.data.name || previewUrl !== null;
 
+  const isAdminOrCreator = conversation.data.members[currentUserId] === 'admin' || conversation.data.creatorId === currentUserId;
+
   return (
     <>
       <Modal
@@ -137,9 +139,7 @@ export const EditGroupModal: React.FC<EditGroupModalProps> = ({
             className="bg-bg-secondary"
           />
 
-          <p className="text-xs text-text-tertiary text-center">
-            {participants.length} thành viên
-          </p>
+
         </div>
       </Modal>
 

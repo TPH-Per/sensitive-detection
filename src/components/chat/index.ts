@@ -19,6 +19,7 @@ export { CreateGroupModal } from './modals/CreateGroupModal';
 export { AddMemberModal } from './modals/AddMemberModal';
 export { EditGroupModal } from './modals/EditGroupModal';
 export { TransferAdminModal } from './modals/TransferAdminModal';
+export { TransferCreatorModal } from './modals/TransferCreatorModal';
 export { ForwardModal } from './modals/ForwardModal';
 export { SharePostModal } from './modals/SharePostModal';
 

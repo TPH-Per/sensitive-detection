@@ -231,11 +231,21 @@ export const useChat = () => {
   useEffect(() => {
     if (!selectedConversationId || !currentUser) return;
     const msgs = messages[selectedConversationId] || [];
-    if (msgs.length === 0) return;
-    const userIds = [...new Set(msgs.map(m => m.data.senderId))];
-    participantIds.forEach(id => userIds.push(id));
-    fetchUsers(userIds);
-  }, [messages, selectedConversationId, currentUser, participantIds, fetchUsers]);
+    const pendingMembers = selectedConversation?.data?.pendingMembers || {};
+    const pendingUids = Object.keys(pendingMembers);
+    const addedByUids = Object.values(pendingMembers).map(v => v.addedBy);
+
+    const userIds = [...new Set([
+      ...msgs.map(m => m.data.senderId),
+      ...participantIds,
+      ...pendingUids,
+      ...addedByUids,
+    ])].filter(Boolean);
+
+    if (userIds.length > 0) {
+      fetchUsers(userIds);
+    }
+  }, [messages, selectedConversationId, currentUser, participantIds, fetchUsers, selectedConversation?.data?.pendingMembers]);
 
   const handleSelectConversation = useCallback((id: string | null) => selectConversation(id), [selectConversation]);
 

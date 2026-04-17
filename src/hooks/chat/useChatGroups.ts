@@ -29,6 +29,10 @@ export const useChatGroups = ({
     updateMemberRole,
     disbandGroup,
     sendGroupSystemMessage,
+    toggleJoinApprovalMode,
+    approvePendingMember,
+    rejectPendingMember,
+    transferCreator,
   } = useRtdbChatStore();
 
   const getName = (uid: string) => usersMap[uid]?.fullName || 'Người dùng';
@@ -52,12 +56,21 @@ export const useChatGroups = ({
     if (!selectedConversationId) return;
     try {
       await addMember(selectedConversationId, userIds);
+      
+      const conv = conversations.find(c => c.id === selectedConversationId);
+      const isAdminOrCreator = conv?.data?.members[currentUserId!] === 'admin' || conv?.data?.creatorId === currentUserId;
+      const isApprovalMode = conv?.data?.joinApprovalMode;
+
       if (currentUserId) {
         for (const id of userIds) {
+          const content = (!isApprovalMode || isAdminOrCreator)
+            ? systemMessages.ADD_MEMBERS(getActorName(), getName(id))
+            : systemMessages.INVITE_PENDING(getActorName(), getName(id));
+
           await sendGroupSystemMessage(
             selectedConversationId,
             currentUserId,
-            systemMessages.ADD_MEMBERS(getActorName(), getName(id))
+            content
           );
         }
       }
@@ -163,6 +176,47 @@ export const useChatGroups = ({
     await disbandGroup(id);
   }, [selectedConversationId, disbandGroup]);
 
+  const handleToggleJoinApprovalMode = useCallback(async (enabled: boolean) => {
+    if (!selectedConversationId) return;
+    await toggleJoinApprovalMode(selectedConversationId, enabled);
+    if (currentUserId) {
+        await sendGroupSystemMessage(
+            selectedConversationId,
+            currentUserId,
+            systemMessages.TOGGLE_APPROVAL_MODE(getActorName(), enabled)
+        );
+    }
+  }, [selectedConversationId, toggleJoinApprovalMode, sendGroupSystemMessage, currentUserId]);
+
+  const handleApprovePendingMember = useCallback(async (userId: string) => {
+    if (!selectedConversationId) return;
+    await approvePendingMember(selectedConversationId, userId);
+    if (currentUserId) {
+        await sendGroupSystemMessage(
+            selectedConversationId,
+            currentUserId,
+            systemMessages.APPROVE_MEMBER(getActorName(), getName(userId))
+        );
+    }
+  }, [selectedConversationId, approvePendingMember, sendGroupSystemMessage, currentUserId, getName]);
+
+  const handleRejectPendingMember = useCallback(async (userId: string) => {
+    if (!selectedConversationId) return;
+    await rejectPendingMember(selectedConversationId, userId);
+  }, [selectedConversationId, rejectPendingMember]);
+
+  const handleTransferCreator = useCallback(async (newCreatorId: string) => {
+    if (!selectedConversationId || !currentUserId) return;
+    await transferCreator(selectedConversationId, currentUserId, newCreatorId);
+    if (currentUserId) {
+        await sendGroupSystemMessage(
+            selectedConversationId,
+            currentUserId,
+            systemMessages.TRANSFER_CREATOR(getActorName(), getName(newCreatorId))
+        );
+    }
+  }, [selectedConversationId, currentUserId, transferCreator, sendGroupSystemMessage, getName]);
+
   return {
     handleCreateGroup,
     handleAddMembers,
@@ -173,5 +227,9 @@ export const useChatGroups = ({
     handleDemoteFromAdmin,
     handleEditGroup,
     handleDisbandGroup,
+    handleToggleJoinApprovalMode,
+    handleApprovePendingMember,
+    handleRejectPendingMember,
+    handleTransferCreator,
   };
 };

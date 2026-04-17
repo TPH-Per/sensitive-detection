@@ -24,6 +24,12 @@
         },
         "isDisbanded": {
           ".write": "auth != null && data.parent().child('creatorId').val() === auth.uid"
+        },
+        "joinApprovalMode": {
+          ".write": "auth != null && data.parent().child('members').child(auth.uid).val() === 'admin'"
+        },
+        "pendingMembers": {
+          ".write": "auth != null && data.parent().child('members').child(auth.uid).exists()"
         }
       }
     },

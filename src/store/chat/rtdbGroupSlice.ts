@@ -14,6 +14,10 @@ export interface RtdbGroupSlice {
     updateMemberRole: (conversationId: string, userId: string, role: 'admin' | 'member') => Promise<void>;
     disbandGroup: (conversationId: string) => Promise<void>;
     sendGroupSystemMessage: (conversationId: string, actorId: string, content: string) => Promise<void>;
+    toggleJoinApprovalMode: (conversationId: string, enabled: boolean) => Promise<void>;
+    approvePendingMember: (conversationId: string, userId: string) => Promise<void>;
+    rejectPendingMember: (conversationId: string, userId: string) => Promise<void>;
+    transferCreator: (conversationId: string, currentCreatorId: string, newCreatorId: string) => Promise<void>;
 }
 
 type RtdbGroupSliceWithConversation = RtdbGroupSlice & RtdbConversationSlice & RtdbMessageSlice;
@@ -110,6 +114,48 @@ export const createRtdbGroupSlice: StateCreator<RtdbGroupSliceWithConversation, 
             await rtdbGroupService.sendGroupSystemMessage(conversationId, actorId, content);
         } catch (error) {
             console.error('[rtdbGroupSlice] Lỗi sendGroupSystemMessage:', error);
+            throw error;
+        }
+    },
+
+    toggleJoinApprovalMode: async (conversationId: string, enabled: boolean) => {
+        try {
+            const uid = useAuthStore.getState().user?.id;
+            if (!uid) throw new Error('Chưa đăng nhập');
+            await rtdbGroupService.toggleJoinApprovalMode(conversationId, enabled, uid);
+        } catch (error) {
+            console.error('[rtdbGroupSlice] Lỗi toggleJoinApprovalMode:', error);
+            throw error;
+        }
+    },
+
+    approvePendingMember: async (conversationId: string, userId: string) => {
+        try {
+            const uid = useAuthStore.getState().user?.id;
+            if (!uid) throw new Error('Chưa đăng nhập');
+            await rtdbGroupService.approvePendingMember(conversationId, userId, uid);
+        } catch (error) {
+            console.error('[rtdbGroupSlice] Lỗi approvePendingMember:', error);
+            throw error;
+        }
+    },
+
+    rejectPendingMember: async (conversationId: string, userId: string) => {
+        try {
+            const uid = useAuthStore.getState().user?.id;
+            if (!uid) throw new Error('Chưa đăng nhập');
+            await rtdbGroupService.rejectPendingMember(conversationId, userId, uid);
+        } catch (error) {
+            console.error('[rtdbGroupSlice] Lỗi rejectPendingMember:', error);
+            throw error;
+        }
+    },
+
+    transferCreator: async (conversationId: string, currentCreatorId: string, newCreatorId: string) => {
+        try {
+            await rtdbGroupService.transferCreator(conversationId, currentCreatorId, newCreatorId);
+        } catch (error) {
+            console.error('[rtdbGroupSlice] Lỗi transferCreator:', error);
             throw error;
         }
     }

@@ -237,19 +237,21 @@ _Mô tả: Lưu trạng thái Online/Offline và lần truy cập cuối cùng c
 
 _Mô tả: Lưu cấu trúc Core của Nhóm chat và Chat 1-1, cấu hình Group, snippet tin nhắn mới nhất._
 
-| Field         | Type        | Required/Optional | Description/Default                                                              |
-| :------------ | :---------- | :---------------- | :------------------------------------------------------------------------------- |
-| `isGroup`     | Boolean     | **Required**      | Có phải nhóm hay không                                                           |
-| `creatorId`   | String      | **Required**      | ID người tạo                                                                     |
-| `createdAt`   | Number      | **Required**      | Timestamp tạo                                                                    |
-| `updatedAt`   | Number      | **Required**      | Timestamp cập nhật                                                               |
-| `members`     | Map         | **Required**      | Danh sách thành viên (UID: Vai trò)                                              |
-| `name`        | String      | _Optional_        | Tên nhóm. `null` với chat 1-1                                                    |
-| `avatar`      | MediaObject | _Optional_        | Ảnh đại diện nhóm. `null` với chat 1-1 hoặc nhóm chưa đặt ảnh                    |
-| `isDisbanded` | Boolean     | _Optional_        | Đã giải tán hay chưa. Mặc định `false`. _(Chỉ Người tạo nhóm mới có quyền xóa)_  |
-| `typing`      | Map         | _Optional_        | Trạng thái đang gõ (UID: Timestamp)                                              |
-| `lastMessage` | Object      | _Optional_        | Snippet tin nhắn mới nhất                                                        |
-| `activeCall`  | Object      | _Optional_        | `{ callerId, callType, messageId, startedAt, participants: { uid: timestamp } }` |
+| Field              | Type        | Required/Optional | Description/Default                                                              |
+| :----------------- | :---------- | :---------------- | :------------------------------------------------------------------------------- |
+| `isGroup`          | Boolean     | **Required**      | Có phải nhóm hay không                                                           |
+| `creatorId`        | String      | **Required**      | ID người tạo                                                                     |
+| `createdAt`        | Number      | **Required**      | Timestamp tạo                                                                    |
+| `updatedAt`        | Number      | **Required**      | Timestamp cập nhật                                                               |
+| `members`          | Map         | **Required**      | Danh sách thành viên (UID: Vai trò)                                              |
+| `name`             | String      | _Optional_        | Tên nhóm. `null` với chat 1-1                                                    |
+| `avatar`           | MediaObject | _Optional_        | Ảnh đại diện nhóm. `null` với chat 1-1 hoặc nhóm chưa đặt ảnh                    |
+| `isDisbanded`      | Boolean     | _Optional_        | Đã giải tán hay chưa. Mặc định `false`. _(Chỉ Người tạo nhóm mới có quyền xóa)_  |
+| `typing`           | Map         | _Optional_        | Trạng thái đang gõ (UID: Timestamp)                                              |
+| `lastMessage`      | Object      | _Optional_        | Snippet tin nhắn mới nhất                                                        |
+| `activeCall`       | Object      | _Optional_        | `{ callerId, callType, messageId, startedAt, participants: { uid: timestamp } }` |
+| `joinApprovalMode` | Boolean     | _Optional_        | Chế độ phê duyệt thành viên mới (Chỉ Admin/Creator quản lý).                     |
+| `pendingMembers`   | Map         | _Optional_        | Danh sách thành viên chờ duyệt `{ uid: { addedBy, timestamp } }`.                |
 
 ### 3. Node `messages`
 

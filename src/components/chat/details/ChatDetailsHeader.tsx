@@ -17,12 +17,12 @@ export const ChatDetailsHeader: React.FC<ChatDetailsHeaderProps> = ({
   const avatarSrc = isGroup ? conversation.data.avatar?.url : partner?.avatar?.url;
 
   return (
-    <div className="flex flex-col items-center py-6 px-4 border-b border-border-light">
+    <div className="flex flex-col items-center py-4 px-4 border-b border-border-light">
       {isGroup ? (
         <Avatar
           src={avatarSrc}
           name={displayName}
-          size="xl"
+          size="lg"
           isGroup
           members={participants}
         />
@@ -31,14 +31,14 @@ export const ChatDetailsHeader: React.FC<ChatDetailsHeaderProps> = ({
           userId={partner?.id ?? ''}
           src={avatarSrc}
           name={displayName}
-          size="xl"
+          size="lg"
           initialStatus={partner?.status}
           showStatus={false}
         />
       )}
 
-      <div className="mt-4 flex items-center gap-2 justify-center">
-        <h2 className="text-base font-semibold text-text-primary text-center">
+      <div className="mt-2 flex items-center gap-2 justify-center">
+        <h2 className="text-sm font-semibold text-text-primary text-center">
           {displayName}
         </h2>
         {!isGroup && partner?.status === UserStatus.BANNED && (
@@ -50,12 +50,12 @@ export const ChatDetailsHeader: React.FC<ChatDetailsHeaderProps> = ({
         <UserStatusText
           userId={partner.id}
           initialStatus={partner.status}
-          className="text-xs mt-1"
+          className="text-xs mt-0.5"
         />
       )}
 
       {isGroup && (
-        <p className="text-xs text-text-secondary mt-1">
+        <p className="text-[11px] text-text-secondary mt-0.5">
           {participants.length} thành viên
         </p>
       )}

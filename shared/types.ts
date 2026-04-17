@@ -241,6 +241,8 @@ export interface RtdbConversation {
     createdAt: number;
     updatedAt: number;
     isDisbanded?: boolean;
+    joinApprovalMode?: boolean;
+    pendingMembers?: Record<string, { addedBy: string; timestamp: number }>;
     activeCall?: {
         callerId: string;
         callType: 'voice' | 'video';

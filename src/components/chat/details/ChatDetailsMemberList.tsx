@@ -6,9 +6,10 @@ import {
   ConfirmDialog, IconButton,
 } from '../../ui';
 import {
-  Crown, Shield, UserPlus, MoreVertical,
-  UserMinus, ShieldPlus, ShieldMinus, Lock,
+  UserMinus, ShieldPlus, ShieldMinus, Lock, Crown,
+  UserPlus, Shield, MoreVertical, Clock,
 } from 'lucide-react';
+import { PendingMembersModal } from '../modals/PendingMembersModal';
 
 interface ChatDetailsMemberListProps {
   conversation: { id: string; data: RtdbConversation; userChat: RtdbUserChat };
@@ -19,16 +20,23 @@ interface ChatDetailsMemberListProps {
   onRemoveMember?: (userId: string) => void;
   onPromoteToAdmin?: (userId: string) => void;
   onDemoteFromAdmin?: (userId: string) => void;
+  onTransferCreator?: (userId: string) => void;
+  onApprovePendingMember?: (userId: string) => void;
+  onRejectPendingMember?: (userId: string) => void;
+  usersMap: Record<string, User>;
 }
 
 export const ChatDetailsMemberList: React.FC<ChatDetailsMemberListProps> = ({
   conversation, currentUserId, participants,
   onMemberClick, onAddMember, onRemoveMember,
-  onPromoteToAdmin, onDemoteFromAdmin,
+  onPromoteToAdmin, onDemoteFromAdmin, onTransferCreator,
+  onApprovePendingMember, onRejectPendingMember,
+  usersMap,
 }) => {
   const navigate = useNavigate();
   const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
   const [confirmRemove, setConfirmRemove] = useState<string | null>(null);
+  const [isPendingModalOpen, setIsPendingModalOpen] = useState(false);
 
   if (!conversation.data.isGroup) return null;
 
@@ -58,7 +66,7 @@ export const ChatDetailsMemberList: React.FC<ChatDetailsMemberListProps> = ({
         <p className="text-xs font-semibold text-text-tertiary uppercase tracking-wide">
           Thành viên ({participants.length})
         </p>
-        {(isCurrentUserAdmin || isCurrentUserCreator) && onAddMember && (
+        {onAddMember && (
           <button
             onClick={onAddMember}
             className="flex items-center gap-1.5 text-xs font-semibold text-primary hover:underline transition-colors duration-200"
@@ -68,6 +76,40 @@ export const ChatDetailsMemberList: React.FC<ChatDetailsMemberListProps> = ({
           </button>
         )}
       </div>
+
+      {(isCurrentUserAdmin || isCurrentUserCreator) && conversation.data.pendingMembers && Object.keys(conversation.data.pendingMembers).length > 0 && (
+        <div className="px-4 mb-4">
+          <button
+            onClick={() => setIsPendingModalOpen(true)}
+            className="w-full flex items-center justify-between p-3 bg-bg-secondary border border-border-light rounded-xl hover:bg-bg-hover hover:border-border-medium transition-all duration-200 group"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary/20 transition-colors duration-200">
+                <Clock size={18} />
+              </div>
+              <div className="text-left">
+                <p className="text-xs font-semibold text-text-primary">Yêu cầu tham gia</p>
+                <p className="text-[11px] text-text-tertiary">
+                  <span className="text-primary font-medium">{Object.keys(conversation.data.pendingMembers).length} người</span> đang chờ duyệt
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-1 text-[11px] font-medium text-primary">
+              Xem
+              <MoreVertical size={12} className="rotate-90" />
+            </div>
+          </button>
+
+          <PendingMembersModal
+            isOpen={isPendingModalOpen}
+            onClose={() => setIsPendingModalOpen(false)}
+            pendingMembers={conversation.data.pendingMembers}
+            usersMap={usersMap}
+            onApprove={(uid) => onApprovePendingMember?.(uid)}
+            onReject={(uid) => onRejectPendingMember?.(uid)}
+          />
+        </div>
+      )}
 
       <div>
         {participants.map((member) => {
@@ -160,6 +202,14 @@ export const ChatDetailsMemberList: React.FC<ChatDetailsMemberListProps> = ({
                       label="Xóa khỏi nhóm"
                       variant="danger"
                       onClick={() => { setConfirmRemove(member.id); setMenuOpenId(null); }}
+                    />
+                  )}
+                  {!isBanned && isCurrentUserCreator && onTransferCreator && (
+                    <DropdownItem
+                      icon={<Crown size={14} />}
+                      label="Chuyển quyền Trưởng nhóm"
+                      variant="danger"
+                      onClick={() => { onTransferCreator(member.id); setMenuOpenId(null); }}
                     />
                   )}
                 </Dropdown>
