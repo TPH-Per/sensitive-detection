@@ -42,14 +42,14 @@ export const commentService = {
   },
 
   /** Lấy danh sách bình luận gốc của bài viết */
-  getRootComments: async (postId: string, blockedUserIds: string[] = [], limitCount: number = PAGINATION.COMMENTS, lastDoc?: DocumentSnapshot) => {
+  getRootComments: async (postId: string, blockedUserIds: string[] = [], limitCount: number = PAGINATION.COMMENTS, lastDoc?: DocumentSnapshot, sortBy: 'newest' | 'oldest' = 'newest') => {
     try {
       let q = query(
         collection(db, 'comments'),
         where('postId', '==', postId),
         where('parentId', '==', null),
         where('status', '==', CommentStatus.ACTIVE),
-        orderBy('createdAt', 'desc'),
+        orderBy('createdAt', sortBy === 'oldest' ? 'asc' : 'desc'),
         limit(limitCount + 1)
       );
 
@@ -261,7 +261,8 @@ export const commentService = {
     postId: string,
     blockedUserIds: string[] = [],
     callback: (action: 'initial' | 'add' | 'update' | 'remove', data: Comment[] | { comments: Comment[]; lastDoc: DocumentSnapshot | null; hasMore: boolean }) => void,
-    limitCount: number = PAGINATION.COMMENTS
+    limitCount: number = PAGINATION.COMMENTS,
+    sortBy: 'newest' | 'oldest' = 'newest'
   ) => {
 
     const rootQuery = query(
@@ -269,7 +270,7 @@ export const commentService = {
       where('postId', '==', postId),
       where('parentId', '==', null),
       where('status', '==', CommentStatus.ACTIVE),
-      orderBy('createdAt', 'desc'),
+      orderBy('createdAt', sortBy === 'oldest' ? 'asc' : 'desc'),
       limit(limitCount + 1)
     );
 

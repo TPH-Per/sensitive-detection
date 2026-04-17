@@ -23,6 +23,7 @@ export const createFetchSlice: StateCreator<CommentStoreState, [], [], any> = (s
   hasMoreReply: {},
   loadingPosts: {},
   uploadingStates: {},
+  sortOrders: {},
 
   isLoadingPost: (postId: string) => get().loadingPosts[postId] || false,
 
@@ -41,8 +42,9 @@ export const createFetchSlice: StateCreator<CommentStoreState, [], [], any> = (s
     if (get().loadingPosts[postId]) return;
     set(state => ({ loadingPosts: { ...state.loadingPosts, [postId]: true } }));
     try {
+      const sortOrder = get().sortOrders[postId] || 'newest';
       const lastDoc = loadMore ? get().lastRootDoc[postId] : undefined;
-      const result = await commentService.getRootComments(postId, blockedUserIds, PAGINATION.COMMENTS, lastDoc || undefined);
+      const result = await commentService.getRootComments(postId, blockedUserIds, PAGINATION.COMMENTS, lastDoc || undefined, sortOrder);
       if (loadMore) get().addRootComments(postId, result.comments, result.lastDoc, result.hasMore);
       else get().setRootComments(postId, result.comments, result.lastDoc, result.hasMore);
     } catch (err) { console.error('Lỗi tải bình luận gốc:', err); }
@@ -62,6 +64,7 @@ export const createFetchSlice: StateCreator<CommentStoreState, [], [], any> = (s
   },
 
   subscribeToComments: (postId: string, blockedUserIds: string[] = []) => {
+    const sortOrder = get().sortOrders[postId] || 'newest';
     return commentService.subscribeToComments(postId, blockedUserIds, (action, data) => {
       set(state => {
         if (action === 'initial') {
@@ -74,7 +77,8 @@ export const createFetchSlice: StateCreator<CommentStoreState, [], [], any> = (s
         }
         const comments = data as Comment[];
         if (action === 'add') {
-          const merged = mergeOptimisticComments(state.rootComments[postId] || [], comments, 'desc');
+          const sortOrder = get().sortOrders[postId] || 'newest';
+          const merged = mergeOptimisticComments(state.rootComments[postId] || [], comments, sortOrder === 'newest' ? 'desc' : 'asc');
           return { rootComments: { ...state.rootComments, [postId]: merged } };
         }
         if (action === 'update') {
@@ -151,6 +155,16 @@ export const createFetchSlice: StateCreator<CommentStoreState, [], [], any> = (s
     lastReplyDoc: { ...s.lastReplyDoc, [postId]: { ...(s.lastReplyDoc[postId] || {}), [parentId]: lastDoc } },
     hasMoreReply: { ...s.hasMoreReply, [postId]: { ...(s.hasMoreReply[postId] || {}), [parentId]: hasMore } }
   })),
+  
+  setSortOrder: (postId: string, order: 'newest' | 'oldest') => {
+    set(state => ({
+      sortOrders: { ...state.sortOrders, [postId]: order },
+      rootComments: { ...state.rootComments, [postId]: [] },
+      lastRootDoc: { ...state.lastRootDoc, [postId]: null },
+      hasMoreRoot: { ...state.hasMoreRoot, [postId]: false }
+    }));
+    get().fetchRootComments(postId);
+  },
 
   clearComments: (postId: string) => set(s => {
     const { [postId]: _r, ...rootComments } = s.rootComments;

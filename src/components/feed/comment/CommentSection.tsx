@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
-import { X, MessageCircle } from 'lucide-react';
-import { Button, ConfirmDialog, UploadProgress } from '../../ui';
+import { X, MessageCircle, ChevronDown, SortAsc, SortDesc } from 'lucide-react';
+import { Button, ConfirmDialog, UploadProgress, Dropdown, DropdownItem } from '../../ui';
 import { CONFIRM_MESSAGES } from '../../../constants';
 import { toast } from '../../../store/toastStore';
 import { Comment, User, ReportType, MediaObject } from '../../../../shared/types';
@@ -37,7 +37,7 @@ export const CommentSection: React.FC<CommentSectionProps> = ({
     rootComments, replies, hasMoreRoot, hasMoreReply, isLoadingPost,
     fetchRootComments, fetchReplies, subscribeToComments, subscribeToReplies,
     createComment, updateComment, deleteComment,
-    getFilteredRootComments, getFilteredReplies,
+    getFilteredRootComments, getFilteredReplies, sortOrders, setSortOrder,
   } = useCommentStore();
 
   const { users, fetchUsers } = useUserCache();
@@ -59,6 +59,7 @@ export const CommentSection: React.FC<CommentSectionProps> = ({
 
   const currentRootComments = rootComments[postId] || [];
   const currentHasMoreRoot = hasMoreRoot[postId] ?? false;
+  const currentSortOrder = sortOrders[postId] || 'newest';
   const isLoading = isLoadingPost(postId);
 
   const { visibleComments: filteredRootComments, hiddenCount: rootHiddenCount } = useMemo(() =>
@@ -85,7 +86,7 @@ export const CommentSection: React.FC<CommentSectionProps> = ({
   useEffect(() => {
     const unsubscribe = subscribeToComments(postId, blockedUserIds);
     return () => { if (typeof unsubscribe === 'function') unsubscribe(); };
-  }, [postId, blockedUserIds, subscribeToComments]);
+  }, [postId, blockedUserIds, subscribeToComments, currentSortOrder]);
 
   useEffect(() => {
     if (currentRootComments.length === 0) return;
@@ -174,9 +175,41 @@ export const CommentSection: React.FC<CommentSectionProps> = ({
 
       {/* Scrollable comment list */}
       <div className="flex-1 overflow-y-auto scroll-hide">
-        {header && <div className="bg-bg-primary">{header}</div>}
-
         <div className="pb-4">
+          {header && <div className="bg-bg-primary">{header}</div>}
+          
+          {/* Comment Sort Filter */}
+          {filteredRootComments.length > 0 && (
+            <div className="px-3 py-1.5 flex items-center">
+              <Dropdown
+                trigger={
+                  <button className="flex items-center gap-1 px-2 py-1 rounded-md hover:bg-bg-secondary text-[12px] font-bold text-text-secondary transition-colors duration-200">
+                    {currentSortOrder === 'newest' ? 'Mới nhất' : 'Cũ nhất'}
+                    <ChevronDown size={14} className="text-text-tertiary" />
+                  </button>
+                }
+                align="left"
+                className="inline-block"
+              >
+                <div className="py-1 min-w-[140px]">
+                  <DropdownItem
+                    label="Mới nhất"
+                    onClick={() => setSortOrder(postId, 'newest')}
+                    icon={<SortDesc size={14} className={currentSortOrder === 'newest' ? 'text-primary' : ''} />}
+                    className={currentSortOrder === 'newest' ? 'bg-primary/5 text-primary' : ''}
+                  />
+                  <DropdownItem
+                    label="Cũ nhất"
+                    onClick={() => setSortOrder(postId, 'oldest')}
+                    icon={<SortAsc size={14} className={currentSortOrder === 'oldest' ? 'text-primary' : ''} />}
+                    className={currentSortOrder === 'oldest' ? 'bg-primary/5 text-primary' : ''}
+                  />
+                </div>
+              </Dropdown>
+            </div>
+          )}
+
+          <div className="pt-0">
           {isLoading && filteredRootComments.length === 0 ? (
             <div className="px-4 py-4">
               <CommentSkeleton />
@@ -254,12 +287,13 @@ export const CommentSection: React.FC<CommentSectionProps> = ({
                     isLoading={isLoading}
                     className="text-primary w-full justify-center text-xs font-semibold hover:bg-primary/5"
                   >
-                    Xem thêm bình luận cũ...
+                    {currentSortOrder === 'newest' ? 'Xem thêm bình luận cũ...' : 'Xem thêm bình luận mới hơn...'}
                   </Button>
                 </div>
               )}
             </div>
           )}
+          </div>
         </div>
       </div>
 

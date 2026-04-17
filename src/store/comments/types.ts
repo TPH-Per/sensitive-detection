@@ -10,6 +10,7 @@ export interface CommentState {
   hasMoreReply: Record<string, Record<string, boolean>>;
   loadingPosts: Record<string, boolean>;
   uploadingStates: Record<string, { progress: number; error?: string }>;
+  sortOrders: Record<string, 'newest' | 'oldest'>;
 }
 
 export interface CommentActions {
@@ -25,6 +26,7 @@ export interface CommentActions {
   addRootComments: (postId: string, comments: Comment[], lastDoc: DocumentSnapshot | null, hasMore: boolean) => void;
   setReplies: (postId: string, parentId: string, replies: Comment[], lastDoc: DocumentSnapshot | null, hasMore: boolean) => void;
   addReplies: (postId: string, parentId: string, replies: Comment[], lastDoc: DocumentSnapshot | null, hasMore: boolean) => void;
+  setSortOrder: (postId: string, order: 'newest' | 'oldest') => void;
   clearComments: (postId: string) => void;
   updateCommentInStore: (postId: string, commentId: string, content: string, parentId?: string | null, replyToUserId?: string, replyToId?: string, image?: any) => void;
   isLoadingPost: (postId: string) => boolean;
