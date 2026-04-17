@@ -2,12 +2,10 @@ import React, { useCallback } from 'react';
 import { UserPlus, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { UserAvatar, Skeleton } from '../ui';
-import { User } from '../../../shared/types';
-import { useAuthStore } from '../../store/authStore';
-import { getHybridReason } from '../../utils/userUtils';
+import { SuggestionData } from '../../services/friendService';
 
 interface SuggestionItemProps {
-    user: User;
+    data: SuggestionData;
     onAddFriend: (userId: string) => void;
     onDismiss: (userId: string) => void;
     isSending?: boolean;
@@ -16,7 +14,7 @@ interface SuggestionItemProps {
 }
 
 const SuggestionItemInner: React.FC<SuggestionItemProps> = ({
-    user,
+    data,
     onAddFriend,
     onDismiss,
     isSending,
@@ -24,10 +22,11 @@ const SuggestionItemInner: React.FC<SuggestionItemProps> = ({
     className,
 }) => {
     const navigate = useNavigate();
-    const currentUser = useAuthStore((state) => state.user);
+    const { user, mutualCount } = data;
 
     const getSmartReason = () => {
-        return getHybridReason(currentUser, user);
+        if (mutualCount > 0) return `Có ${mutualCount} bạn chung`;
+        return "Có thể bạn quen";
     };
 
     const handleAdd = useCallback(

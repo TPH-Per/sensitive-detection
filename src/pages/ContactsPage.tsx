@@ -319,10 +319,10 @@ const ContactsPage: React.FC = () => {
                 />
               ) : (
                 <div className="bg-bg-primary rounded-2xl border border-border-light overflow-hidden">
-                  {filteredSuggestions.map(user => (
+                  {filteredSuggestions.map(data => (
                     <SuggestionItem
-                      key={user.id}
-                      user={user}
+                      key={data.user.id}
+                      data={data}
                       onAddFriend={handleAddFriend}
                       onDismiss={handleDismissSuggestion}
                     />

@@ -91,11 +91,11 @@ export const FriendSuggestionsWidget: React.FC = () => {
           {isSuggestionsLoading ? (
             [...Array(4)].map((_, i) => <SuggestionItem.Skeleton variant="card" key={i} className="w-[calc((100%-12px)/2)] min-w-[calc((100%-12px)/2)] sm:w-[calc((100%-24px)/3)] sm:min-w-[calc((100%-24px)/3)] md:w-[calc((100%-36px)/4)] md:min-w-[calc((100%-36px)/4)]" />)
           ) : (
-            displaySuggestions.map(user => (
+            displaySuggestions.map(data => (
               <SuggestionItem
                 variant="card"
-                key={user.id}
-                user={user}
+                key={data.user.id}
+                data={data}
                 onAddFriend={handleAddFriend}
                 onDismiss={handleDismissSuggestion}
                 className="w-[calc((100%-12px)/2)] min-w-[calc((100%-12px)/2)] sm:w-[calc((100%-24px)/3)] sm:min-w-[calc((100%-24px)/3)] md:w-[calc((100%-36px)/4)] md:min-w-[calc((100%-36px)/4)]"

@@ -8,7 +8,6 @@ import { User, ReportType, UserStatus, FriendStatus, Visibility } from '../../..
 import { UserAvatar, Button, Dropdown, DropdownItem, ImageCropper, LazyImage, CircularProgress } from '../ui';
 import { toast } from '../../store/toastStore';
 import { useAuthStore } from '../../store/authStore';
-import { getHybridReason } from '../../utils/userUtils';
 import { useReportStore } from '../../store/reportStore';
 import { BookUser } from 'lucide-react';
 import { validateFile } from '../../utils/uploadUtils';
@@ -196,12 +195,20 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
               <h1 className="text-2xl md:text-3xl font-bold text-text-primary truncate">
                 {user.fullName}
               </h1>
-              {!isOwnProfile && friendStatus !== FriendStatus.FRIEND && (
-                <div className="flex items-center justify-center md:justify-start gap-1.5 mt-1 text-text-tertiary text-xs md:text-sm font-medium animate-fade-in group">
-                  <BookUser size={14} className="text-primary/70 group-hover:text-primary transition-colors" />
-                  <span className="truncate">{getHybridReason(currentUser, user)}</span>
-                </div>
-              )}
+              {!isOwnProfile && friendStatus !== FriendStatus.FRIEND && (() => {
+                const suggestedData = currentUser?.suggestedFriends?.find(s => s.id === user.id);
+                const mutualCount = suggestedData?.mutualCount || 0;
+                
+                if (mutualCount > 0) {
+                  return (
+                    <div className="flex items-center justify-center md:justify-start gap-1.5 mt-1 text-text-tertiary text-xs md:text-sm font-medium animate-fade-in group">
+                      <BookUser size={14} className="text-primary/70 group-hover:text-primary transition-colors" />
+                      <span className="truncate">Có {mutualCount} bạn chung</span>
+                    </div>
+                  );
+                }
+                return null;
+              })()}
             </div>
 
             {/* Action buttons */}

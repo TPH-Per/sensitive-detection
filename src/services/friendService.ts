@@ -16,9 +16,15 @@ import {
 } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
 import { db, functions } from '../firebase/config';
+import { useAuthStore } from '../store/authStore';
 import { FriendRequest, FriendRequestStatus, User } from '../../shared/types';
 import { convertDoc, convertDocs } from '../utils/firebaseUtils';
 import { batchGetUsers } from '../utils/batchUtils';
+
+export interface SuggestionData {
+  user: User;
+  mutualCount: number;
+}
 
 export const friendService = {
   // Kiểm tra yêu cầu kết bạn đang chờ
@@ -297,10 +303,23 @@ export const friendService = {
 
   removeSuggestion: async (currentUserId: string, targetUserId: string): Promise<void> => {
     try {
-      await updateDoc(doc(db, 'users', currentUserId), {
-        suggestedFriends: arrayRemove(targetUserId)
+      const userRef = doc(db, 'users', currentUserId);
+      const userSnap = await getDoc(userRef);
+      if (!userSnap.exists()) return;
+
+      const suggestedFriends: Array<{ id: string; mutualCount: number }> = userSnap.data()?.suggestedFriends ?? [];
+      const updatedSuggestions = suggestedFriends.filter(s => s.id !== targetUserId);
+
+      await updateDoc(userRef, {
+        suggestedFriends: updatedSuggestions
       });
-    } catch {
+
+      const { user, setUser } = useAuthStore.getState();
+      if (user && user.id === currentUserId) {
+        setUser({ ...user, suggestedFriends: updatedSuggestions });
+      }
+    } catch (error) {
+      console.error("Lỗi xóa gợi ý kết bạn", error);
     }
   },
 
@@ -318,18 +337,26 @@ export const friendService = {
     }
   },
 
-  getCachedSuggestions: async (userId: string): Promise<User[]> => {
+  getCachedSuggestions: async (userId: string): Promise<SuggestionData[]> => {
     try {
       const userSnap = await getDoc(doc(db, 'users', userId));
       if (!userSnap.exists()) return [];
 
-      const suggestedIds: string[] = userSnap.data()?.suggestedFriends ?? [];
-      if (suggestedIds.length === 0) return [];
+      const suggestedData: Array<{ id: string; mutualCount: number }> = userSnap.data()?.suggestedFriends ?? [];
+      if (suggestedData.length === 0) return [];
 
+      const suggestedIds = suggestedData.map(d => d.id);
       const usersMap = await batchGetUsers(suggestedIds);
-      return suggestedIds
-        .map(id => usersMap[id])
-        .filter((u): u is User => Boolean(u) && u.status !== 'banned');
+
+      return suggestedData
+        .map(d => {
+          const user = usersMap[d.id];
+          if (user && user.status !== 'banned') {
+            return { user, mutualCount: d.mutualCount };
+          }
+          return null;
+        })
+        .filter((item): item is SuggestionData => item !== null);
     } catch (error) {
       console.error("Lỗi lấy gợi ý kết bạn đã cache", error);
       return [];

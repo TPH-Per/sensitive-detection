@@ -5,7 +5,7 @@ import { useContactStore } from '../store/contactStore';
 import { useUserCache } from '../store/userCacheStore';
 import { useRtdbChatStore } from '../store';
 import { useLoadingStore } from '../store/loadingStore';
-import { friendService } from '../services/friendService';
+import { friendService, SuggestionData } from '../services/friendService';
 import { userService } from '../services/userService';
 
 type TabType = 'all' | 'requests' | 'sent' | 'suggestions';
@@ -20,8 +20,8 @@ interface UseContactsReturn {
   friends: User[];
   receivedRequests: FriendRequest[];
   sentRequests: FriendRequest[];
-  suggestions: User[];
-  filteredSuggestions: User[];
+  suggestions: SuggestionData[];
+  filteredSuggestions: SuggestionData[];
   filteredFriends: User[];
   groupedFriends: FriendGroup[];
   userCache: Record<string, User>;
@@ -128,7 +128,7 @@ export const useContacts = (): UseContactsReturn => {
       ...sentRequests.map(r => r.receiverId),
       ...receivedRequests.map(r => r.senderId),
     ]);
-    return suggestions.filter(u => !excludeIds.has(u.id));
+    return suggestions.filter(s => !excludeIds.has(s.user.id));
   }, [suggestions, friends, sentRequests, receivedRequests]);
 
   const handleAcceptRequest = useCallback(async (requestId: string, friendId: string) => {

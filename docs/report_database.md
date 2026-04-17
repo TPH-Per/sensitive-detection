@@ -54,10 +54,11 @@ _Ghi chú: `id` là Document ID (UID Firebase Auth), không lưu thành field ri
 | `interests`              | Array<String> | _Optional_        | Danh sách sở thích. Mặc định `[]`                                                                               |
 | `generation`             | String Enum   | _Optional_        | `"Gen Alpha"`, `"Gen Z"`, `"Millennials"`, `"Gen X"`, `"Baby Boomers"`, `""`                                    |
 | `userVector`             | Array<Number> | _Optional_        | Vector hồ sơ dùng cho cosine similarity trong Cloud Function gợi ý bạn bè. Ghi bởi hệ thống, không do user nhập |
-| `suggestedFriends`       | Array<String> | _Optional_        | Cache danh sách userId được gợi ý. Ghi bởi `generateFriendSuggestions`                                          |
+| `suggestedFriends`       | Array<Object> | _Optional_        | Cache danh sách gợi ý: `[{id: string, mutualCount: number}]`. Ghi bởi `generateFriendSuggestions`               |
 | `suggestionsLastUpdated` | Timestamp     | _Optional_        | Thời điểm cập nhật gợi ý gần nhất                                                                               |
-| `createdAt`              | Timestamp     | **Required**      | Thời điểm tạo                                                                                                   |
-| `updatedAt`              | Timestamp     | **Required**      | Thời điểm cập nhật                                                                                              |
+
+| `createdAt` | Timestamp | **Required** | Thời điểm tạo |
+| `updatedAt` | Timestamp | **Required** | Thời điểm cập nhật |
 
 **1.1. Sub-collection `private/fcm` (Bên trong `users/{uid}`)**
 

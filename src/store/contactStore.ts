@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { User, FriendRequest } from '../../shared/types';
 import { userService } from '../services/userService';
-import { friendService } from '../services/friendService';
+import { friendService, SuggestionData } from '../services/friendService';
 import { useLoadingStore } from './loadingStore';
 import { useAuthStore } from './authStore';
 import { usePostStore } from './posts';
@@ -12,7 +12,7 @@ interface ContactState {
   receivedRequests: FriendRequest[];
   sentRequests: FriendRequest[];
   searchResults: User[];
-  suggestions: User[];
+  suggestions: SuggestionData[];
 
   subscribeToFriends: (userId: string) => () => void;
   subscribeToRequests: (userId: string) => () => void;
@@ -99,7 +99,7 @@ export const useContactStore = create<ContactState>()(
             ...state.sentRequests.map(r => r.receiverId),
             ...state.receivedRequests.map(r => r.senderId),
           ]);
-          set({ suggestions: suggestions.filter(u => !excludeIds.has(u.id)) });
+          set({ suggestions: suggestions.filter(s => !excludeIds.has(s.user.id)) });
         } finally {
           useLoadingStore.getState().setLoading('contacts.suggestions', false);
         }
@@ -119,7 +119,7 @@ export const useContactStore = create<ContactState>()(
                 ...state.sentRequests.map(r => r.receiverId),
                 ...state.receivedRequests.map(r => r.senderId),
               ]);
-              set({ suggestions: suggestions.filter(u => !excludeIds.has(u.id)) });
+              set({ suggestions: suggestions.filter(s => !excludeIds.has(s.user.id)) });
             }
           } else {
             set({ suggestions: [] });
@@ -131,7 +131,7 @@ export const useContactStore = create<ContactState>()(
 
       dismissSuggestion: (userId: string) => {
         set(state => ({
-          suggestions: state.suggestions.filter(u => u.id !== userId),
+          suggestions: state.suggestions.filter(s => s.user.id !== userId),
         }));
       },
 
