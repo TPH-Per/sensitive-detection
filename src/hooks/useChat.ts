@@ -238,8 +238,12 @@ export const useChat = () => {
 
   const handleTyping = useCallback(async (isTyping: boolean) => {
     if (!selectedConversationId || !currentUser) return;
+    
+    // Chỉ gửi typing nếu là bạn bè hoặc là nhóm
+    if (!isFriend && !selectedConversation?.data.isGroup) return;
+    
     await setTyping(selectedConversationId, currentUser.id, isTyping);
-  }, [selectedConversationId, currentUser, setTyping]);
+  }, [selectedConversationId, currentUser, setTyping, isFriend, selectedConversation?.data.isGroup]);
 
   const handleSearch = useCallback(async (term: string) => {
     if (!currentUser) return;

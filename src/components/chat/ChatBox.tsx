@@ -180,7 +180,7 @@ export const ChatBox: React.FC<ChatBoxProps> = ({
 
       {!conversation.data.isDisbanded && (
         <TypingIndicator
-          typingUsers={typingUsers}
+          typingUsers={isFriend || conversation.data.isGroup ? typingUsers : []}
           currentUserId={currentUserId}
           usersMap={usersMap}
         />
