@@ -57,7 +57,7 @@ export const ConversationList = React.memo<ConversationListProps>(({
   const [searchTerm, setSearchTerm] = useState('');
   const [activeFilter, setActiveFilter] = useState<FilterType>('all');
 
-  const { friendConversations, requestConversations, displayConversations } = useConversationGroups({
+  const { friendConversations, requestConversations, requestUnreadCount, displayConversations } = useConversationGroups({
     conversations, currentUserId, currentUserFriendIds, blockedUserIds,
     viewMode: (viewMode || 'normal') as 'normal' | 'archived',
     activeFilter,
@@ -131,7 +131,7 @@ export const ConversationList = React.memo<ConversationListProps>(({
             activeFilter={activeFilter}
             onFilterChange={setActiveFilter}
             onMarkAllRead={onMarkAllRead}
-            strangerCount={requestConversations.length}
+            strangerCount={requestUnreadCount}
           />
         ) : (
           <div className="flex-shrink-0 flex items-center px-4 h-10 bg-bg-secondary border-b border-border-light">

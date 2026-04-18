@@ -7,7 +7,7 @@ interface UseMentionsProps {
   participants: User[];
   currentUserId: string;
   isGroup: boolean;
-  inputRef: React.RefObject<HTMLTextAreaElement>;
+  inputRef: React.RefObject<HTMLTextAreaElement | null>;
 }
 
 export const useMentions = ({

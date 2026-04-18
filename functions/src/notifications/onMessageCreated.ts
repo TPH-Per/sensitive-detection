@@ -3,6 +3,7 @@ import { rtdb } from '../app';
 import { NotificationType } from '../types';
 import { getSenderName, buildPushBody } from '../helpers/notificationHelper';
 import { sendPushNotification } from '../helpers/fcmHelper';
+import { getDirectMessageBlockReason } from '../chat/directMessagePolicy';
 
 /**
  * Xử lý khi có tin nhắn mới trong RTDB
@@ -13,10 +14,14 @@ export const onMessageCreated = onValueCreated(
     region: 'us-central1'
   },
   async (event) => {
-    const message = event.data.val();
+    const { convId, msgId } = event.params;
+    const messageRef = rtdb.ref(`messages/${convId}/${msgId}`);
+    const latestMessageSnap = await messageRef.get();
+    if (!latestMessageSnap.exists()) return;
+
+    const message = latestMessageSnap.val();
     if (!message || message.isRecalled) return;
 
-    const { convId } = event.params;
     const { senderId, content, type, mentions = [] } = message;
     const safeContent = typeof content === 'string' ? content : '';
     if (type === 'system') return;
@@ -33,6 +38,17 @@ export const onMessageCreated = onValueCreated(
       const conversation = convSnap.val();
       const members = conversation.members || {};
       const isGroup = !!conversation.isGroup;
+
+      if (!isGroup) {
+        const memberIds = Object.keys(members);
+        const receiverId = memberIds.find(id => id !== senderId) || '';
+        if (!receiverId) return;
+
+        const blockReason = await getDirectMessageBlockReason(senderId, receiverId);
+        if (blockReason) {
+          return;
+        }
+      }
       
       const memberIds = Object.keys(members).filter(id => id !== senderId);
 
@@ -80,6 +96,11 @@ export const onMessageCreated = onValueCreated(
       }
 
       for (const receiverId of memberIds) {
+        const latestCheck = await messageRef.get();
+        if (!latestCheck.exists()) {
+          return;
+        }
+
         const isMentioned = isGroup && mentions.includes(receiverId);
         const notificationType = isMentioned ? NotificationType.MENTION : NotificationType.CHAT;
 

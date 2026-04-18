@@ -1,15 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { MessageSquare } from 'lucide-react';
-import { BlockOptionsModal } from '../components/ui';
+import { BlockOptionsModal, ConfirmDialog } from '../components/ui';
 import { useChat } from '../hooks';
 import { useLoadingStore } from '../store/loadingStore';
 import { useAuthStore } from '../store/authStore';
 import { useFriendIds, useBlockedUsers } from '../hooks';
 import { friendService } from '../services/friendService';
+import { userService } from '../services/userService';
 import { useConversationMemberSettings } from '../hooks/chat/useConversationMemberSettings';
 import { useCallManager } from '../hooks/chat/useCallManager';
 import { toast } from '../store/toastStore';
+import { CONFIRM_MESSAGES, TOAST_MESSAGES } from '../constants';
 import {
   ConversationList, ChatBox, ChatInput, ChatDetailsPanel,
   CreateGroupModal, AddMemberModal, EditGroupModal,
@@ -48,6 +50,8 @@ const ChatPage: React.FC = () => {
   const isSearching = useLoadingStore(state => state.loadingStates['contacts.search']);
   const friendIds = useFriendIds();
   const { blockedUserIds } = useBlockedUsers();
+  const settings = useAuthStore(state => state.settings);
+  const updateSettings = useAuthStore(state => state.updateSettings);
   const selectedMemberSettings = useConversationMemberSettings(
     selectedConversationId || '', currentUser?.id || ''
   );
@@ -74,7 +78,9 @@ const ChatPage: React.FC = () => {
   const [showTransferCreator, setShowTransferCreator] = useState(false);
   const [transferCreatorUserId, setTransferCreatorUserId] = useState<string | null>(null);
   const [isBlockModalOpen, setIsBlockModalOpen] = useState(false);
+  const [showEnableStrangerMessagesConfirm, setShowEnableStrangerMessagesConfirm] = useState(false);
   const [blockTarget, setBlockTarget] = useState<{ id: string; name: string } | null>(null);
+  const enableStrangerMessagesResolver = useRef<((result: boolean) => void) | null>(null);
 
   const openBlockModal = (partnerId?: string, partnerName?: string) => {
     if (partnerId && partnerName) {
@@ -84,6 +90,23 @@ const ChatPage: React.FC = () => {
   };
   const closeBlockModal = () => { setIsBlockModalOpen(false); setBlockTarget(null); };
   const confirmUnblock = async () => { await handleUnblock(blockTarget?.id); closeBlockModal(); };
+
+  const resolveEnableStrangerMessagesConfirm = useCallback((result: boolean) => {
+    setShowEnableStrangerMessagesConfirm(false);
+    if (enableStrangerMessagesResolver.current) {
+      enableStrangerMessagesResolver.current(result);
+      enableStrangerMessagesResolver.current = null;
+    }
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (enableStrangerMessagesResolver.current) {
+        enableStrangerMessagesResolver.current(false);
+        enableStrangerMessagesResolver.current = null;
+      }
+    };
+  }, []);
 
   const { startCall, joinActiveCall } = useCallManager(currentUser?.id || '');
 
@@ -135,6 +158,33 @@ const ChatPage: React.FC = () => {
     handleSelectConversation(null);
     navigate('/', { replace: true });
   };
+
+  const ensureCanSendToStranger = useCallback(async (): Promise<boolean> => {
+    if (!currentUser || !selectedConversation || selectedConversation.data.isGroup) return true;
+
+    const memberIds = Object.keys(selectedConversation.data.members || {});
+    const partnerId = memberIds.find(id => id !== currentUser.id);
+    if (!partnerId || friendIds.includes(partnerId)) return true;
+    if (settings.allowMessagesFromStrangers) return true;
+
+    const confirmed = await new Promise<boolean>((resolve) => {
+      enableStrangerMessagesResolver.current = resolve;
+      setShowEnableStrangerMessagesConfirm(true);
+    });
+
+    if (!confirmed) return false;
+
+    updateSettings({ allowMessagesFromStrangers: true });
+    try {
+      await userService.updateUserSettings(currentUser.id, { allowMessagesFromStrangers: true });
+      toast.success(TOAST_MESSAGES.CHAT.ENABLE_STRANGER_MESSAGES_SUCCESS);
+      return true;
+    } catch {
+      updateSettings({ allowMessagesFromStrangers: false });
+      toast.error(TOAST_MESSAGES.CHAT.ENABLE_STRANGER_MESSAGES_FAILED);
+      return false;
+    }
+  }, [currentUser, selectedConversation, friendIds, settings.allowMessagesFromStrangers, updateSettings]);
 
   return (
     <div className="flex h-full w-full overflow-hidden">
@@ -249,6 +299,7 @@ const ChatPage: React.FC = () => {
               onCancelAction={() => { setReplyingTo(null); setEditingMessage(null); }}
               onEditMessage={editingMessage ? (text) => handleEditMessage(editingMessage.id, text) : undefined}
               conversationId={selectedConversationId}
+              onBeforeSend={ensureCanSendToStranger}
             />
           </>
         ) : (
@@ -382,6 +433,15 @@ const ChatPage: React.FC = () => {
           onClose={closeBlockModal}
         />
       )}
+
+      <ConfirmDialog
+        isOpen={showEnableStrangerMessagesConfirm}
+        onClose={() => resolveEnableStrangerMessagesConfirm(false)}
+        onConfirm={() => resolveEnableStrangerMessagesConfirm(true)}
+        title={CONFIRM_MESSAGES.CHAT.ENABLE_STRANGER_MESSAGES.TITLE}
+        message={CONFIRM_MESSAGES.CHAT.ENABLE_STRANGER_MESSAGES.MESSAGE}
+        confirmLabel={CONFIRM_MESSAGES.CHAT.ENABLE_STRANGER_MESSAGES.CONFIRM}
+      />
     </div>
   );
 };

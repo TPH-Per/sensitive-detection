@@ -28,17 +28,22 @@ export const useNotifications = () => {
 
             const prevConv = prevConversationsRef.current.find(c => c.id === conv.id);
             const prevTimestamp = prevConv?.data?.lastMessage?.timestamp || 0;
+            const prevUnreadCount = prevConv?.userChat?.unreadCount || 0;
+            const currentUnreadCount = conv.userChat?.unreadCount || 0;
+            const hasUnreadIncreased = currentUnreadCount > prevUnreadCount;
+            const hasNewTimestamp = lastMsg.timestamp > prevTimestamp;
 
-            if (lastMsg.timestamp > prevTimestamp) {
+            if (hasUnreadIncreased || hasNewTimestamp) {
                 const isNotMe = lastMsg.senderId !== user.id;
                 const isNotSilent = lastMsg.type !== 'system' && lastMsg.type !== 'call';
                 const isNotMuted = !conv.userChat?.isMuted;
                 const isNotSelected = selectedConversationId !== conv.id;
                 const isTabHidden = document.visibilityState === 'hidden';
-
                 const isVeryRecent = lastMsg.timestamp > (Date.now() - 30000);
+                const shouldPlayByUnread = hasUnreadIncreased;
+                const shouldPlayByTimestamp = hasNewTimestamp && currentUnreadCount > 0;
 
-                if (isVeryRecent && isNotMe && isNotSilent && isNotMuted && (isNotSelected || isTabHidden)) {
+                if (isVeryRecent && (shouldPlayByUnread || shouldPlayByTimestamp) && isNotMe && isNotSilent && isNotMuted && (isNotSelected || isTabHidden)) {
                     soundManager.play('message');
                 }
             }

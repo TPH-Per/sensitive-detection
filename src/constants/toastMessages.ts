@@ -57,6 +57,8 @@ export const TOAST_MESSAGES = {
   CHAT: {
     SEND_FAILED: 'Không thể gửi tin nhắn.',
     BLOCKED_USER: 'Không thể nhắn tin cho người dùng đã bị khóa.',
+    ENABLE_STRANGER_MESSAGES_SUCCESS: 'Đã mở nhận tin nhắn từ người lạ.',
+    ENABLE_STRANGER_MESSAGES_FAILED: 'Không thể mở nhận tin nhắn từ người lạ.',
     OPEN_FAILED: 'Không thể mở cuộc hội thoại.',
     UPDATE_GROUP_FAILED: 'Không thể cập nhật nhóm.',
     FILE_LIMIT: (max: number) => `Chỉ được gửi tối đa ${max} file cùng lúc.`,

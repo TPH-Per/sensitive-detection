@@ -188,24 +188,12 @@ export const useChat = () => {
   useEffect(() => {
     if (!selectedConversationId || !currentUser || !isConversationInStore) return;
 
-    const selectedConvData = conversations.find(c => c.id === selectedConversationId)?.data;
-    const isGroup = selectedConvData?.isGroup || false;
-
-    if (!isGroup) {
-      const activeParticipantIds = Object.keys(selectedConvData?.members || {});
-      const activePartnerId = activeParticipantIds.find(id => id !== currentUser.id);
-      const isMessageRequest = activePartnerId ? !friendIds.includes(activePartnerId) : false;
-      if (isMessageRequest) return;
-    }
-
     markAsRead(selectedConversationId, currentUser.id);
-  }, [selectedConversationId, currentUser?.id, isConversationInStore]);
+  }, [selectedConversationId, currentUser?.id, isConversationInStore, markAsRead]);
 
   useEffect(() => {
     if (!selectedConversationId || !currentUser || !isConversationInStore) return;
 
-    const selectedConvData = conversations.find(c => c.id === selectedConversationId)?.data;
-    const isGroup = selectedConvData?.isGroup || false;
     const msgs = messages[selectedConversationId] || [];
 
     const hasUndelivered = msgs.some(m =>
@@ -215,18 +203,11 @@ export const useChat = () => {
       markAsDelivered(selectedConversationId, currentUser.id);
     }
 
-    if (!isGroup) {
-      const activeParticipantIds = Object.keys(selectedConvData?.members || {});
-      const activePartnerId = activeParticipantIds.find(id => id !== currentUser.id);
-      const isMessageRequest = activePartnerId ? !friendIds.includes(activePartnerId) : false;
-      if (isMessageRequest) return;
-    }
-
     const hasUnread = msgs.some(m =>
       m.data.senderId !== currentUser.id && (!m.data.readBy || !m.data.readBy[currentUser.id])
     );
     if (hasUnread) markAsRead(selectedConversationId, currentUser.id);
-  }, [messages, selectedConversationId, currentUser, markAsRead, markAsDelivered, conversations, friendIds, isConversationInStore]);
+  }, [messages, selectedConversationId, currentUser, markAsRead, markAsDelivered, isConversationInStore]);
 
   useEffect(() => {
     if (!selectedConversationId || !currentUser) return;

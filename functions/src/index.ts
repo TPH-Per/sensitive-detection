@@ -32,5 +32,6 @@ export { onUserProfileUpdated } from './friends/onUserProfileUpdated';
 
 export { onMessageCreated } from './notifications/onMessageCreated';
 export { chatMessageGuard } from './chat/chatGuard';
+export { validateDirectMessageSend } from './chat/validateDirectMessageSend';
 
 

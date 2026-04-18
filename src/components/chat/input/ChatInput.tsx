@@ -16,6 +16,7 @@ import { RtdbMessage, User, MessageType } from '../../../../shared/types';
 import { LinkPreviewCard } from '../../shared/LinkPreviewCard';
 import { getMessageDisplayContent } from '../../../utils/chatUtils';
 import { GiphyPicker } from './GiphyPicker';
+import { isDirectMessageBlockedError } from '../../../services/chat/strangerMessagePolicy';
 interface ChatInputProps {
   onSendText: (text: string, mentions?: string[], replyToId?: string) => void;
   onSendImages: (files: File[], replyToId?: string) => Promise<void>;
@@ -39,6 +40,7 @@ interface ChatInputProps {
   onManageBlock?: () => void;
   isBlockedByMe?: boolean;
   conversationId?: string;
+  onBeforeSend?: () => Promise<boolean>;
 }
 
 export const ChatInput: React.FC<ChatInputProps> = ({
@@ -49,6 +51,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   isGroup = false, isDisbanded = false,
   onDeleteConversation, onManageBlock, isBlockedByMe = false,
   conversationId,
+  onBeforeSend,
 }) => {
   const { saveDraft, clearDraft, draftMessages } = useRtdbChatStore();
   const [inputText, setInputText] = useState(() =>
@@ -232,6 +235,11 @@ export const ChatInput: React.FC<ChatInputProps> = ({
     e.preventDefault();
     if (disabled || isSending || (!inputText.trim() && selectedFiles.length === 0)) return;
 
+    if (!editingMessage && onBeforeSend) {
+      const canProceed = await onBeforeSend();
+      if (!canProceed) return;
+    }
+
     setIsSending(true);
     onTyping(false);
 
@@ -242,18 +250,30 @@ export const ChatInput: React.FC<ChatInputProps> = ({
       const otherFiles = selectedFiles.filter(f => f.type !== 'image' && f.type !== 'video');
 
       if (albumFiles.length > 0) {
-        onSendImages(albumFiles, replyingTo?.id).catch(() => {
-          toast.error(TOAST_MESSAGES.CHAT.SEND_FAILED);
+        onSendImages(albumFiles, replyingTo?.id).catch((error) => {
+          if (!isDirectMessageBlockedError(error)) {
+            toast.error(TOAST_MESSAGES.CHAT.SEND_FAILED);
+          }
         });
       }
 
       for (const item of otherFiles) {
         if (item.type === 'voice') {
-          try { onSendVoice?.(item.file, replyingTo?.id, item.duration); } catch {
-            toast.error(TOAST_MESSAGES.CHAT.SEND_FAILED);
+          try {
+            await onSendVoice?.(item.file, replyingTo?.id, item.duration);
+          } catch (error) {
+            if (!isDirectMessageBlockedError(error)) {
+              toast.error(TOAST_MESSAGES.CHAT.SEND_FAILED);
+            }
           }
         } else {
-          onSendFile(item.file, replyingTo?.id);
+          try {
+            await onSendFile(item.file, replyingTo?.id);
+          } catch (error) {
+            if (!isDirectMessageBlockedError(error)) {
+              toast.error(TOAST_MESSAGES.CHAT.SEND_FAILED);
+            }
+          }
         }
       }
 
@@ -294,8 +314,10 @@ export const ChatInput: React.FC<ChatInputProps> = ({
 
       clearAllFiles();
       onCancelAction();
-    } catch {
-      toast.error(TOAST_MESSAGES.CHAT.SEND_FAILED);
+    } catch (error) {
+      if (!isDirectMessageBlockedError(error)) {
+        toast.error(TOAST_MESSAGES.CHAT.SEND_FAILED);
+      }
     } finally {
       setIsSending(false);
       isCurrentlyTypingRef.current = false;
@@ -392,10 +414,24 @@ export const ChatInput: React.FC<ChatInputProps> = ({
           <div className="fixed inset-0" onClick={() => setShowGiphy(false)} />
           <div className="relative">
             <GiphyPicker
-              onSelect={(url) => {
-                onSendGif?.(url, replyingTo?.id);
-                setShowGiphy(false);
-                onCancelAction();
+              onSelect={async (url) => {
+                if (onBeforeSend) {
+                  const canProceed = await onBeforeSend();
+                  if (!canProceed) {
+                    setShowGiphy(false);
+                    return;
+                  }
+                }
+                try {
+                  await onSendGif?.(url, replyingTo?.id);
+                  onCancelAction();
+                } catch (error) {
+                  if (!isDirectMessageBlockedError(error)) {
+                    toast.error(TOAST_MESSAGES.CHAT.SEND_FAILED);
+                  }
+                } finally {
+                  setShowGiphy(false);
+                }
               }}
               onClose={() => setShowGiphy(false)}
             />

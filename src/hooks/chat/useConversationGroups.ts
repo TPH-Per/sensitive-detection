@@ -20,7 +20,7 @@ export const useConversationGroups = ({
   activeFilter
 }: UseConversationGroupsProps) => {
 
-  const { friendConversations, requestConversations } = useMemo(() => {
+  const { friendConversations, requestConversations: requestConversationsRaw } = useMemo(() => {
     const friends: Array<{ id: string; data: RtdbConversation; userChat: RtdbUserChat }> = [];
     const requests: Array<{ id: string; data: RtdbConversation; userChat: RtdbUserChat }> = [];
 
@@ -52,6 +52,17 @@ export const useConversationGroups = ({
     };
   }, [conversations, currentUserId, currentUserFriendIds, blockedUserIds]);
 
+  const requestConversations = useMemo(() => requestConversationsRaw.filter(conv => {
+    const clearedAt = conv.userChat?.clearedAt || 0;
+    const lastMsgTimestamp = conv.data.lastMessage?.timestamp || conv.data.updatedAt || 0;
+    return !(clearedAt > 0 && lastMsgTimestamp <= clearedAt);
+  }), [requestConversationsRaw]);
+
+  const requestUnreadCount = useMemo(() =>
+    requestConversations.filter(conv => (conv.userChat?.unreadCount || 0) > 0).length,
+    [requestConversations]
+  );
+
   const displayConversations = useMemo(() => {
     if (viewMode === 'archived') {
       return conversations
@@ -77,11 +88,8 @@ export const useConversationGroups = ({
 
   return {
     friendConversations,
-    requestConversations: requestConversations.filter(conv => {
-      const clearedAt = conv.userChat?.clearedAt || 0;
-      const lastMsgTimestamp = conv.data.lastMessage?.timestamp || conv.data.updatedAt || 0;
-      return !(clearedAt > 0 && lastMsgTimestamp <= clearedAt);
-    }),
+    requestConversations,
+    requestUnreadCount,
     displayConversations
   };
 };

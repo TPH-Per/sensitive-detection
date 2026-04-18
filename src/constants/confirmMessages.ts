@@ -74,6 +74,11 @@ export const CONFIRM_MESSAGES = {
     }
   },
   CHAT: {
+    ENABLE_STRANGER_MESSAGES: {
+      TITLE: 'Mở nhận tin nhắn từ người lạ',
+      MESSAGE: 'Bạn đang tắt nhận tin nhắn từ người lạ. Để tiếp tục gửi tin nhắn này, hệ thống sẽ mở tính năng này cho tài khoản của bạn.',
+      CONFIRM: 'Mở và tiếp tục',
+    },
     DELETE_CONVERSATION: {
       TITLE: 'Xóa cuộc trò chuyện',
       MESSAGE: 'Bạn có chắc chắn muốn xóa cuộc trò chuyện này? Hành động này không thể hoàn tác.',

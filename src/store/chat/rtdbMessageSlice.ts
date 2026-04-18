@@ -1,7 +1,9 @@
 import { StateCreator } from 'zustand';
-import { RtdbMessage, MessageType, SharedPostMessagePayload } from '../../../shared/types';
+import { RtdbMessage, SharedPostMessagePayload } from '../../../shared/types';
 import { rtdbMessageService } from '../../services/chat/messages';
 import { useAuthStore } from '../authStore';
+import { useContactStore } from '../contactStore';
+import { assertCanSendDirectMessage, assertCanSendDirectMessageServer } from '../../services/chat/strangerMessagePolicy';
 import type { RtdbChatState } from '../rtdbChatStore';
 import { PAGINATION } from '../../constants';
 
@@ -36,6 +38,31 @@ export interface RtdbMessageSlice {
 
 const LIMIT_PER_PAGE = PAGINATION.CHAT_MESSAGES;
 
+const ensureMessagePolicy = async (
+    get: () => RtdbChatState,
+    conversationId: string,
+    senderId: string,
+): Promise<void> => {
+    const state = get();
+    const conversation = state.conversations.find((c) => c.id === conversationId)?.data;
+    const friendIds = useContactStore.getState().friends.map((friend) => friend.id);
+    const allowMessagesFromStrangers = useAuthStore.getState().settings.allowMessagesFromStrangers;
+
+    assertCanSendDirectMessage({
+        conversationId,
+        senderId,
+        conversation,
+        friendIds,
+        allowMessagesFromStrangers,
+    });
+
+    await assertCanSendDirectMessageServer({
+        conversationId,
+        senderId,
+        conversation,
+    });
+};
+
 export const createRtdbMessageSlice: StateCreator<RtdbChatState, [], [], RtdbMessageSlice> = (set, get) => ({
     messages: {},
     hasMoreMessages: {},
@@ -57,13 +84,25 @@ export const createRtdbMessageSlice: StateCreator<RtdbChatState, [], [], RtdbMes
             set((state) => {
                 const currentMessages = state.messages[conversationId] || [];
 
-                const messageMap = new Map();
-
-                currentMessages.forEach(m => messageMap.set(m.id, m));
-                newIncomingMessages.forEach(m => messageMap.set(m.id, m));
-
-                const mergedMessages = Array.from(messageMap.values())
+                const incomingMessages = newIncomingMessages
                     .filter(m => m.data.createdAt > clearedAt)
+                    .sort((a, b) => a.data.createdAt - b.data.createdAt);
+
+                const incomingIds = new Set(incomingMessages.map(m => m.id));
+                const earliestIncomingTs = incomingMessages.length > 0
+                    ? incomingMessages[0].data.createdAt
+                    : Number.POSITIVE_INFINITY;
+                const shouldPreserveOlderMessages = incomingMessages.length === LIMIT_PER_PAGE;
+
+                const preservedOlderMessages = shouldPreserveOlderMessages
+                    ? currentMessages.filter((m) =>
+                        m.data.createdAt > clearedAt
+                        && m.data.createdAt < earliestIncomingTs
+                        && !incomingIds.has(m.id)
+                    )
+                    : [];
+
+                const mergedMessages = [...preservedOlderMessages, ...incomingMessages]
                     .sort((a, b) => a.data.createdAt - b.data.createdAt);
 
                 return {
@@ -121,43 +160,11 @@ export const createRtdbMessageSlice: StateCreator<RtdbChatState, [], [], RtdbMes
 
     sendTextMessage: async (conversationId: string, senderId: string, content: string, mentions?: string[], replyToId?: string) => {
         if (useAuthStore.getState().isBanned) throw new Error('Account is banned');
+        await ensureMessagePolicy(get, conversationId, senderId);
         try {
-            const msgId = await rtdbMessageService.sendTextMessage(conversationId, senderId, content, {
+            await rtdbMessageService.sendTextMessage(conversationId, senderId, content, {
                 mentions,
                 replyToId
-            });
-
-            set((state) => {
-                const existing = state.messages[conversationId] || [];
-                if (existing.some(m => m.id === msgId)) return state;
-
-                const optimisticMsg = {
-                    id: msgId,
-                    data: {
-                        senderId,
-                        type: MessageType.TEXT,
-                        content,
-                        media: [],
-                        mentions: mentions || [],
-                        isForwarded: false,
-                        replyToId: replyToId || null,
-                        isEdited: false,
-                        isRecalled: false,
-                        deletedBy: {},
-                        readBy: {},
-                        deliveredTo: {},
-                        reactions: {},
-                        createdAt: Date.now(),
-                        updatedAt: Date.now()
-                    } as RtdbMessage
-                };
-
-                return {
-                    messages: {
-                        ...state.messages,
-                        [conversationId]: [...existing, optimisticMsg].sort((a, b) => a.data.createdAt - b.data.createdAt)
-                    }
-                };
             });
         } catch (error) {
             console.error('[rtdbMessageSlice] Lỗi sendTextMessage:', error);
@@ -167,46 +174,10 @@ export const createRtdbMessageSlice: StateCreator<RtdbChatState, [], [], RtdbMes
 
     sendSharedPostMessage: async (conversationId: string, senderId: string, payload: SharedPostMessagePayload, replyToId?: string) => {
         if (useAuthStore.getState().isBanned) throw new Error('Account is banned');
+        await ensureMessagePolicy(get, conversationId, senderId);
         try {
-            const content = JSON.stringify(payload);
-            const msgId = await rtdbMessageService.sendSharedPostMessage(conversationId, senderId, payload, {
+            await rtdbMessageService.sendSharedPostMessage(conversationId, senderId, payload, {
                 replyToId
-            });
-
-            set((state) => {
-                const existing = state.messages[conversationId] || [];
-                if (existing.some(m => m.id === msgId)) return state;
-
-                const optimisticMsg = {
-                    id: msgId,
-                    data: {
-                        senderId,
-                        type: MessageType.SHARE_POST,
-                        content,
-                        media: [],
-                        mentions: [],
-                        isForwarded: false,
-                        isEdited: false,
-                        isRecalled: false,
-                        deletedBy: {},
-                        readBy: {},
-                        deliveredTo: {},
-                        reactions: {},
-                        createdAt: Date.now(),
-                        updatedAt: Date.now()
-                    } as RtdbMessage
-                };
-
-                if (replyToId) {
-                    optimisticMsg.data.replyToId = replyToId;
-                }
-
-                return {
-                    messages: {
-                        ...state.messages,
-                        [conversationId]: [...existing, optimisticMsg].sort((a, b) => a.data.createdAt - b.data.createdAt)
-                    }
-                };
             });
         } catch (error) {
             console.error('[rtdbMessageSlice] Lỗi sendSharedPostMessage:', error);
@@ -216,6 +187,7 @@ export const createRtdbMessageSlice: StateCreator<RtdbChatState, [], [], RtdbMes
 
     sendImageMessage: async (conversationId: string, senderId: string, files: File[], replyToId?: string) => {
         if (useAuthStore.getState().isBanned) throw new Error('Account is banned');
+        await ensureMessagePolicy(get, conversationId, senderId);
         let uploadedMsgId: string | undefined;
         try {
             await rtdbMessageService.sendImageMessage(conversationId, senderId, files, {
@@ -240,6 +212,7 @@ export const createRtdbMessageSlice: StateCreator<RtdbChatState, [], [], RtdbMes
 
     sendFileMessage: async (conversationId: string, senderId: string, file: File, replyToId?: string) => {
         if (useAuthStore.getState().isBanned) throw new Error('Account is banned');
+        await ensureMessagePolicy(get, conversationId, senderId);
         let uploadedMsgId: string | undefined;
         try {
             await rtdbMessageService.sendFileMessage(conversationId, senderId, file, {
@@ -264,6 +237,7 @@ export const createRtdbMessageSlice: StateCreator<RtdbChatState, [], [], RtdbMes
 
     sendVideoMessage: async (conversationId: string, senderId: string, file: File, replyToId?: string) => {
         if (useAuthStore.getState().isBanned) throw new Error('Account is banned');
+        await ensureMessagePolicy(get, conversationId, senderId);
         let uploadedMsgId: string | undefined;
         try {
             await rtdbMessageService.sendVideoMessage(conversationId, senderId, file, {
@@ -288,6 +262,7 @@ export const createRtdbMessageSlice: StateCreator<RtdbChatState, [], [], RtdbMes
 
     sendVoiceMessage: async (conversationId: string, senderId: string, file: File, replyToId?: string, duration?: number) => {
         if (useAuthStore.getState().isBanned) throw new Error('Account is banned');
+        await ensureMessagePolicy(get, conversationId, senderId);
         let uploadedMsgId: string | undefined;
         try {
             await rtdbMessageService.sendVoiceMessage(conversationId, senderId, file, {
@@ -313,42 +288,9 @@ export const createRtdbMessageSlice: StateCreator<RtdbChatState, [], [], RtdbMes
 
     sendGifMessage: async (conversationId: string, senderId: string, gifUrl: string, replyToId?: string) => {
         if (useAuthStore.getState().isBanned) throw new Error('Account is banned');
+        await ensureMessagePolicy(get, conversationId, senderId);
         try {
-            const msgId = await rtdbMessageService.sendGifMessage(conversationId, senderId, gifUrl, { replyToId });
-            if (!msgId) return;
-
-            set(state => {
-                const existing = state.messages[conversationId] || [];
-                if (existing.some(m => m.id === msgId)) return state;
-
-                const optimisticMsg = {
-                    id: msgId,
-                    data: {
-                        senderId,
-                        type: MessageType.GIF,
-                        content: gifUrl,
-                        media: [],
-                        mentions: [],
-                        isForwarded: false,
-                        isEdited: false,
-                        isRecalled: false,
-                        deletedBy: {},
-                        readBy: {},
-                        deliveredTo: {},
-                        reactions: {},
-                        replyToId: replyToId || null,
-                        createdAt: Date.now(),
-                        updatedAt: Date.now()
-                    } as RtdbMessage
-                };
-
-                return {
-                    messages: {
-                        ...state.messages,
-                        [conversationId]: [...existing, optimisticMsg].sort((a, b) => a.data.createdAt - b.data.createdAt)
-                    }
-                };
-            });
+            await rtdbMessageService.sendGifMessage(conversationId, senderId, gifUrl, { replyToId });
         } catch (error) {
             console.error('[rtdbMessageSlice] Lỗi sendGifMessage:', error);
             throw error;
@@ -357,40 +299,9 @@ export const createRtdbMessageSlice: StateCreator<RtdbChatState, [], [], RtdbMes
 
     sendCallMessage: async (conversationId, senderId, payload) => {
         if (useAuthStore.getState().isBanned) throw new Error('Account is banned');
+        await ensureMessagePolicy(get, conversationId, senderId);
         try {
             const msgId = await rtdbMessageService.sendCallMessage(conversationId, senderId, payload);
-            
-            set((state) => {
-                const existing = state.messages[conversationId] || [];
-                if (existing.some(m => m.id === msgId)) return state;
-
-                const optimisticMsg = {
-                    id: msgId,
-                    data: {
-                        senderId,
-                        type: MessageType.CALL,
-                        content: JSON.stringify(payload),
-                        media: [],
-                        mentions: [],
-                        isForwarded: false,
-                        isEdited: false,
-                        isRecalled: false,
-                        deletedBy: {},
-                        readBy: {},
-                        deliveredTo: {},
-                        reactions: {},
-                        createdAt: Date.now(),
-                        updatedAt: Date.now()
-                    } as RtdbMessage
-                };
-
-                return {
-                    messages: {
-                        ...state.messages,
-                        [conversationId]: [...existing, optimisticMsg].sort((a, b) => a.data.createdAt - b.data.createdAt)
-                    }
-                };
-            });
 
             return msgId;
         } catch (error) {
@@ -525,6 +436,7 @@ export const createRtdbMessageSlice: StateCreator<RtdbChatState, [], [], RtdbMes
     },
 
     forwardMessage: async (targetConversationId: string, senderId: string, srcMessage: RtdbMessage) => {
+        await ensureMessagePolicy(get, targetConversationId, senderId);
         try {
             await rtdbMessageService.forwardMessage(targetConversationId, senderId, srcMessage);
         } catch (error) {
