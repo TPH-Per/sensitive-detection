@@ -1,0 +1,7 @@
+path: D:\python\DA_DL_KPDL\artifacts\smoke_yolo_run
+train: train/images
+val: valid/images
+test: test/images
+
+nc: 1
+names: ['weapon']

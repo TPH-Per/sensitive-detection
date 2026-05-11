@@ -1,0 +1,100 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isValidImage() {
+      return request.resource.contentType.matches('image/.*');
+    }
+
+    function isValidVideo() {
+      return request.resource.contentType.matches('video/.*');
+    }
+
+
+
+    // Avatar người dùng (max 5MB)
+    match /avatars/{userId}/{allPaths=**} {
+      allow read: if true;
+      allow write: if isOwner(userId)
+                   && request.resource.size <= 5 * 1024 * 1024
+                   && isValidImage();
+      allow delete: if isOwner(userId);
+    }
+
+    // Ảnh bìa (max 10MB)
+    match /covers/{userId}/{allPaths=**} {
+      allow read: if true;
+      allow write: if isOwner(userId)
+                   && request.resource.size <= 10 * 1024 * 1024
+                   && isValidImage();
+      allow delete: if isOwner(userId);
+    }
+
+    // Media bài viết (max 50MB per file)
+    match /posts/{userId}/{allPaths=**} {
+      allow read: if isAuthenticated();
+      allow write: if isOwner(userId)
+                   && request.resource.size <= 50 * 1024 * 1024
+                   && (isValidImage() || isValidVideo());
+      allow delete: if isOwner(userId);
+    }
+
+    // Ảnh bình luận (max 5MB)
+    match /comments/{userId}/{allPaths=**} {
+      allow read: if isAuthenticated();
+      allow write: if isOwner(userId)
+                   && request.resource.size <= 5 * 1024 * 1024
+                   && isValidImage();
+      allow delete: if isOwner(userId);
+    }
+
+    // File chat - limit theo từng loại: ảnh 5MB, video 50MB, audio/file 10MB
+    match /chats/{conversationId}/{allPaths=**} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() && (
+                     (isValidImage() && request.resource.size <= 5 * 1024 * 1024) ||
+                     (isValidVideo() && request.resource.size <= 50 * 1024 * 1024) ||
+                     (request.resource.contentType.matches('audio/.*') && request.resource.size <= 10 * 1024 * 1024) ||
+                     ((request.resource.contentType.matches('application/.*') || request.resource.contentType.matches('text/.*')) && request.resource.size <= 10 * 1024 * 1024)
+                   );
+      allow delete: if isAuthenticated();
+    }
+
+    // Avatar nhóm (max 5MB) - chỉ thành viên nhóm mới được upload
+    match /group-avatars/{conversationId}/{allPaths=**} {
+      allow read: if true;
+      allow write: if isAuthenticated()
+                   && request.resource.size <= 5 * 1024 * 1024
+                   && isValidImage();
+      // Delete chỉ cho phép người upload, enforce ở application layer
+      allow delete: if isAuthenticated();
+    }
+
+    // Ảnh báo cáo (max 5MB per image)
+    match /reports/{userId}/{allPaths=**} {
+      allow read: if isAuthenticated();
+      allow write: if isOwner(userId)
+                   && request.resource.size <= 5 * 1024 * 1024
+                   && isValidImage();
+      allow delete: if isOwner(userId);
+    }
+
+    // Video thumbnails (max 2MB) - gắn với owner qua path
+    match /thumbnails/{userId}/{allPaths=**} {
+      allow read: if isAuthenticated();
+      allow write: if isOwner(userId)
+                   && request.resource.size <= 2 * 1024 * 1024
+                   && isValidImage();
+      allow delete: if isOwner(userId);
+    }
+  }
+}

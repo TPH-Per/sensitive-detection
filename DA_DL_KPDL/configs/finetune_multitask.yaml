@@ -1,0 +1,56 @@
+inherits: configs/base.yaml
+stage: finetune_multitask
+
+data:
+  train_manifest: manifests/multitask_train.csv
+  val_manifest: manifests/multitask_val.csv
+  test_manifest: manifests/multitask_test.csv
+  frames_per_clip: 64
+
+model:
+  name: task_prompted_transformer
+  d_model: 768
+  input_dim: 768
+  aux_dim: 6
+  hidden_dim: 512
+  dropout: 0.2
+  n_heads: 8
+  n_layers: 4
+  ff_dim: 2048
+  qformer_layers: 2
+  task_tokens:
+    - violence
+    - self_harm
+    - nsfw
+
+optimizer:
+  name: adamw
+  backbone_lr: 0.00001
+  heads_lr: 0.0002
+  weight_decay: 0.01
+
+target:
+  epochs: 25
+  batch_size: 4
+  grad_accum_steps: 4
+  label_smoothing: 0.1
+  decision_threshold: 0.5
+  early_stopping_patience: 4
+  use_pos_weight: true
+  pos_weight_cap: 20.0
+  use_weighted_sampler: true
+  sampler_weight_cap: 10.0
+
+checkpoint:
+  monitor: val_f1_macro
+  mode: max
+  save_last: true
+
+evaluation:
+  metrics:
+    - f1_macro
+    - confusion_matrix
+    - map50_weapons
+  calibration_mode: f0.5
+  beta: 0.5
+thresholds_json: ''

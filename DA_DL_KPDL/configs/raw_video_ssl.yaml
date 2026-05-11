@@ -1,0 +1,31 @@
+inherits: configs/base.yaml
+stage: raw_video_ssl
+
+data:
+  # Use labels CSV directly (not feature manifests) — contains relative_path to raw videos
+  train_labels: /kaggle/working/artifacts/data_prep/labels/labels_temporal_train.csv
+  val_labels:   /kaggle/working/artifacts/data_prep/labels/labels_temporal_val.csv
+  n_frames:     16       # frames per clip — keep low for GPU memory
+  frame_size:   112      # resize to 112x112 (standard for video SSL)
+
+model:
+  backbone: resnet18
+  freeze_stages: [0, 1, 2, 3]   # only layer4 (index 4) trains; stem+layer1-3 frozen
+  hidden_dim: 512
+  dropout: 0.3
+
+optimizer:
+  name: adamw
+  lr: 0.0003            # 3e-4: higher than before because we're fine-tuning layer4
+  weight_decay: 0.01
+
+target:
+  epochs: 20
+  batch_size: 8          # safe for T4/P100 at 112x112x16
+  num_workers: 2
+  early_stopping_patience: 7
+
+checkpoint:
+  monitor: val_loss
+  mode: min
+  save_last: true

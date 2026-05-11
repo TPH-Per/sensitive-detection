@@ -1,0 +1,101 @@
+{
+  "generated_at_utc": "2026-05-05T07:45:41.793765+00:00",
+  "project": "V6.1 Task-Gated Moderation",
+  "calibration_thresholds": {
+    "violence": 0.9136363636363637,
+    "self_harm": 0.995,
+    "nsfw": 0.999
+  },
+  "pooling_cfg": {
+    "sn_pooling": "topk_noisy_or",
+    "sn_topk_ratio": 0.2,
+    "sn_topk_min": 3
+  },
+  "checkpoint_cfg": {
+    "temperature": 2.0,
+    "lambda_dist": 0.5,
+    "lambda_ent": 0.1,
+    "violence_pos_weight": 6.0,
+    "sampler_pos_weight": 6.0,
+    "sn_pooling": "topk_noisy_or",
+    "sn_topk_ratio": 0.2,
+    "sn_topk_min": 3,
+    "v_clip_scale": 0.35,
+    "s_clip_scale": 0.45,
+    "n_clip_scale": 0.65
+  },
+  "split_stats": {
+    "train": {
+      "rows": 3542,
+      "violence_pos": 1225,
+      "violence_ratio": 0.3458498023715415
+    },
+    "val": {
+      "rows": 759,
+      "violence_pos": 262,
+      "violence_ratio": 0.3451910408432148
+    },
+    "test": {
+      "rows": 760,
+      "violence_pos": 263,
+      "violence_ratio": 0.3460526315789474
+    }
+  },
+  "artifacts": [
+    {
+      "path": "/kaggle/working/trong_so/task_gated_v6_best.pth",
+      "size_bytes": 24485742,
+      "sha256": "43be34116f433e0de8f6b02bfc82352e1498799e9c37c417d6036df218b16c68"
+    },
+    {
+      "path": "/kaggle/working/trong_so/gore_detector_v6_best.pth",
+      "size_bytes": 45052771,
+      "sha256": "1c92e0803b2bab972320f207a488e242fbe1c55232ba6520ae77e229858de7d8"
+    },
+    {
+      "path": "/kaggle/working/trong_so/selfharm_detector_v6_best.pth",
+      "size_bytes": 44922027,
+      "sha256": "c2db14b2f3f53d0ad4769ddc6f7aaf91b4ec3bfa543af30625aa12e31820299f"
+    },
+    {
+      "path": "/kaggle/working/trong_so/nsfw_classifier_v6_best.pth",
+      "size_bytes": 45053095,
+      "sha256": "f0c63787b3c83d83ce563b64f7fa3c2977ca7ee80e631f93d7116a592adbcf9f"
+    },
+    {
+      "path": "/kaggle/working/trong_so/yolov8_weapon_v6_best.pt",
+      "size_bytes": 6237162,
+      "sha256": "2be339a9dd6c201c9482dcde860ac49599039964f59f9343b6e555461a38f7e1"
+    },
+    {
+      "path": "/kaggle/working/trong_so/calibration_v6.json",
+      "size_bytes": 390,
+      "sha256": "da17c4160f6efd874027b489ae3ecac00f17d2990678d46014bb742bbe25b9bd"
+    },
+    {
+      "path": "/kaggle/working/manifests_v6/train_manifest.csv",
+      "size_bytes": 542008,
+      "sha256": "84715b83bc125fb481dd6318ae6ac5db37549de34ce1b11b4458d24f83b62e1e"
+    },
+    {
+      "path": "/kaggle/working/manifests_v6/val_manifest.csv",
+      "size_bytes": 116473,
+      "sha256": "d5b53a6d22888a2ffdb53a1b50cfb8368cb8f548a0d5c9155faf0d96120aa196"
+    },
+    {
+      "path": "/kaggle/working/manifests_v6/test_manifest.csv",
+      "size_bytes": 117498,
+      "sha256": "ed6753147d25b2bb45ac64948f29a48d253de018599cb337764a9b23c64af8b8"
+    },
+    {
+      "path": "/kaggle/working/manifests_v6/test_set_lock.txt",
+      "size_bytes": 153,
+      "sha256": "23586a404707c6ebc575383dcd1523e9baef28fa0eb2cda801a4632da2dd2c55"
+    },
+    {
+      "path": "/kaggle/working/trong_so/metrics/e2e_metrics.csv",
+      "size_bytes": 14841,
+      "sha256": "1cabcf900c39c44220c438e1fb76f111079f4e49f9632ae65c37e8c2a0b087bb"
+    }
+  ]
+}

@@ -1,0 +1,63 @@
+project:
+  seed: 42
+
+splits:
+  val_size: 0.15
+  test_size: 0.15
+
+caps:
+  max_per_source_signature: 6000
+
+taxonomy:
+  ucf_crimes:
+    violence_positive_classes:
+      - Abuse
+      - Arrest
+      - Arson
+      - Assault
+      - Burglary
+      - Explosion
+      - Fighting
+      - RoadAccidents
+      - Robbery
+      - Shooting
+
+  ucf101:
+    enabled: true
+    fold: 1
+    hard_negative_classes:
+      - BoxingPunchingBag
+      - BoxingSpeedBag
+      - Fencing
+      - Hammering
+      - Nunchucks
+      - Punch
+      - SumoWrestling
+      - CuttingInKitchen
+      - ShavingBeard
+
+  nsfw_dataset_v1:
+    positive_classes:
+      - porn
+      - sexy
+      - hentai
+    negative_classes:
+      - neutral
+      - drawings
+
+  adult_content_binary:
+    enabled: true
+    class_map:
+      "1": 0
+      "2": 1
+    mapping_confidence: high
+    notes: >
+      Confirmed mapping: folder "1" is safe (nsfw=0) and folder "2" is NSFW-positive (nsfw=1).
+
+challenge_holdout:
+  enabled: true
+  max_groups_per_bucket: 300
+  priority_splits:
+    - test
+    - val
+    - train

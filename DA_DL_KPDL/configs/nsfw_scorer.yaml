@@ -1,0 +1,23 @@
+inherits: configs/base.yaml
+stage: nsfw_scorer
+
+data:
+  train_manifest: artifacts/data_prep/labels/labels_nsfw_train.csv
+  val_manifest: artifacts/data_prep/labels/labels_nsfw_val.csv
+  test_manifest: artifacts/data_prep/labels/labels_nsfw_test.csv
+  image_size: 224
+
+model:
+  backbone: efficientnet_b0
+  pretrained: false
+
+optimizer:
+  name: adamw
+  lr: 0.0003
+  weight_decay: 0.01
+
+target:
+  epochs: 10
+  batch_size: 32
+  label_smoothing: 0.05
+  early_stopping_patience: 3

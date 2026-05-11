@@ -1,0 +1,5 @@
+sample_id,feature_path,violence,self_harm,nsfw,split,source
+sample_3001,features/sample_3001.npy,1,0,0,train,ucf101
+sample_3002,features/sample_3002.npy,0,1,0,train,nsfw_selfharm
+sample_3003,features/sample_3003.npy,0,0,1,train,nsfw_selfharm
+sample_3004,features/sample_3004.npy,0,0,0,train,medical_hard_negative

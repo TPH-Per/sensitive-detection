@@ -1,0 +1,40 @@
+inherits: configs/base.yaml
+stage: inference
+
+# Ghi đè paths cho local (RTX 4050)
+runtime:
+  device: cuda
+  mixed_precision: fp16
+  num_workers: 2        # Giảm worker cho local
+  pin_memory: true
+
+# Model config phải khớp với checkpoint đã train
+model:
+  name: task_prompted_transformer
+  input_dim: 768
+  d_model: 768
+  aux_dim: 6            # flow(3) + yolo(2) + nsfw(1)
+  n_heads: 8
+  n_layers: 4
+  ff_dim: 2048
+  dropout: 0.2
+  qformer_layers: 2
+
+# Ngưỡng tối ưu từ Cell 18b (recommended_thresholds)
+thresholds:
+  violence: 0.3447
+  self_harm: 0.9263
+  nsfw: 0.2394
+
+scene_cut:
+  enabled: false        # Tắt TransNetV2 (không cần thiết cho demo)
+  backend: auto
+
+inference:
+  max_frames: 64
+  use_proxy_gate: true
+  proxy_threshold: 0.2
+  proxy_frames: 8
+  yolo_imgsz: 640
+
+thresholds_json: ''

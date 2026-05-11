@@ -1,0 +1,2 @@
+relative_path,label,sample_id,split,split_before_challenge,source,group_id,media_type,challenge_bucket
+ucf101/UCF101/UCF-101/Punch/v_Punch_g01_c01.avi,0,ucf101_678d419d8488,challenge,train,ucf101,ucf101:punch/v_punch_g01_c01,video,normal_hard

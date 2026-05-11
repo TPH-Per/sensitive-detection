@@ -1,0 +1,20 @@
+inherits: configs/base.yaml
+stage: inference
+
+thresholds:
+  violence: 0.5
+  self_harm: 0.45
+  nsfw: 0.6
+
+scene_cut:
+  enabled: true
+  backend: auto
+
+inference:
+  max_frames: 64
+  use_proxy_gate: true
+  proxy_threshold: 0.2
+  proxy_frames: 8
+  yolo_frames: 8
+  yolo_imgsz: 640
+thresholds_json: ''

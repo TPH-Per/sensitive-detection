@@ -1,0 +1,10 @@
+inherits: configs/base.yaml
+stage: yolo_weapon_detector
+yolo:
+  model: yolov8n.pt
+  data_yaml: D:\python\DA_DL_KPDL\artifacts\smoke_output\yolo_merged\data.yaml
+  imgsz: 640
+  run_name: yolov8n_weapons
+target:
+  epochs: 80
+  batch_size: 16

@@ -1,0 +1,8 @@
+path: /kaggle/input/your-dataset/yolo
+train: images/train
+val: images/val
+
+names:
+  0: knife
+  1: gun
+  2: blade

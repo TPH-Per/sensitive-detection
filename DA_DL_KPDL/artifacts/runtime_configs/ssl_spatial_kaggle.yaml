@@ -1,0 +1,33 @@
+inherits: configs/base.yaml
+stage: ssl_spatial
+data:
+  train_manifest: artifacts\manifests\spatial_train.csv
+  val_manifest: artifacts\manifests\spatial_val.csv
+  test_manifest: artifacts\manifests\spatial_test.csv
+  image_size: 224
+  crops:
+    global_crops: 2
+    local_crops: 6
+model:
+  name: baseline_mlp
+  backbone: clip_vit_b32
+  embedding_dim: 768
+  input_dim: 768
+  aux_dim: 0
+  hidden_dim: 512
+  dropout: 0.2
+  freeze_backbone: false
+optimizer:
+  name: adamw
+  lr: 0.0003
+  weight_decay: 0.01
+target:
+  epochs: 20
+  batch_size: 16
+  grad_accum_steps: 1
+  decision_threshold: 0.5
+  early_stopping_patience: 3
+checkpoint:
+  monitor: val_knn
+  mode: max
+  save_last: true

@@ -1,0 +1,10 @@
+inherits: configs/base.yaml
+stage: yolo_weapon_detector
+yolo:
+  model: yolov8n.pt
+  data_yaml: artifacts\yolo_merged\data.yaml
+  imgsz: 640
+  run_name: yolov8n_weapons
+target:
+  epochs: 80
+  batch_size: 16

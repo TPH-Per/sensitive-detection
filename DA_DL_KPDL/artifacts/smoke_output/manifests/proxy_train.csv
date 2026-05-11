@@ -1,0 +1,3 @@
+sample_id,array_path,label,split,source,group_id,n_frames,height,width
+rwf2000_a74183f21316,D:\python\DA_DL_KPDL\artifacts\smoke_output\proxy_arrays\rwf2000_a74183f21316.npy,1,train,rwf2000,rwf2000:fight,8,224,224
+ucf_crimes_f26c92e274a0,D:\python\DA_DL_KPDL\artifacts\smoke_output\proxy_arrays\ucf_crimes_f26c92e274a0.npy,1,train,ucf_crimes,ucf_crimes:abuse001,8,224,224

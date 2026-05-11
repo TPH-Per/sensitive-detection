@@ -1,0 +1,7 @@
+path: D:\python\DA_DL_KPDL\artifacts\smoke_yolo_output\yolo_merged
+train: train/images
+val: val/images
+test: test/images
+names:
+  0: risky_object
+  1: medical_tool

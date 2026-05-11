@@ -1,0 +1,760 @@
+feature_path,video_path,violence,self_harm,nsfw
+RTHTRS_720_86037cf2.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/val/Fight/RTHTRS_720.avi,1.0,0.0,0.0
+nuf-d5GugL0_5_b4c7a29d.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/val/Fight/nuf-d5GugL0_5.avi,1.0,0.0,0.0
+e5Dmmply_2_3d3c36dc.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/val/Fight/e5Dmmply_2.avi,1.0,0.0,0.0
+nuf-d5GugL0_6_946707aa.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/val/Fight/nuf-d5GugL0_6.avi,1.0,0.0,0.0
+g6jdqkcdgqk_1_3ed23735.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/val/Fight/g6jdqkcdgqk_1.avi,1.0,0.0,0.0
+SJRnWfHAx_E_0_04ad1b75.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/val/Fight/SJRnWfHAx_E_0.avi,1.0,0.0,0.0
+RTHTRS_698_02d3a4da.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/val/Fight/RTHTRS_698.avi,1.0,0.0,0.0
+trtrhrt_1049_ac10b93c.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/val/Fight/trtrhrt_1049.avi,1.0,0.0,0.0
+etyiEs3j8x8_1_761f4603.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/val/Fight/etyiEs3j8x8_1.avi,1.0,0.0,0.0
+hytjfg_354_dfcf08de.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/val/Fight/hytjfg_354.avi,1.0,0.0,0.0
+6Rl7q_kXYbg_5_89f9b14b.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/val/Fight/6Rl7q_kXYbg_5.avi,1.0,0.0,0.0
+RTHTRS_717_0ccfe4f6.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/val/Fight/RTHTRS_717.avi,1.0,0.0,0.0
+SDFDSSDF_976_2f5d7481.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/val/Fight/SDFDSSDF_976.avi,1.0,0.0,0.0
+g-qjkePEXQA_2_a4b1199f.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/val/Fight/g-qjkePEXQA_2.avi,1.0,0.0,0.0
+nuf-d5GugL0_10_b4494ebd.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/val/Fight/nuf-d5GugL0_10.avi,1.0,0.0,0.0
+tf_X7GtOGyE_0_fd0ae091.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/val/Fight/tf_X7GtOGyE_0.avi,1.0,0.0,0.0
+7gLKFV5voOg_0_dc9215b7.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/val/Fight/7gLKFV5voOg_0.avi,1.0,0.0,0.0
+nVdn1krnTCQ_2_f3565868.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/val/Fight/nVdn1krnTCQ_2.avi,1.0,0.0,0.0
+e5Dmmply_1_f387895b.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/val/Fight/e5Dmmply_1.avi,1.0,0.0,0.0
+y_vX9FtjLaQ_3_35882f48.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/val/Fight/y_vX9FtjLaQ_3.avi,1.0,0.0,0.0
+TYRFDVD_1112_6520be29.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/val/Fight/TYRFDVD_1112.avi,1.0,0.0,0.0
+qaAclucigpY_1_4145732a.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/val/Fight/qaAclucigpY_1.avi,1.0,0.0,0.0
+0Ow4cotKOuw_3_fd2e70a1.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/val/Fight/0Ow4cotKOuw_3.avi,1.0,0.0,0.0
+trtrhrt_1050_ef85d2cc.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/val/Fight/trtrhrt_1050.avi,1.0,0.0,0.0
+83d-16REC40_0_2827cdbd.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/val/Fight/83d-16REC40_0.avi,1.0,0.0,0.0
+39BFeYnbu-I_5_14b8a61f.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/val/Fight/39BFeYnbu-I_5.avi,1.0,0.0,0.0
+XM0NI7ZmwWM_2_e3b467cf.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/val/Fight/XM0NI7ZmwWM_2.avi,1.0,0.0,0.0
+XM0NI7ZmwWM_0_6c0a9e5e.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/val/Fight/XM0NI7ZmwWM_0.avi,1.0,0.0,0.0
+39BFeYnbu-I_3_d0b134e3.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/val/Fight/39BFeYnbu-I_3.avi,1.0,0.0,0.0
+RTHTRS_718_d668bf9e.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/val/Fight/RTHTRS_718.avi,1.0,0.0,0.0
+39BFeYnbu-I_6_d25d5f0e.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/val/Fight/39BFeYnbu-I_6.avi,1.0,0.0,0.0
+nVdn1krnTCQ_6_a9984813.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/val/Fight/nVdn1krnTCQ_6.avi,1.0,0.0,0.0
+etyiEs3j8x8_0_8db69a6f.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/val/Fight/etyiEs3j8x8_0.avi,1.0,0.0,0.0
+LruY67tu_0_3a704a44.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/val/NonFight/LruY67tu_0.avi,0.0,0.0,0.0
+myaBOqJ3_0_e984e1f7.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/val/NonFight/myaBOqJ3_0.avi,0.0,0.0,0.0
+e8jli13nLaM_0_06474f11.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/val/NonFight/e8jli13nLaM_0.avi,0.0,0.0,0.0
+VIPpAkyG_0_1f2091a4.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/val/NonFight/VIPpAkyG_0.avi,0.0,0.0,0.0
+Fds7C6sp_0_05d0e5ad.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/val/NonFight/Fds7C6sp_0.avi,0.0,0.0,0.0
+PNgE-OKjhgU_0_06916f6f.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/val/NonFight/PNgE-OKjhgU_0.avi,0.0,0.0,0.0
+GCgD8AkV_0_b12d59c2.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/val/NonFight/GCgD8AkV_0.avi,0.0,0.0,0.0
+v1Sb6NhU_0_61880fa9.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/val/NonFight/v1Sb6NhU_0.avi,0.0,0.0,0.0
+v4dhdnsxiX4_0_c783a0a8.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/val/NonFight/v4dhdnsxiX4_0.avi,0.0,0.0,0.0
+egQvmVL2_0_100449a2.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/val/NonFight/egQvmVL2_0.avi,0.0,0.0,0.0
+Yf55ftZR_0_1d2b2918.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/val/NonFight/Yf55ftZR_0.avi,0.0,0.0,0.0
+1MVS2QPWbHc_1_5d9fb894.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/val/NonFight/1MVS2QPWbHc_1.avi,0.0,0.0,0.0
+MxkTo5F-nvU_0_6ba44d5c.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/val/NonFight/MxkTo5F-nvU_0.avi,0.0,0.0,0.0
+TP6mtOzL_0_67a06326.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/val/NonFight/TP6mtOzL_0.avi,0.0,0.0,0.0
+qaAclucigpY_1_432f4a65.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/val/NonFight/qaAclucigpY_1.avi,0.0,0.0,0.0
+y2pGPMqikJg_1_693d1b6b.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/val/NonFight/y2pGPMqikJg_1.avi,0.0,0.0,0.0
+tSk5CEXB_0_2c81e7c0.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/val/NonFight/tSk5CEXB_0.avi,0.0,0.0,0.0
+v4dhdnsxiX4_1_28520296.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/val/NonFight/v4dhdnsxiX4_1.avi,0.0,0.0,0.0
+O2rd3LTv_0_0941b508.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/val/NonFight/O2rd3LTv_0.avi,0.0,0.0,0.0
+scznszmE_0_11916228.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/val/NonFight/scznszmE_0.avi,0.0,0.0,0.0
+A7FCl8G35Cs_0_42f0bb2a.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/val/NonFight/A7FCl8G35Cs_0.avi,0.0,0.0,0.0
+6doZoiaG9PM_0_6cda3a1f.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/val/NonFight/6doZoiaG9PM_0.avi,0.0,0.0,0.0
+p1bUxYeJ_1_0cfe0502.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/Fight/p1bUxYeJ_1.avi,1.0,0.0,0.0
+rfthfd_536_0d60a67d.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/Fight/rfthfd_536.avi,1.0,0.0,0.0
+mRqg-WXiR7Q_1_7419a5bf.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/Fight/mRqg-WXiR7Q_1.avi,1.0,0.0,0.0
+uKFI67bUzfg_1_2ba8c3c1.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/Fight/uKFI67bUzfg_1.avi,1.0,0.0,0.0
+o9sRXy5r_0_4b2b83f8.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/Fight/o9sRXy5r_0.avi,1.0,0.0,0.0
+bzw-HKuuQbg_2_86cf0152.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/Fight/bzw-HKuuQbg_2.avi,1.0,0.0,0.0
+l4gqDHx9_dI_3_6b353715.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/Fight/l4gqDHx9_dI_3.avi,1.0,0.0,0.0
+Ek0jcAoCRw8_0_ab17589a.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/Fight/Ek0jcAoCRw8_0.avi,1.0,0.0,0.0
+EtRfZ2KP_0_8fc28c83.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/Fight/EtRfZ2KP_0.avi,1.0,0.0,0.0
+a7D2i0HTXGM_0_318b33ed.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/Fight/a7D2i0HTXGM_0.avi,1.0,0.0,0.0
+F7W6PQ3V3y8_9_cc1669a6.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/Fight/F7W6PQ3V3y8_9.avi,1.0,0.0,0.0
+DC10fyQgNqo_1_8fa4faf5.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/Fight/DC10fyQgNqo_1.avi,1.0,0.0,0.0
+SGntTioECg4_997_437fcdfe.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/Fight/SGntTioECg4_997.avi,1.0,0.0,0.0
+X6V5o-uCYF4_1_cf105e20.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/Fight/X6V5o-uCYF4_1.avi,1.0,0.0,0.0
+dt8YUGoOSgQ_1_bc90c235.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/Fight/dt8YUGoOSgQ_1.avi,1.0,0.0,0.0
+4RqDG4I4iAk_7_34175e6a.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/Fight/4RqDG4I4iAk_7.avi,1.0,0.0,0.0
+хРМшбМшАБцЭ┐хПлцЭех╕оц┤╛цЙУцЮ╢я╝Мф╕Лф╕АчзТцЬЙф║║шзБцн╗чеЮф║Жя╝МчЫСцОзцЛНф╕ЛцГичГИчФ╗щЭвя╝Б_urlgot_224_37b87432.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/Fight/хРМшбМшАБцЭ┐хПлцЭех╕оц┤╛цЙУцЮ╢я╝Мф╕Лф╕АчзТцЬЙф║║шзБцн╗чеЮф║Жя╝МчЫСцОзцЛНф╕ЛцГичГИчФ╗щЭвя╝Б_urlgot_224.avi,1.0,0.0,0.0
+oW8ySS0rN4Y_0_750185c0.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/Fight/oW8ySS0rN4Y_0.avi,1.0,0.0,0.0
+X6V5o-uCYF4_0_157b9dd9.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/Fight/X6V5o-uCYF4_0.avi,1.0,0.0,0.0
+OTVE3eLAuUM_0_e93c9b49.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/Fight/OTVE3eLAuUM_0.avi,1.0,0.0,0.0
+HVSv9sgz2ZI_2_c86a1b6b.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/Fight/HVSv9sgz2ZI_2.avi,1.0,0.0,0.0
+videoplayback_93_ccac0006.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/Fight/videoplayback_93.avi,1.0,0.0,0.0
+_q5Nwh4Z6ao_3_3824cfc8.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/Fight/_q5Nwh4Z6ao_3.avi,1.0,0.0,0.0
+sadsa_959_7ed85f9f.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/Fight/sadsa_959.avi,1.0,0.0,0.0
+BpargJW29Wo_2_162ac4cb.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/Fight/BpargJW29Wo_2.avi,1.0,0.0,0.0
+kMI2JME3Aag_1_43642ffc.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/Fight/kMI2JME3Aag_1.avi,1.0,0.0,0.0
+a2qLzOu_n0s_0_4967500b.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/Fight/a2qLzOu_n0s_0.avi,1.0,0.0,0.0
+trhfd_1016_9f180cc9.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/Fight/trhfd_1016.avi,1.0,0.0,0.0
+ug2tQMG8DC0_2_a70009a6.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/Fight/ug2tQMG8DC0_2.avi,1.0,0.0,0.0
+1dsLuL5Lvbc_1_f60d1dc6.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/Fight/1dsLuL5Lvbc_1.avi,1.0,0.0,0.0
+CBfRtxkO1bE_3_0929db28.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/Fight/CBfRtxkO1bE_3.avi,1.0,0.0,0.0
+kExp3yhspR0_3_79a8b6e1.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/Fight/kExp3yhspR0_3.avi,1.0,0.0,0.0
+aKgSasWRJ2s_1_5c56417c.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/Fight/aKgSasWRJ2s_1.avi,1.0,0.0,0.0
+-1l5631l3fg_0_20384086.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/Fight/-1l5631l3fg_0.avi,1.0,0.0,0.0
+RYFG_776_8a54fdcf.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/Fight/RYFG_776.avi,1.0,0.0,0.0
+rfthfd_537_a350660b.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/Fight/rfthfd_537.avi,1.0,0.0,0.0
+6mrIIcAQ2fI_2_cba5b7da.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/Fight/6mrIIcAQ2fI_2.avi,1.0,0.0,0.0
+aIg9Yb0O7Hg_5_9799c3d5.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/Fight/aIg9Yb0O7Hg_5.avi,1.0,0.0,0.0
+3CQi0ZCCHvc_0_7d2994ca.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/Fight/3CQi0ZCCHvc_0.avi,1.0,0.0,0.0
+OAfV0xPIhZw_4_67566ed1.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/Fight/OAfV0xPIhZw_4.avi,1.0,0.0,0.0
+GhZRf4GIw0w_0_0e3da37a.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/Fight/GhZRf4GIw0w_0.avi,1.0,0.0,0.0
+-1l5631l3fg_2_3522393d.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/Fight/-1l5631l3fg_2.avi,1.0,0.0,0.0
+K6WRP2xi_2_5e88d964.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/Fight/K6WRP2xi_2.avi,1.0,0.0,0.0
+NPeKBgURcxI_2_43f608c1.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/Fight/NPeKBgURcxI_2.avi,1.0,0.0,0.0
+SXd2yu2LHv0_0_5bcd45de.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/Fight/SXd2yu2LHv0_0.avi,1.0,0.0,0.0
+0lHQ2f0d_0_18c7dfd6.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/Fight/0lHQ2f0d_0.avi,1.0,0.0,0.0
+HW48LUZKOL4_4_25ed8536.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/Fight/HW48LUZKOL4_4.avi,1.0,0.0,0.0
+iquSbj5Wqj0_0_fa09e155.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/Fight/iquSbj5Wqj0_0.avi,1.0,0.0,0.0
+uKFI67bUzfg_0_03b4e156.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/Fight/uKFI67bUzfg_0.avi,1.0,0.0,0.0
+QUGT4a6qcJs_1_af624085.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/Fight/QUGT4a6qcJs_1.avi,1.0,0.0,0.0
+RGIpCpdlzI8_0_a2b09b1f.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/Fight/RGIpCpdlzI8_0.avi,1.0,0.0,0.0
+T56HlypCEyU_2_f4866e4c.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/Fight/T56HlypCEyU_2.avi,1.0,0.0,0.0
+dxzvtJ4gPC0_0_f5ddff98.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/Fight/dxzvtJ4gPC0_0.avi,1.0,0.0,0.0
+API3q8TBGu4_0_96cd85e9.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/Fight/API3q8TBGu4_0.avi,1.0,0.0,0.0
+vQKHxtrdEHM_3_846aaf20.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/Fight/vQKHxtrdEHM_3.avi,1.0,0.0,0.0
+HW48LUZKOL4_1_cc5663ce.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/Fight/HW48LUZKOL4_1.avi,1.0,0.0,0.0
+z19nkHMw_0_eaa335b7.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/Fight/z19nkHMw_0.avi,1.0,0.0,0.0
+SjJEt0drQZs_0_2620f910.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/Fight/SjJEt0drQZs_0.avi,1.0,0.0,0.0
+PlHzsigAFas_9_72b608b8.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/Fight/PlHzsigAFas_9.avi,1.0,0.0,0.0
+asdasda_112_74fac125.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/Fight/asdasda_112.avi,1.0,0.0,0.0
+VYWWsld6ibI_0_e4a28f28.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/Fight/VYWWsld6ibI_0.avi,1.0,0.0,0.0
+fwEk96k8g_I_0_640af864.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/Fight/fwEk96k8g_I_0.avi,1.0,0.0,0.0
+ThiaJUQ8_3_3d1dcfad.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/Fight/ThiaJUQ8_3.avi,1.0,0.0,0.0
+6Dej3-k3MRE_3_857dfc17.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/Fight/6Dej3-k3MRE_3.avi,1.0,0.0,0.0
+PFw7SeFOD04_2_75ac4982.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/Fight/PFw7SeFOD04_2.avi,1.0,0.0,0.0
+1dsLuL5Lvbc_0_1111172f.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/Fight/1dsLuL5Lvbc_0.avi,1.0,0.0,0.0
+_6-B11R9FJM_1_59f76ed8.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/Fight/_6-B11R9FJM_1.avi,1.0,0.0,0.0
+PTy2vx8Ejas_5_6d2dca32.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/Fight/PTy2vx8Ejas_5.avi,1.0,0.0,0.0
+cy1gi3ZJb_c_2_2339deb5.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/Fight/cy1gi3ZJb_c_2.avi,1.0,0.0,0.0
+0lHQ2f0d_1_d8aca914.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/Fight/0lHQ2f0d_1.avi,1.0,0.0,0.0
+3kpviz7lAMY_0_165d658a.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/Fight/3kpviz7lAMY_0.avi,1.0,0.0,0.0
+C8wt47cphU8_1_909e12c5.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/Fight/C8wt47cphU8_1.avi,1.0,0.0,0.0
+AkTZX27QhjE_4_2b3da239.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/Fight/AkTZX27QhjE_4.avi,1.0,0.0,0.0
+1O4KGHbRt3M_1_d8b6aed1.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/Fight/1O4KGHbRt3M_1.avi,1.0,0.0,0.0
+truutrdf_1082_02fb02fc.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/Fight/truutrdf_1082.avi,1.0,0.0,0.0
+JPIeYvRgo6I_0_6d39167c.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/Fight/JPIeYvRgo6I_0.avi,1.0,0.0,0.0
+mxlWEjopk_c_0_e5356f66.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/Fight/mxlWEjopk_c_0.avi,1.0,0.0,0.0
+uKFI67bUzfg_2_553337a7.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/Fight/uKFI67bUzfg_2.avi,1.0,0.0,0.0
+GafFu4IZtIA_2_45018185.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/Fight/GafFu4IZtIA_2.avi,1.0,0.0,0.0
+_q5Nwh4Z6ao_7_e662795f.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/Fight/_q5Nwh4Z6ao_7.avi,1.0,0.0,0.0
+mRqg-WXiR7Q_3_4f0ad277.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/Fight/mRqg-WXiR7Q_3.avi,1.0,0.0,0.0
+BpargJW29Wo_0_140d89ed.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/Fight/BpargJW29Wo_0.avi,1.0,0.0,0.0
+xKq3hlefCUI_0_57791e02.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/Fight/xKq3hlefCUI_0.avi,1.0,0.0,0.0
+cy1gi3ZJb_c_4_5d61f434.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/Fight/cy1gi3ZJb_c_4.avi,1.0,0.0,0.0
+oIEZ45OCmAw_0_2da2593a.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/Fight/oIEZ45OCmAw_0.avi,1.0,0.0,0.0
+6TDF_14_cc36d525.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/Fight/6TDF_14.avi,1.0,0.0,0.0
+tIvvuvuJFYc_0_eda77b47.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/Fight/tIvvuvuJFYc_0.avi,1.0,0.0,0.0
+z1WyVUv8_2_0034951d.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/Fight/z1WyVUv8_2.avi,1.0,0.0,0.0
+a7D2i0HTXGM_1_c4f4c539.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/Fight/a7D2i0HTXGM_1.avi,1.0,0.0,0.0
+PlHzsigAFas_5_ec7d7484.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/Fight/PlHzsigAFas_5.avi,1.0,0.0,0.0
+R1A_AxUKosk_3_064fb439.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/Fight/R1A_AxUKosk_3.avi,1.0,0.0,0.0
+NPeKBgURcxI_1_38357e29.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/Fight/NPeKBgURcxI_1.avi,1.0,0.0,0.0
+u1r8f71c_0_b50ba04f.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/Fight/u1r8f71c_0.avi,1.0,0.0,0.0
+88ndrvAZpE8_1_bbb12cae.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/Fight/88ndrvAZpE8_1.avi,1.0,0.0,0.0
+SGntTioECg4_999_68a1a983.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/Fight/SGntTioECg4_999.avi,1.0,0.0,0.0
+Kx5lWLPZ0Y0_1_89f0abc7.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/Fight/Kx5lWLPZ0Y0_1.avi,1.0,0.0,0.0
+RYFG_781_53329b6f.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/Fight/RYFG_781.avi,1.0,0.0,0.0
+wetrew_1195_bdbba4e8.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/Fight/wetrew_1195.avi,1.0,0.0,0.0
+ZVPU5c95_0_48025140.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/Fight/ZVPU5c95_0.avi,1.0,0.0,0.0
+ф╕дхе│хнРх║ЧщЗМцЙУцЮ╢я╝МхН┤х╝ХхПСцХ░хРНчФ╖хнРхЗ║цЙЛя╝МцШпф╗Аф╣ИхОЯхЫая╝ЯчЫСцОзцЛНф╕ЛхЕичиЛ_urlgot_221_59e205a3.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/Fight/ф╕дхе│хнРх║ЧщЗМцЙУцЮ╢я╝МхН┤х╝ХхПСцХ░хРНчФ╖хнРхЗ║цЙЛя╝МцШпф╗Аф╣ИхОЯхЫая╝ЯчЫСцОзцЛНф╕ЛхЕичиЛ_urlgot_221.avi,1.0,0.0,0.0
+FZDDNtcaBcw_2_c2647937.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/Fight/FZDDNtcaBcw_2.avi,1.0,0.0,0.0
+HgwpC5Xx_0_def06e8d.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/Fight/HgwpC5Xx_0.avi,1.0,0.0,0.0
+хРОхОищЗМщЭвф╕АшиАф╕НхРИх░▒х╝АцЙУя╝МцЛЙцЮ╢хПШцЙУцЮ╢я╝МчО░хЬ║ф╕АчЙЗц╖╖ф╣▒я╝МчЫСцОзцЛНф╕ЛхЕичиЛ_urlgot_237_9df57d18.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/Fight/хРОхОищЗМщЭвф╕АшиАф╕НхРИх░▒х╝АцЙУя╝МцЛЙцЮ╢хПШцЙУцЮ╢я╝МчО░хЬ║ф╕АчЙЗц╖╖ф╣▒я╝МчЫСцОзцЛНф╕ЛхЕичиЛ_urlgot_237.avi,1.0,0.0,0.0
+aIg9Yb0O7Hg_0_6c3a6e18.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/Fight/aIg9Yb0O7Hg_0.avi,1.0,0.0,0.0
+чЫСцОз-шЛ▒хЫ╜шнжхпЯцЪ┤хКЫцо┤цЙУхе│хлМчКп_urlgot_210_2dc41d3b.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/Fight/чЫСцОз-шЛ▒хЫ╜шнжхпЯцЪ┤хКЫцо┤цЙУхе│хлМчКп_urlgot_210.avi,1.0,0.0,0.0
+fK7CSrQ6OpM_2_a6764818.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/Fight/fK7CSrQ6OpM_2.avi,1.0,0.0,0.0
+NvYo6CS_i_A_0_68c6176d.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/Fight/NvYo6CS_i_A_0.avi,1.0,0.0,0.0
+p1bUxYeJ_2_24044a57.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/Fight/p1bUxYeJ_2.avi,1.0,0.0,0.0
+nBO2Wlr3LhU_1_246a6605.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/Fight/nBO2Wlr3LhU_1.avi,1.0,0.0,0.0
+TuWan04E3gQ_1_4e55bca7.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/Fight/TuWan04E3gQ_1.avi,1.0,0.0,0.0
+_6-B11R9FJM_4_1d0444ff.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/Fight/_6-B11R9FJM_4.avi,1.0,0.0,0.0
+C8wt47cphU8_0_a48970a6.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/Fight/C8wt47cphU8_0.avi,1.0,0.0,0.0
+1tU4kxa51vw_1_7c45550a.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/Fight/1tU4kxa51vw_1.avi,1.0,0.0,0.0
+nNUeqFgG_5_4a200ab5.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/Fight/nNUeqFgG_5.avi,1.0,0.0,0.0
+as4zD6d86q0_2_3bed749e.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/Fight/as4zD6d86q0_2.avi,1.0,0.0,0.0
+QaIY5Au8yOc_1_38f8646c.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/Fight/QaIY5Au8yOc_1.avi,1.0,0.0,0.0
+uWH7kvNG_0_472148c6.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/uWH7kvNG_0.avi,0.0,0.0,0.0
+iRnSE1TL_0_6fae916c.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/iRnSE1TL_0.avi,0.0,0.0,0.0
+THqDidIr4Xs_0_803161aa.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/THqDidIr4Xs_0.avi,0.0,0.0,0.0
+uAKRFGFR_0_94e7d642.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/uAKRFGFR_0.avi,0.0,0.0,0.0
+pHiqIppg_0_1043c5d7.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/pHiqIppg_0.avi,0.0,0.0,0.0
+p9d6QmKh_0_ae2061ba.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/p9d6QmKh_0.avi,0.0,0.0,0.0
+pKOUG5AqLpY_1_d21fe653.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/pKOUG5AqLpY_1.avi,0.0,0.0,0.0
+aRvWjteA_0_eee657ad.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/aRvWjteA_0.avi,0.0,0.0,0.0
+uu3SB2L1_0_e00c2a9b.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/uu3SB2L1_0.avi,0.0,0.0,0.0
+EGhykgb4_0_8869161e.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/EGhykgb4_0.avi,0.0,0.0,0.0
+Assault009_x264_1_0e310b7d.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/Assault009_x264_1.avi,0.0,0.0,0.0
+4RgIlSIB_0_1eb3b77e.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/4RgIlSIB_0.avi,0.0,0.0,0.0
+qrWTk-2a13o_0_dc149571.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/qrWTk-2a13o_0.avi,0.0,0.0,0.0
+pr8yRPMO_0_2bff6775.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/pr8yRPMO_0.avi,0.0,0.0,0.0
+CKzrrb7E_0_929643bd.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/CKzrrb7E_0.avi,0.0,0.0,0.0
+K_7hT4N2QCE_0_1695ef5a.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/K_7hT4N2QCE_0.avi,0.0,0.0,0.0
+0QSeuqzpcOQ_1_3f75306d.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/0QSeuqzpcOQ_1.avi,0.0,0.0,0.0
+q2yEYFD5_0_3509a47f.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/q2yEYFD5_0.avi,0.0,0.0,0.0
+dOo2X5wR_0_30483bbc.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/dOo2X5wR_0.avi,0.0,0.0,0.0
+skycjZcE_0_45f56e50.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/skycjZcE_0.avi,0.0,0.0,0.0
+5RayT2Vy0EA_2_4e6198de.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/5RayT2Vy0EA_2.avi,0.0,0.0,0.0
+KQTiHlA11fM_1_5109623a.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/KQTiHlA11fM_1.avi,0.0,0.0,0.0
+qEeRHumV_0_95e6ccc5.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/qEeRHumV_0.avi,0.0,0.0,0.0
+AsGAgf8U2rk_0_4c22302d.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/AsGAgf8U2rk_0.avi,0.0,0.0,0.0
+McDxnU7x_0_aa456104.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/McDxnU7x_0.avi,0.0,0.0,0.0
+oW8ySS0rN4Y_0_accf3d36.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/oW8ySS0rN4Y_0.avi,0.0,0.0,0.0
+d_93UNyiVM4_1_bb71b686.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/d_93UNyiVM4_1.avi,0.0,0.0,0.0
+IynvwHe9W3U_3_328cd60b.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/IynvwHe9W3U_3.avi,0.0,0.0,0.0
+OTVE3eLAuUM_0_9dac45e5.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/OTVE3eLAuUM_0.avi,0.0,0.0,0.0
+7qtRgyFsk3s_1_81755f70.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/7qtRgyFsk3s_1.avi,0.0,0.0,0.0
+rRbZUKgk_0_93497b83.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/rRbZUKgk_0.avi,0.0,0.0,0.0
+cJvLTWGs-SE_1_c2ddc905.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/cJvLTWGs-SE_1.avi,0.0,0.0,0.0
+PJDdPv2b9-s_0_3fa4af5a.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/PJDdPv2b9-s_0.avi,0.0,0.0,0.0
+6JmCJbug_0_8cca0936.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/6JmCJbug_0.avi,0.0,0.0,0.0
+cURNFrn5_0_c91094e0.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/cURNFrn5_0.avi,0.0,0.0,0.0
+C7Ty4ui5_0_65af99c0.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/C7Ty4ui5_0.avi,0.0,0.0,0.0
+RFAA8QO7_0_df8fc4a3.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/RFAA8QO7_0.avi,0.0,0.0,0.0
+F7W6PQ3V3y8_2_ce3c2db6.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/F7W6PQ3V3y8_2.avi,0.0,0.0,0.0
+yWnLtCrM_0_6700c237.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/yWnLtCrM_0.avi,0.0,0.0,0.0
+F7W6PQ3V3y8_1_290241bd.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/F7W6PQ3V3y8_1.avi,0.0,0.0,0.0
+1tU4kxa51vw_0_b15a6f75.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/1tU4kxa51vw_0.avi,0.0,0.0,0.0
+Ae3RYgGF_0_4cd68c26.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/Ae3RYgGF_0.avi,0.0,0.0,0.0
+WW8zIoiZ_0_a9705de2.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/WW8zIoiZ_0.avi,0.0,0.0,0.0
+q78eIX56_0_7709b5a5.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/q78eIX56_0.avi,0.0,0.0,0.0
+TYsebroPeGY_1_0ecbe915.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/TYsebroPeGY_1.avi,0.0,0.0,0.0
+R1A_AxUKosk_0_171c8081.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/R1A_AxUKosk_0.avi,0.0,0.0,0.0
+0TFi8D8IBg4_0_e76b11f4.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/0TFi8D8IBg4_0.avi,0.0,0.0,0.0
+XQR0CvyY_1_bf72cfe9.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/XQR0CvyY_1.avi,0.0,0.0,0.0
+4HH7yMU8y9A_0_3b107fa2.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/4HH7yMU8y9A_0.avi,0.0,0.0,0.0
+PFw7SeFOD04_1_557fcc17.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/PFw7SeFOD04_1.avi,0.0,0.0,0.0
+X3mPJLe9_0_4aa387a4.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/X3mPJLe9_0.avi,0.0,0.0,0.0
+11vr9Jho_0_ac0854ad.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/11vr9Jho_0.avi,0.0,0.0,0.0
+oUqxGhTe_0_d6df1bbc.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/oUqxGhTe_0.avi,0.0,0.0,0.0
+jbSCSexU_0_e8032263.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/jbSCSexU_0.avi,0.0,0.0,0.0
+5z1f5blMBdk_0_ac27ef3e.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/5z1f5blMBdk_0.avi,0.0,0.0,0.0
+OU7AM5fv_0_1e0e9f3c.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/OU7AM5fv_0.avi,0.0,0.0,0.0
+K4700BuM_0_7351706d.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/K4700BuM_0.avi,0.0,0.0,0.0
+Fighting014_x264_1_49957094.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/Fighting014_x264_1.avi,0.0,0.0,0.0
+JwTPruSFTjk_0_e6539dc6.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/JwTPruSFTjk_0.avi,0.0,0.0,0.0
+Fk3lg4wG_0_b1b614ce.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/Fk3lg4wG_0.avi,0.0,0.0,0.0
+RGIpCpdlzI8_1_af13b2dc.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/RGIpCpdlzI8_1.avi,0.0,0.0,0.0
+hWBjrqFS_0_ba2b3b79.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/hWBjrqFS_0.avi,0.0,0.0,0.0
+golJWJCak1k_1_79b2f0a4.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/golJWJCak1k_1.avi,0.0,0.0,0.0
+Isob76kh_0_0d8b6dc8.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/Isob76kh_0.avi,0.0,0.0,0.0
+kMI2JME3Aag_0_58a336ab.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/kMI2JME3Aag_0.avi,0.0,0.0,0.0
+S5dmvVF4_0_e3f980db.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/S5dmvVF4_0.avi,0.0,0.0,0.0
+OTVE3eLAuUM_1_6435d2d7.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/OTVE3eLAuUM_1.avi,0.0,0.0,0.0
+IynvwHe9W3U_0_c4614e61.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/IynvwHe9W3U_0.avi,0.0,0.0,0.0
+88ndrvAZpE8_0_d99ad498.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/88ndrvAZpE8_0.avi,0.0,0.0,0.0
+NPeKBgURcxI_0_6cc918d9.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/NPeKBgURcxI_0.avi,0.0,0.0,0.0
+tgkbh2d9_0_475d2b37.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/tgkbh2d9_0.avi,0.0,0.0,0.0
+EckGCByW_0_570e7c08.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/EckGCByW_0.avi,0.0,0.0,0.0
+vCO6CZNt_0_c8bdce8f.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/vCO6CZNt_0.avi,0.0,0.0,0.0
+3z7ncTuu_0_3d26f182.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/3z7ncTuu_0.avi,0.0,0.0,0.0
+Pe1uIhp4dAQ_0_c1bd829d.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/Pe1uIhp4dAQ_0.avi,0.0,0.0,0.0
+fMmvH1Fa_0_326ba38a.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/fMmvH1Fa_0.avi,0.0,0.0,0.0
+dkTzP0SB_0_2689243b.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/dkTzP0SB_0.avi,0.0,0.0,0.0
+wk5WCCti_0_1ea5bda8.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/wk5WCCti_0.avi,0.0,0.0,0.0
+310cmTrl_0_e12f7c2f.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/310cmTrl_0.avi,0.0,0.0,0.0
+bQHNsRpQOIE_0_4998e28d.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/bQHNsRpQOIE_0.avi,0.0,0.0,0.0
+qrWTk-2a13o_2_9cb260ed.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/qrWTk-2a13o_2.avi,0.0,0.0,0.0
+s2S2nIWk_0_8262c7a4.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/s2S2nIWk_0.avi,0.0,0.0,0.0
+Am9mUxPTvK4_0_fedad063.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/Am9mUxPTvK4_0.avi,0.0,0.0,0.0
+e6iHy7V5_0_acee4249.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/e6iHy7V5_0.avi,0.0,0.0,0.0
+6Dej3-k3MRE_0_e8d389fb.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/6Dej3-k3MRE_0.avi,0.0,0.0,0.0
+TJfoIe801t8_0_5e8dfe0e.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/TJfoIe801t8_0.avi,0.0,0.0,0.0
+xKq3hlefCUI_0_ee76dfb9.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/xKq3hlefCUI_0.avi,0.0,0.0,0.0
+KQTiHlA11fM_0_e875d212.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/KQTiHlA11fM_0.avi,0.0,0.0,0.0
+nj9Rc3lY_0_7bca0de1.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/nj9Rc3lY_0.avi,0.0,0.0,0.0
+4grE6XdY_0_5b5f2157.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/4grE6XdY_0.avi,0.0,0.0,0.0
+MmUtpm6Z_0_2d3af2e0.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/MmUtpm6Z_0.avi,0.0,0.0,0.0
+az7WDDFT_0_6d6ce2e5.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/az7WDDFT_0.avi,0.0,0.0,0.0
+LiCakkNH_0_12994c8e.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/LiCakkNH_0.avi,0.0,0.0,0.0
+TfDHgxDm_0_e7fadb15.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/TfDHgxDm_0.avi,0.0,0.0,0.0
+4HH7yMU8y9A_1_fb7f735c.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/4HH7yMU8y9A_1.avi,0.0,0.0,0.0
+6mrIIcAQ2fI_0_890aaf53.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/6mrIIcAQ2fI_0.avi,0.0,0.0,0.0
+kExp3yhspR0_1_e709b5bf.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/kExp3yhspR0_1.avi,0.0,0.0,0.0
+_q5Nwh4Z6ao_5_f7cb5c1a.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/_q5Nwh4Z6ao_5.avi,0.0,0.0,0.0
+E0rUpvbX_0_1070257a.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/E0rUpvbX_0.avi,0.0,0.0,0.0
+551_wlV44GU_0_6db0952f.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/551_wlV44GU_0.avi,0.0,0.0,0.0
+88ndrvAZpE8_1_e41588de.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/88ndrvAZpE8_1.avi,0.0,0.0,0.0
+gk0v57Xn_0_80e27dca.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/gk0v57Xn_0.avi,0.0,0.0,0.0
+OakN3f1N_0_73292935.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/OakN3f1N_0.avi,0.0,0.0,0.0
+xTCvMktQ_0_f035c5ab.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/xTCvMktQ_0.avi,0.0,0.0,0.0
+ww9L6ULb_0_c60e26aa.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/ww9L6ULb_0.avi,0.0,0.0,0.0
+4HH7yMU8y9A_3_6e7a16b5.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/4HH7yMU8y9A_3.avi,0.0,0.0,0.0
+gR4OsEPl894_3_6b511aad.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/gR4OsEPl894_3.avi,0.0,0.0,0.0
+gR4OsEPl894_2_427bb4ca.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/gR4OsEPl894_2.avi,0.0,0.0,0.0
+lmfaDmCCRoY_0_8fafaba3.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/lmfaDmCCRoY_0.avi,0.0,0.0,0.0
+i5xJxtv4gXs_2_788ef575.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/i5xJxtv4gXs_2.avi,0.0,0.0,0.0
+CfPgoKqk_0_a625f9db.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/CfPgoKqk_0.avi,0.0,0.0,0.0
+NvYo6CS_i_A_0_16c9c6c4.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/NvYo6CS_i_A_0.avi,0.0,0.0,0.0
+LSJPhJTB_0_2b4abba5.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/LSJPhJTB_0.avi,0.0,0.0,0.0
+4jZvTj4j_0_a84f6764.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/4jZvTj4j_0.avi,0.0,0.0,0.0
+TuWan04E3gQ_1_acd124c7.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/TuWan04E3gQ_1.avi,0.0,0.0,0.0
+VpnCjE1l_0_27641a4d.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/VpnCjE1l_0.avi,0.0,0.0,0.0
+H_VQJU0Bqpc_3_1f629845.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/H_VQJU0Bqpc_3.avi,0.0,0.0,0.0
+1QixA5m2_0_c6c43447.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/1QixA5m2_0.avi,0.0,0.0,0.0
+tXk2yvmq_0_0b3508ee.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/tXk2yvmq_0.avi,0.0,0.0,0.0
+CPGf41PN_0_f4d4d76c.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/CPGf41PN_0.avi,0.0,0.0,0.0
+1A3zEkCHBl8_2_dfe63c44.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/1A3zEkCHBl8_2.avi,0.0,0.0,0.0
+2bBn7MLg_0_6cef1770.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/2bBn7MLg_0.avi,0.0,0.0,0.0
+tILABXoHE7s_1_262b6de0.npy,/kaggle/input/datasets/vulamnguyen/rwf2000/RWF-2000/train/NonFight/tILABXoHE7s_1.avi,0.0,0.0,0.0
+Normal_Videos_941_x264_207bcadd.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Testing_Normal_Videos_Anomaly/Normal_Videos_941_x264.mp4,0.0,0.0,0.0
+Normal_Videos_710_x264_ba677246.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Testing_Normal_Videos_Anomaly/Normal_Videos_710_x264.mp4,0.0,0.0,0.0
+Normal_Videos_439_x264_072b2b9f.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Testing_Normal_Videos_Anomaly/Normal_Videos_439_x264.mp4,0.0,0.0,0.0
+Normal_Videos_873_x264_7be2a2dd.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Testing_Normal_Videos_Anomaly/Normal_Videos_873_x264.mp4,0.0,0.0,0.0
+Normal_Videos_866_x264_fd47019d.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Testing_Normal_Videos_Anomaly/Normal_Videos_866_x264.mp4,0.0,0.0,0.0
+Normal_Videos_897_x264_d92f7032.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Testing_Normal_Videos_Anomaly/Normal_Videos_897_x264.mp4,0.0,0.0,0.0
+Normal_Videos_783_x264_006aecb6.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Testing_Normal_Videos_Anomaly/Normal_Videos_783_x264.mp4,0.0,0.0,0.0
+Normal_Videos_871_x264_2b78c076.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Testing_Normal_Videos_Anomaly/Normal_Videos_871_x264.mp4,0.0,0.0,0.0
+Normal_Videos_758_x264_a1a39e76.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Testing_Normal_Videos_Anomaly/Normal_Videos_758_x264.mp4,0.0,0.0,0.0
+Normal_Videos_906_x264_999024e9.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Testing_Normal_Videos_Anomaly/Normal_Videos_906_x264.mp4,0.0,0.0,0.0
+Normal_Videos_246_x264_f83967a0.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Testing_Normal_Videos_Anomaly/Normal_Videos_246_x264.mp4,0.0,0.0,0.0
+Normal_Videos_929_x264_99a5ecdb.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Testing_Normal_Videos_Anomaly/Normal_Videos_929_x264.mp4,0.0,0.0,0.0
+Normal_Videos_704_x264_206ae22f.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Testing_Normal_Videos_Anomaly/Normal_Videos_704_x264.mp4,0.0,0.0,0.0
+Normal_Videos_911_x264_67159175.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Testing_Normal_Videos_Anomaly/Normal_Videos_911_x264.mp4,0.0,0.0,0.0
+Normal_Videos_875_x264_da768047.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Testing_Normal_Videos_Anomaly/Normal_Videos_875_x264.mp4,0.0,0.0,0.0
+Normal_Videos_927_x264_6b25c4f6.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Testing_Normal_Videos_Anomaly/Normal_Videos_927_x264.mp4,0.0,0.0,0.0
+Normal_Videos139_x264_7bad8d95.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/Normal_Videos139_x264.mp4,0.0,0.0,0.0
+Normal_Videos151_x264_4d719028.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/Normal_Videos151_x264.mp4,0.0,0.0,0.0
+Normal_Videos849_x264_7f0fa4c2.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/Normal_Videos849_x264.mp4,0.0,0.0,0.0
+Normal_Videos237_x264_c3e90e0c.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/Normal_Videos237_x264.mp4,0.0,0.0,0.0
+Normal_Videos396_x264_ddef30f6.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/Normal_Videos396_x264.mp4,0.0,0.0,0.0
+Normal_Videos388_x264_01414f73.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/Normal_Videos388_x264.mp4,0.0,0.0,0.0
+Normal_Videos302_x264_760c6c13.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/Normal_Videos302_x264.mp4,0.0,0.0,0.0
+Normal_Videos916_x264_138099d5.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/Normal_Videos916_x264.mp4,0.0,0.0,0.0
+Normal_Videos474_x264_96b68eba.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/Normal_Videos474_x264.mp4,0.0,0.0,0.0
+Normal_Videos646_x264_71a577a6.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/Normal_Videos646_x264.mp4,0.0,0.0,0.0
+Normal_Videos429_x264_53446a34.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/Normal_Videos429_x264.mp4,0.0,0.0,0.0
+Normal_Videos068_x264_e8943286.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/Normal_Videos068_x264.mp4,0.0,0.0,0.0
+Normal_Videos581_x264_655de69d.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/Normal_Videos581_x264.mp4,0.0,0.0,0.0
+Normal_Videos403_x264_d5c79ed4.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/Normal_Videos403_x264.mp4,0.0,0.0,0.0
+Normal_Videos840_x264_4ceb1404.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/Normal_Videos840_x264.mp4,0.0,0.0,0.0
+Normal_Videos290_x264_72ec4f8b.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/Normal_Videos290_x264.mp4,0.0,0.0,0.0
+Normal_Videos723_x264_503606d3.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/Normal_Videos723_x264.mp4,0.0,0.0,0.0
+Normal_Videos683_x264_9d68d133.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/Normal_Videos683_x264.mp4,0.0,0.0,0.0
+Normal_Videos947_x264_d4bd2bbf.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/Normal_Videos947_x264.mp4,0.0,0.0,0.0
+Normal_Videos121_x264_1932d92a.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/Normal_Videos121_x264.mp4,0.0,0.0,0.0
+Normal_Videos501_x264_c5803375.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/Normal_Videos501_x264.mp4,0.0,0.0,0.0
+Normal_Videos496_x264_15761dea.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/Normal_Videos496_x264.mp4,0.0,0.0,0.0
+Normal_Videos154_x264_0420844e.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/Normal_Videos154_x264.mp4,0.0,0.0,0.0
+Normal_Videos448_x264_c7d66a43.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/Normal_Videos448_x264.mp4,0.0,0.0,0.0
+Normal_Videos278_x264_36e6b363.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/Normal_Videos278_x264.mp4,0.0,0.0,0.0
+Normal_Videos459_x264_3e7b2d2e.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/Normal_Videos459_x264.mp4,0.0,0.0,0.0
+Normal_Videos668_x264_c0554367.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/Normal_Videos668_x264.mp4,0.0,0.0,0.0
+Normal_Videos440_x264_c8cd65ec.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/Normal_Videos440_x264.mp4,0.0,0.0,0.0
+Normal_Videos072_x264_bccc8f52.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/Normal_Videos072_x264.mp4,0.0,0.0,0.0
+Normal_Videos820_x264_dd79ec20.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/Normal_Videos820_x264.mp4,0.0,0.0,0.0
+Normal_Videos415_x264_0d9691ce.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/Normal_Videos415_x264.mp4,0.0,0.0,0.0
+Normal_Videos470_x264_d684fd0a.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/Normal_Videos470_x264.mp4,0.0,0.0,0.0
+Normal_Videos333_x264_e964d1e6.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/Normal_Videos333_x264.mp4,0.0,0.0,0.0
+Normal_Videos699_x264_18c57713.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/Normal_Videos699_x264.mp4,0.0,0.0,0.0
+Normal_Videos301_x264_ebca5f87.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/Normal_Videos301_x264.mp4,0.0,0.0,0.0
+Normal_Videos692_x264_f294d0c6.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/Normal_Videos692_x264.mp4,0.0,0.0,0.0
+Normal_Videos630_x264_0bdbe6fb.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/Normal_Videos630_x264.mp4,0.0,0.0,0.0
+Normal_Videos532_x264_780354e2.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/Normal_Videos532_x264.mp4,0.0,0.0,0.0
+Normal_Videos605_x264_174348d9.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/Normal_Videos605_x264.mp4,0.0,0.0,0.0
+Normal_Videos286_x264_939ed5af.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/Normal_Videos286_x264.mp4,0.0,0.0,0.0
+Normal_Videos593_x264_829cd976.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/Normal_Videos593_x264.mp4,0.0,0.0,0.0
+Normal_Videos380_x264_102f6fe3.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/Normal_Videos380_x264.mp4,0.0,0.0,0.0
+Normal_Videos657_x264_772aefa2.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/Normal_Videos657_x264.mp4,0.0,0.0,0.0
+Normal_Videos468_x264_dc00156f.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/Normal_Videos468_x264.mp4,0.0,0.0,0.0
+Normal_Videos318_x264_9b1ae036.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/Normal_Videos318_x264.mp4,0.0,0.0,0.0
+Normal_Videos834_x264_5c834a08.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/Normal_Videos834_x264.mp4,0.0,0.0,0.0
+Normal_Videos752_x264_01be1ea9.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/Normal_Videos752_x264.mp4,0.0,0.0,0.0
+Normal_Videos413_x264_a56b97aa.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/Normal_Videos413_x264.mp4,0.0,0.0,0.0
+Normal_Videos405_x264_1f5d2cfc.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/Normal_Videos405_x264.mp4,0.0,0.0,0.0
+Normal_Videos948_x264_cd880eb7.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/Normal_Videos948_x264.mp4,0.0,0.0,0.0
+Normal_Videos351_x264_858081fa.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/Normal_Videos351_x264.mp4,0.0,0.0,0.0
+Normal_Videos565_x264_a711dd6f.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/Normal_Videos565_x264.mp4,0.0,0.0,0.0
+Normal_Videos664_x264_49cf0ff2.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/Normal_Videos664_x264.mp4,0.0,0.0,0.0
+Normal_Videos103_x264_9719f4f6.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/Normal_Videos103_x264.mp4,0.0,0.0,0.0
+Normal_Videos284_x264_1c2668fb.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/Normal_Videos284_x264.mp4,0.0,0.0,0.0
+Normal_Videos599_x264_bf007caa.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/Normal_Videos599_x264.mp4,0.0,0.0,0.0
+Normal_Videos821_x264_8fe8b60b.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/Normal_Videos821_x264.mp4,0.0,0.0,0.0
+Normal_Videos395_x264_04120172.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/Normal_Videos395_x264.mp4,0.0,0.0,0.0
+Normal_Videos564_x264_4a27a807.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/Normal_Videos564_x264.mp4,0.0,0.0,0.0
+Normal_Videos672_x264_5d21f0b5.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/Normal_Videos672_x264.mp4,0.0,0.0,0.0
+Normal_Videos949_x264_1c713690.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/Normal_Videos949_x264.mp4,0.0,0.0,0.0
+Normal_Videos685_x264_6b0f08d8.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/Normal_Videos685_x264.mp4,0.0,0.0,0.0
+Normal_Videos719_x264_bcf9590a.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/Normal_Videos719_x264.mp4,0.0,0.0,0.0
+Normal_Videos425_x264_506d70a5.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/Normal_Videos425_x264.mp4,0.0,0.0,0.0
+Normal_Videos073_x264_216bbdf8.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/Normal_Videos073_x264.mp4,0.0,0.0,0.0
+Normal_Videos771_x264_98b6c647.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/Normal_Videos771_x264.mp4,0.0,0.0,0.0
+Normal_Videos520_x264_3eeec056.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/Normal_Videos520_x264.mp4,0.0,0.0,0.0
+Normal_Videos675_x264_c11908ac.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/Normal_Videos675_x264.mp4,0.0,0.0,0.0
+Normal_Videos193_x264_5975e1c6.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/Normal_Videos193_x264.mp4,0.0,0.0,0.0
+Normal_Videos384_x264_c6726688.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/Normal_Videos384_x264.mp4,0.0,0.0,0.0
+Normal_Videos650_x264_cc77ae67.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/Normal_Videos650_x264.mp4,0.0,0.0,0.0
+Normal_Videos521_x264_0bf61ecc.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/Normal_Videos521_x264.mp4,0.0,0.0,0.0
+Normal_Videos334_x264_24367528.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/Normal_Videos334_x264.mp4,0.0,0.0,0.0
+Normal_Videos809_x264_3c76e491.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/Normal_Videos809_x264.mp4,0.0,0.0,0.0
+Normal_Videos431_x264_67a2ad40.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/Normal_Videos431_x264.mp4,0.0,0.0,0.0
+Normal_Videos357_x264_68d0a3d7.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/Normal_Videos357_x264.mp4,0.0,0.0,0.0
+Normal_Videos753_x264_13aeec21.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/Normal_Videos753_x264.mp4,0.0,0.0,0.0
+Normal_Videos814_x264_2581c44b.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/Normal_Videos814_x264.mp4,0.0,0.0,0.0
+Normal_Videos174_x264_7969e982.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/Normal_Videos174_x264.mp4,0.0,0.0,0.0
+Normal_Videos307_x264_4838e96f.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/Normal_Videos307_x264.mp4,0.0,0.0,0.0
+Normal_Videos383_x264_e1fd3fa4.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/Normal_Videos383_x264.mp4,0.0,0.0,0.0
+Normal_Videos594_x264_1d6a6071.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/Normal_Videos594_x264.mp4,0.0,0.0,0.0
+Normal_Videos847_x264_eaff8a1f.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/Normal_Videos847_x264.mp4,0.0,0.0,0.0
+Normal_Videos370_x264_a08bdc91.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/Normal_Videos370_x264.mp4,0.0,0.0,0.0
+Normal_Videos822_x264_f2b0db6e.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/Normal_Videos822_x264.mp4,0.0,0.0,0.0
+Normal_Videos666_x264_48470901.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/Normal_Videos666_x264.mp4,0.0,0.0,0.0
+Normal_Videos374_x264_b178d5b9.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/Normal_Videos374_x264.mp4,0.0,0.0,0.0
+Normal_Videos239_x264_3f0fd488.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/Normal_Videos239_x264.mp4,0.0,0.0,0.0
+Normal_Videos306_x264_efd05bac.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/Normal_Videos306_x264.mp4,0.0,0.0,0.0
+Normal_Videos534_x264_ae6743b8.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/Normal_Videos534_x264.mp4,0.0,0.0,0.0
+Normal_Videos523_x264_ac937bf7.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/Normal_Videos523_x264.mp4,0.0,0.0,0.0
+Normal_Videos375_x264_198bcdcf.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/Normal_Videos375_x264.mp4,0.0,0.0,0.0
+Normal_Videos762_x264_07738eda.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/Normal_Videos762_x264.mp4,0.0,0.0,0.0
+Normal_Videos716_x264_d13e4007.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/Normal_Videos716_x264.mp4,0.0,0.0,0.0
+Normal_Videos146_x264_3544902d.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/Normal_Videos146_x264.mp4,0.0,0.0,0.0
+Normal_Videos682_x264_b4f7d52b.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/Normal_Videos682_x264.mp4,0.0,0.0,0.0
+Normal_Videos697_x264_8dd15a6a.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/Normal_Videos697_x264.mp4,0.0,0.0,0.0
+Normal_Videos323_x264_1846b14f.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/Normal_Videos323_x264.mp4,0.0,0.0,0.0
+Normal_Videos560_x264_65dd4ab4.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/Normal_Videos560_x264.mp4,0.0,0.0,0.0
+Normal_Videos706_x264_88fcadaa.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/Normal_Videos706_x264.mp4,0.0,0.0,0.0
+Normal_Videos047_x264_fe04972d.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/Normal_Videos047_x264.mp4,0.0,0.0,0.0
+Normal_Videos350_x264_26c7b9fb.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/Normal_Videos350_x264.mp4,0.0,0.0,0.0
+Normal_Videos789_x264_fb02e623.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/Normal_Videos789_x264.mp4,0.0,0.0,0.0
+Normal_Videos626_x264_1790ffdb.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/Normal_Videos626_x264.mp4,0.0,0.0,0.0
+Normal_Videos125_x264_96d50c22.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/Normal_Videos125_x264.mp4,0.0,0.0,0.0
+Normal_Videos742_x264_ccbe342f.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/Normal_Videos742_x264.mp4,0.0,0.0,0.0
+Normal_Videos728_x264_bb50fda4.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/Normal_Videos728_x264.mp4,0.0,0.0,0.0
+Normal_Videos433_x264_d0f08ceb.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/Normal_Videos433_x264.mp4,0.0,0.0,0.0
+Normal_Videos359_x264_7d1158b3.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/Normal_Videos359_x264.mp4,0.0,0.0,0.0
+Normal_Videos319_x264_ef41d3ce.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/Normal_Videos319_x264.mp4,0.0,0.0,0.0
+Normal_Videos075_x264_5e1ac65d.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/Normal_Videos075_x264.mp4,0.0,0.0,0.0
+Normal_Videos299_x264_0fbfe457.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/Normal_Videos299_x264.mp4,0.0,0.0,0.0
+Normal_Videos844_x264_aefe4c7a.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/Normal_Videos844_x264.mp4,0.0,0.0,0.0
+Normal_Videos645_x264_d5e519d1.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/Normal_Videos645_x264.mp4,0.0,0.0,0.0
+Normal_Videos746_x264_9c842790.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/Normal_Videos746_x264.mp4,0.0,0.0,0.0
+Normal_Videos788_x264_1aad2068.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/Normal_Videos788_x264.mp4,0.0,0.0,0.0
+Normal_Videos543_x264_e3773fb9.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/Normal_Videos543_x264.mp4,0.0,0.0,0.0
+Normal_Videos473_x264_efd60d56.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/Normal_Videos473_x264.mp4,0.0,0.0,0.0
+Normal_Videos021_x264_11766d45.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/Normal_Videos021_x264.mp4,0.0,0.0,0.0
+Normal_Videos162_x264_0c4010ec.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/Normal_Videos162_x264.mp4,0.0,0.0,0.0
+Normal_Videos_831_x264_22794e6a.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Normal_Videos_for_Event_Recognition/Normal_Videos_831_x264.mp4,0.0,0.0,0.0
+Normal_Videos_758_x264_ac62c0ca.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Normal_Videos_for_Event_Recognition/Normal_Videos_758_x264.mp4,0.0,0.0,0.0
+Normal_Videos_246_x264_5a53a54e.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Normal_Videos_for_Event_Recognition/Normal_Videos_246_x264.mp4,0.0,0.0,0.0
+RoadAccidents079_x264_030dbaed.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/RoadAccidents/RoadAccidents079_x264.mp4,1.0,0.0,0.0
+RoadAccidents055_x264_5571475e.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/RoadAccidents/RoadAccidents055_x264.mp4,1.0,0.0,0.0
+RoadAccidents147_x264_f872780c.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/RoadAccidents/RoadAccidents147_x264.mp4,1.0,0.0,0.0
+RoadAccidents136_x264_7ae791bf.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/RoadAccidents/RoadAccidents136_x264.mp4,1.0,0.0,0.0
+RoadAccidents104_x264_04493066.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/RoadAccidents/RoadAccidents104_x264.mp4,1.0,0.0,0.0
+RoadAccidents107_x264_cc85a7f1.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/RoadAccidents/RoadAccidents107_x264.mp4,1.0,0.0,0.0
+RoadAccidents117_x264_b4dbf6f2.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/RoadAccidents/RoadAccidents117_x264.mp4,1.0,0.0,0.0
+RoadAccidents053_x264_10b8d2b6.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/RoadAccidents/RoadAccidents053_x264.mp4,1.0,0.0,0.0
+RoadAccidents040_x264_58bf49da.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/RoadAccidents/RoadAccidents040_x264.mp4,1.0,0.0,0.0
+RoadAccidents028_x264_49a64fc3.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/RoadAccidents/RoadAccidents028_x264.mp4,1.0,0.0,0.0
+RoadAccidents103_x264_876cbf7c.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/RoadAccidents/RoadAccidents103_x264.mp4,1.0,0.0,0.0
+RoadAccidents031_x264_edefe6ab.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/RoadAccidents/RoadAccidents031_x264.mp4,1.0,0.0,0.0
+RoadAccidents085_x264_46388800.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/RoadAccidents/RoadAccidents085_x264.mp4,1.0,0.0,0.0
+RoadAccidents092_x264_92344759.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/RoadAccidents/RoadAccidents092_x264.mp4,1.0,0.0,0.0
+RoadAccidents090_x264_eab71428.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/RoadAccidents/RoadAccidents090_x264.mp4,1.0,0.0,0.0
+RoadAccidents064_x264_b4286ac6.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/RoadAccidents/RoadAccidents064_x264.mp4,1.0,0.0,0.0
+RoadAccidents067_x264_cd13af8c.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/RoadAccidents/RoadAccidents067_x264.mp4,1.0,0.0,0.0
+RoadAccidents145_x264_5ddc797e.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/RoadAccidents/RoadAccidents145_x264.mp4,1.0,0.0,0.0
+RoadAccidents007_x264_adeb2a39.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/RoadAccidents/RoadAccidents007_x264.mp4,1.0,0.0,0.0
+RoadAccidents065_x264_154b16b6.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/RoadAccidents/RoadAccidents065_x264.mp4,1.0,0.0,0.0
+Assault042_x264_c371b672.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Assault/Assault042_x264.mp4,1.0,0.0,0.0
+Assault046_x264_27c60c98.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Assault/Assault046_x264.mp4,1.0,0.0,0.0
+Assault032_x264_3a2a1625.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Assault/Assault032_x264.mp4,1.0,0.0,0.0
+Assault044_x264_f877d045.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Assault/Assault044_x264.mp4,1.0,0.0,0.0
+Assault013_x264_1434823c.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Assault/Assault013_x264.mp4,1.0,0.0,0.0
+Assault039_x264_8f432dd1.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Assault/Assault039_x264.mp4,1.0,0.0,0.0
+Vandalism010_x264_c80c5a9d.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Vandalism/Vandalism010_x264.mp4,0.0,0.0,0.0
+Vandalism047_x264_1a95115a.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Vandalism/Vandalism047_x264.mp4,0.0,0.0,0.0
+Vandalism034_x264_5d974b80.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Vandalism/Vandalism034_x264.mp4,0.0,0.0,0.0
+Vandalism040_x264_85c7aed3.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Vandalism/Vandalism040_x264.mp4,0.0,0.0,0.0
+Vandalism028_x264_5e527b14.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Vandalism/Vandalism028_x264.mp4,0.0,0.0,0.0
+Vandalism006_x264_5b00f68e.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Vandalism/Vandalism006_x264.mp4,0.0,0.0,0.0
+Vandalism039_x264_f9ed714a.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Vandalism/Vandalism039_x264.mp4,0.0,0.0,0.0
+Vandalism013_x264_f4710674.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Vandalism/Vandalism013_x264.mp4,0.0,0.0,0.0
+Vandalism037_x264_c80777cb.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Vandalism/Vandalism037_x264.mp4,0.0,0.0,0.0
+Vandalism023_x264_04121e0f.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Vandalism/Vandalism023_x264.mp4,0.0,0.0,0.0
+Vandalism008_x264_d2cb134a.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Vandalism/Vandalism008_x264.mp4,0.0,0.0,0.0
+Arrest036_x264_2017e159.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Arrest/Arrest036_x264.mp4,1.0,0.0,0.0
+Arrest019_x264_3ed07cdf.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Arrest/Arrest019_x264.mp4,1.0,0.0,0.0
+Arrest022_x264_3ca8171b.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Arrest/Arrest022_x264.mp4,1.0,0.0,0.0
+Arrest032_x264_c5043514.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Arrest/Arrest032_x264.mp4,1.0,0.0,0.0
+Arrest046_x264_b3626355.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Arrest/Arrest046_x264.mp4,1.0,0.0,0.0
+Arrest002_x264_8e84353f.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Arrest/Arrest002_x264.mp4,1.0,0.0,0.0
+Arrest039_x264_5fc9d2a4.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Arrest/Arrest039_x264.mp4,1.0,0.0,0.0
+Arrest041_x264_ed1349a9.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Arrest/Arrest041_x264.mp4,1.0,0.0,0.0
+Arrest001_x264_b3ca9e83.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Arrest/Arrest001_x264.mp4,1.0,0.0,0.0
+Shooting050_x264_7c8b08cb.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Shooting/Shooting050_x264.mp4,1.0,0.0,0.0
+Shooting014_x264_93b03ad0.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Shooting/Shooting014_x264.mp4,1.0,0.0,0.0
+Shooting031_x264_b7e40485.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Shooting/Shooting031_x264.mp4,1.0,0.0,0.0
+Shooting015_x264_daef6cd8.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Shooting/Shooting015_x264.mp4,1.0,0.0,0.0
+Shooting038_x264_b0b14cc3.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Shooting/Shooting038_x264.mp4,1.0,0.0,0.0
+Shooting024_x264_86359e1c.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Shooting/Shooting024_x264.mp4,1.0,0.0,0.0
+Shooting052_x264_e7595707.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Shooting/Shooting052_x264.mp4,1.0,0.0,0.0
+Shooting017_x264_93229850.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Shooting/Shooting017_x264.mp4,1.0,0.0,0.0
+Shooting048_x264_f1645e93.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Shooting/Shooting048_x264.mp4,1.0,0.0,0.0
+Arson032_x264_5ff389e9.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Arson/Arson032_x264.mp4,1.0,0.0,0.0
+Arson017_x264_ff195124.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Arson/Arson017_x264.mp4,1.0,0.0,0.0
+Arson008_x264_62dc6747.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Arson/Arson008_x264.mp4,1.0,0.0,0.0
+Arson027_x264_c09b668a.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Arson/Arson027_x264.mp4,1.0,0.0,0.0
+Arson016_x264_54b34022.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Arson/Arson016_x264.mp4,1.0,0.0,0.0
+Arson018_x264_1bc887c7.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Arson/Arson018_x264.mp4,1.0,0.0,0.0
+Arson046_x264_d035bfae.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Arson/Arson046_x264.mp4,1.0,0.0,0.0
+Arson009_x264_5acb6f83.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Arson/Arson009_x264.mp4,1.0,0.0,0.0
+Arson030_x264_fbb8a166.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Arson/Arson030_x264.mp4,1.0,0.0,0.0
+Arson023_x264_5846cad9.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Arson/Arson023_x264.mp4,1.0,0.0,0.0
+Explosion009_x264_5b9c8b15.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Explosion/Explosion009_x264.mp4,1.0,0.0,0.0
+Explosion018_x264_822838e8.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Explosion/Explosion018_x264.mp4,1.0,0.0,0.0
+Explosion015_x264_ef653997.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Explosion/Explosion015_x264.mp4,1.0,0.0,0.0
+Explosion045_x264_475b43ef.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Explosion/Explosion045_x264.mp4,1.0,0.0,0.0
+Explosion048_x264_de37cd27.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Explosion/Explosion048_x264.mp4,1.0,0.0,0.0
+Explosion043_x264_a2e6c148.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Explosion/Explosion043_x264.mp4,1.0,0.0,0.0
+Explosion037_x264_46f2fbed.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Explosion/Explosion037_x264.mp4,1.0,0.0,0.0
+Explosion034_x264_25b17587.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Explosion/Explosion034_x264.mp4,1.0,0.0,0.0
+Explosion035_x264_ac6e4806.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Explosion/Explosion035_x264.mp4,1.0,0.0,0.0
+Explosion025_x264_3a2a91c6.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Explosion/Explosion025_x264.mp4,1.0,0.0,0.0
+Shoplifting020_x264_a7055324.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Shoplifting/Shoplifting020_x264.mp4,0.0,0.0,0.0
+Shoplifting018_x264_2c494219.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Shoplifting/Shoplifting018_x264.mp4,0.0,0.0,0.0
+Shoplifting036_x264_780b70db.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Shoplifting/Shoplifting036_x264.mp4,0.0,0.0,0.0
+Shoplifting033_x264_1009b3eb.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Shoplifting/Shoplifting033_x264.mp4,0.0,0.0,0.0
+Shoplifting006_x264_2bca1ad6.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Shoplifting/Shoplifting006_x264.mp4,0.0,0.0,0.0
+Shoplifting025_x264_9a1cf0ac.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Shoplifting/Shoplifting025_x264.mp4,0.0,0.0,0.0
+Shoplifting044_x264_d00e9f0b.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Shoplifting/Shoplifting044_x264.mp4,0.0,0.0,0.0
+Shoplifting038_x264_076715da.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Shoplifting/Shoplifting038_x264.mp4,0.0,0.0,0.0
+Shoplifting013_x264_40a8f1c8.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Shoplifting/Shoplifting013_x264.mp4,0.0,0.0,0.0
+Shoplifting010_x264_9336a4a2.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Shoplifting/Shoplifting010_x264.mp4,0.0,0.0,0.0
+Shoplifting051_x264_0b5cbf10.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Shoplifting/Shoplifting051_x264.mp4,0.0,0.0,0.0
+Shoplifting012_x264_9e8744be.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Shoplifting/Shoplifting012_x264.mp4,0.0,0.0,0.0
+Shoplifting022_x264_ca142955.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Shoplifting/Shoplifting022_x264.mp4,0.0,0.0,0.0
+Robbery008_x264_c5830d29.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Robbery/Robbery008_x264.mp4,1.0,0.0,0.0
+Robbery087_x264_f5a7e630.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Robbery/Robbery087_x264.mp4,1.0,0.0,0.0
+Robbery017_x264_4a36e780.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Robbery/Robbery017_x264.mp4,1.0,0.0,0.0
+Robbery016_x264_00cda885.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Robbery/Robbery016_x264.mp4,1.0,0.0,0.0
+Robbery018_x264_085d6d95.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Robbery/Robbery018_x264.mp4,1.0,0.0,0.0
+Robbery003_x264_3aba5cb2.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Robbery/Robbery003_x264.mp4,1.0,0.0,0.0
+Robbery069_x264_87ca2d76.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Robbery/Robbery069_x264.mp4,1.0,0.0,0.0
+Robbery145_x264_6f66785e.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Robbery/Robbery145_x264.mp4,1.0,0.0,0.0
+Robbery092_x264_dd947063.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Robbery/Robbery092_x264.mp4,1.0,0.0,0.0
+Robbery104_x264_b55ab8be.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Robbery/Robbery104_x264.mp4,1.0,0.0,0.0
+Robbery027_x264_d7d47ba3.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Robbery/Robbery027_x264.mp4,1.0,0.0,0.0
+Robbery120_x264_cfa0d350.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Robbery/Robbery120_x264.mp4,1.0,0.0,0.0
+Robbery076_x264_5ea4b6f5.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Robbery/Robbery076_x264.mp4,1.0,0.0,0.0
+Robbery075_x264_a1a93c99.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Robbery/Robbery075_x264.mp4,1.0,0.0,0.0
+Robbery059_x264_cd3db006.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Robbery/Robbery059_x264.mp4,1.0,0.0,0.0
+Robbery022_x264_7fc89c20.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Robbery/Robbery022_x264.mp4,1.0,0.0,0.0
+Robbery088_x264_6cd563ae.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Robbery/Robbery088_x264.mp4,1.0,0.0,0.0
+Robbery143_x264_13f80c0e.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Robbery/Robbery143_x264.mp4,1.0,0.0,0.0
+Stealing031_x264_2aba8e13.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Stealing/Stealing031_x264.mp4,0.0,0.0,0.0
+Stealing051_x264_a61a47e7.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Stealing/Stealing051_x264.mp4,0.0,0.0,0.0
+Stealing112_x264_3e62704e.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Stealing/Stealing112_x264.mp4,0.0,0.0,0.0
+Stealing103_x264_3cd9b725.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Stealing/Stealing103_x264.mp4,0.0,0.0,0.0
+Stealing095_x264_15b78b63.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Stealing/Stealing095_x264.mp4,0.0,0.0,0.0
+Stealing009_x264_dcf7ca6b.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Stealing/Stealing009_x264.mp4,0.0,0.0,0.0
+Stealing052_x264_fe862c0e.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Stealing/Stealing052_x264.mp4,0.0,0.0,0.0
+Stealing008_x264_a3f18646.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Stealing/Stealing008_x264.mp4,0.0,0.0,0.0
+Stealing013_x264_b251b14f.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Stealing/Stealing013_x264.mp4,0.0,0.0,0.0
+Stealing046_x264_6cd2a9f6.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Stealing/Stealing046_x264.mp4,0.0,0.0,0.0
+Stealing113_x264_a4eba9c6.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Stealing/Stealing113_x264.mp4,0.0,0.0,0.0
+Stealing049_x264_82724e7d.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Stealing/Stealing049_x264.mp4,0.0,0.0,0.0
+Stealing065_x264_9b1383fc.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Stealing/Stealing065_x264.mp4,0.0,0.0,0.0
+Stealing083_x264_c45cbbdd.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Stealing/Stealing083_x264.mp4,0.0,0.0,0.0
+Stealing060_x264_d7de3262.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Stealing/Stealing060_x264.mp4,0.0,0.0,0.0
+Stealing062_x264_0d6cb22b.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Stealing/Stealing062_x264.mp4,0.0,0.0,0.0
+Stealing079_x264_572ce4dc.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Stealing/Stealing079_x264.mp4,0.0,0.0,0.0
+Burglary050_x264_cf30792b.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Burglary/Burglary050_x264.mp4,1.0,0.0,0.0
+Burglary055_x264_f66cbe81.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Burglary/Burglary055_x264.mp4,1.0,0.0,0.0
+Burglary030_x264_9429dcb9.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Burglary/Burglary030_x264.mp4,1.0,0.0,0.0
+Burglary023_x264_d73a8f9e.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Burglary/Burglary023_x264.mp4,1.0,0.0,0.0
+Burglary019_x264_9adeb628.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Burglary/Burglary019_x264.mp4,1.0,0.0,0.0
+Burglary011_x264_a464174d.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Burglary/Burglary011_x264.mp4,1.0,0.0,0.0
+Burglary058_x264_d69ad501.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Burglary/Burglary058_x264.mp4,1.0,0.0,0.0
+Burglary028_x264_e229eb5f.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Burglary/Burglary028_x264.mp4,1.0,0.0,0.0
+Burglary029_x264_567a3765.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Burglary/Burglary029_x264.mp4,1.0,0.0,0.0
+Burglary097_x264_61ac0c65.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Burglary/Burglary097_x264.mp4,1.0,0.0,0.0
+Burglary074_x264_92039dda.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Burglary/Burglary074_x264.mp4,1.0,0.0,0.0
+Burglary045_x264_2df0cc6f.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Burglary/Burglary045_x264.mp4,1.0,0.0,0.0
+Burglary037_x264_170c7f31.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Burglary/Burglary037_x264.mp4,1.0,0.0,0.0
+Burglary048_x264_23054924.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Burglary/Burglary048_x264.mp4,1.0,0.0,0.0
+Abuse041_x264_f41367b5.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Abuse/Abuse041_x264.mp4,1.0,0.0,0.0
+Abuse013_x264_b49c60f9.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Abuse/Abuse013_x264.mp4,1.0,0.0,0.0
+Abuse040_x264_bce5c742.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Abuse/Abuse040_x264.mp4,1.0,0.0,0.0
+Abuse036_x264_02ad7672.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Abuse/Abuse036_x264.mp4,1.0,0.0,0.0
+Abuse027_x264_8e37c9a3.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Abuse/Abuse027_x264.mp4,1.0,0.0,0.0
+Abuse030_x264_0d89178f.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Abuse/Abuse030_x264.mp4,1.0,0.0,0.0
+Abuse012_x264_64c4bf2b.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Abuse/Abuse012_x264.mp4,1.0,0.0,0.0
+Abuse017_x264_a254016f.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Abuse/Abuse017_x264.mp4,1.0,0.0,0.0
+Abuse007_x264_e734a3bb.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Abuse/Abuse007_x264.mp4,1.0,0.0,0.0
+Fighting007_x264_35023f16.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Fighting/Fighting007_x264.mp4,1.0,0.0,0.0
+Fighting045_x264_00329a98.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Fighting/Fighting045_x264.mp4,1.0,0.0,0.0
+Fighting020_x264_0a6b16d7.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Fighting/Fighting020_x264.mp4,1.0,0.0,0.0
+Fighting011_x264_608f7760.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Fighting/Fighting011_x264.mp4,1.0,0.0,0.0
+Fighting015_x264_6250f6fe.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Fighting/Fighting015_x264.mp4,1.0,0.0,0.0
+Fighting050_x264_aa0c679f.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Fighting/Fighting050_x264.mp4,1.0,0.0,0.0
+Fighting004_x264_69aeab6a.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Fighting/Fighting004_x264.mp4,1.0,0.0,0.0
+Fighting049_x264_0477c3d9.npy,/kaggle/input/datasets/bypktt/ucf-crimes/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Fighting/Fighting049_x264.mp4,1.0,0.0,0.0
+v_Skijet_g01_c02_05e794a0.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/Skijet/v_Skijet_g01_c02.avi,0.0,0.0,0.0
+v_BlowDryHair_g01_c02_d2bf8039.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/BlowDryHair/v_BlowDryHair_g01_c02.avi,0.0,0.0,0.0
+v_SumoWrestling_g06_c07_61d27eed.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/SumoWrestling/v_SumoWrestling_g06_c07.avi,0.0,0.0,0.0
+v_MoppingFloor_g06_c02_862a5e12.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/MoppingFloor/v_MoppingFloor_g06_c02.avi,0.0,0.0,0.0
+v_Rafting_g07_c02_b2752131.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/Rafting/v_Rafting_g07_c02.avi,0.0,0.0,0.0
+v_Fencing_g01_c03_8b4a7a53.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/Fencing/v_Fencing_g01_c03.avi,0.0,0.0,0.0
+v_ShavingBeard_g20_c07_2ecfd3f8.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/ShavingBeard/v_ShavingBeard_g20_c07.avi,0.0,0.0,0.0
+v_GolfSwing_g05_c06_0eb3b02f.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/GolfSwing/v_GolfSwing_g05_c06.avi,0.0,0.0,0.0
+v_CuttingInKitchen_g08_c04_33584b6f.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/CuttingInKitchen/v_CuttingInKitchen_g08_c04.avi,0.0,0.0,0.0
+v_HandstandWalking_g18_c06_a1284995.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/HandstandWalking/v_HandstandWalking_g18_c06.avi,0.0,0.0,0.0
+v_BrushingTeeth_g22_c02_2c37c0df.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/BrushingTeeth/v_BrushingTeeth_g22_c02.avi,0.0,0.0,0.0
+v_MilitaryParade_g20_c02_e0edb16c.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/MilitaryParade/v_MilitaryParade_g20_c02.avi,0.0,0.0,0.0
+v_StillRings_g17_c01_33406a89.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/StillRings/v_StillRings_g17_c01.avi,0.0,0.0,0.0
+v_PlayingCello_g02_c02_73dbd6eb.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/PlayingCello/v_PlayingCello_g02_c02.avi,0.0,0.0,0.0
+v_TrampolineJumping_g03_c02_e6b0b9be.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/TrampolineJumping/v_TrampolineJumping_g03_c02.avi,0.0,0.0,0.0
+v_BrushingTeeth_g02_c03_2b65bbfa.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/BrushingTeeth/v_BrushingTeeth_g02_c03.avi,0.0,0.0,0.0
+v_ApplyEyeMakeup_g21_c05_49702590.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/ApplyEyeMakeup/v_ApplyEyeMakeup_g21_c05.avi,0.0,0.0,0.0
+v_BoxingPunchingBag_g18_c03_8a4f96aa.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/BoxingPunchingBag/v_BoxingPunchingBag_g18_c03.avi,0.0,0.0,0.0
+v_PlayingPiano_g07_c03_5ab417d4.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/PlayingPiano/v_PlayingPiano_g07_c03.avi,0.0,0.0,0.0
+v_SoccerJuggling_g14_c06_81d84e9c.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/SoccerJuggling/v_SoccerJuggling_g14_c06.avi,0.0,0.0,0.0
+v_TennisSwing_g02_c01_fa5be558.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/TennisSwing/v_TennisSwing_g02_c01.avi,0.0,0.0,0.0
+v_Rowing_g22_c03_9ec78b27.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/Rowing/v_Rowing_g22_c03.avi,0.0,0.0,0.0
+v_Swing_g19_c04_dc875940.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/Swing/v_Swing_g19_c04.avi,0.0,0.0,0.0
+v_ShavingBeard_g19_c04_4320dbb9.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/ShavingBeard/v_ShavingBeard_g19_c04.avi,0.0,0.0,0.0
+v_TableTennisShot_g22_c03_f4d904ee.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/TableTennisShot/v_TableTennisShot_g22_c03.avi,0.0,0.0,0.0
+v_GolfSwing_g14_c04_73cf85b2.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/GolfSwing/v_GolfSwing_g14_c04.avi,0.0,0.0,0.0
+v_BlowingCandles_g06_c01_9fc69873.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/BlowingCandles/v_BlowingCandles_g06_c01.avi,0.0,0.0,0.0
+v_JumpRope_g16_c07_ea74318e.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/JumpRope/v_JumpRope_g16_c07.avi,0.0,0.0,0.0
+v_WalkingWithDog_g15_c03_7c040f4e.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/WalkingWithDog/v_WalkingWithDog_g15_c03.avi,0.0,0.0,0.0
+v_Punch_g17_c05_9e246900.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/Punch/v_Punch_g17_c05.avi,0.0,0.0,0.0
+v_BaseballPitch_g11_c04_0daab478.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/BaseballPitch/v_BaseballPitch_g11_c04.avi,0.0,0.0,0.0
+v_PlayingDaf_g25_c07_2343181f.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/PlayingDaf/v_PlayingDaf_g25_c07.avi,0.0,0.0,0.0
+v_RockClimbingIndoor_g18_c02_a76e4d31.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/RockClimbingIndoor/v_RockClimbingIndoor_g18_c02.avi,0.0,0.0,0.0
+v_JavelinThrow_g05_c02_f666c272.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/JavelinThrow/v_JavelinThrow_g05_c02.avi,0.0,0.0,0.0
+v_WallPushups_g14_c03_e3dfe267.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/WallPushups/v_WallPushups_g14_c03.avi,0.0,0.0,0.0
+v_MilitaryParade_g22_c02_3ccb4676.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/MilitaryParade/v_MilitaryParade_g22_c02.avi,0.0,0.0,0.0
+v_Swing_g13_c03_1ec5c086.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/Swing/v_Swing_g13_c03.avi,0.0,0.0,0.0
+v_SoccerPenalty_g10_c02_e48b73ad.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/SoccerPenalty/v_SoccerPenalty_g10_c02.avi,0.0,0.0,0.0
+v_VolleyballSpiking_g10_c04_feb14c75.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/VolleyballSpiking/v_VolleyballSpiking_g10_c04.avi,0.0,0.0,0.0
+v_JumpRope_g19_c01_eeb901ce.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/JumpRope/v_JumpRope_g19_c01.avi,0.0,0.0,0.0
+v_ParallelBars_g09_c06_c3c32f5e.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/ParallelBars/v_ParallelBars_g09_c06.avi,0.0,0.0,0.0
+v_ParallelBars_g20_c03_5f34cbcb.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/ParallelBars/v_ParallelBars_g20_c03.avi,0.0,0.0,0.0
+v_RockClimbingIndoor_g10_c04_c0db91e6.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/RockClimbingIndoor/v_RockClimbingIndoor_g10_c04.avi,0.0,0.0,0.0
+v_PoleVault_g24_c01_fa83c1fa.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/PoleVault/v_PoleVault_g24_c01.avi,0.0,0.0,0.0
+v_Nunchucks_g09_c05_928957da.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/Nunchucks/v_Nunchucks_g09_c05.avi,0.0,0.0,0.0
+v_LongJump_g04_c02_14ef38ba.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/LongJump/v_LongJump_g04_c02.avi,0.0,0.0,0.0
+v_WalkingWithDog_g02_c04_cd3242fc.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/WalkingWithDog/v_WalkingWithDog_g02_c04.avi,0.0,0.0,0.0
+v_PlayingViolin_g05_c03_1924d173.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/PlayingViolin/v_PlayingViolin_g05_c03.avi,0.0,0.0,0.0
+v_Biking_g13_c04_45c4d121.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/Biking/v_Biking_g13_c04.avi,0.0,0.0,0.0
+v_MoppingFloor_g16_c04_acea1045.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/MoppingFloor/v_MoppingFloor_g16_c04.avi,0.0,0.0,0.0
+v_BandMarching_g03_c06_327d6325.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/BandMarching/v_BandMarching_g03_c06.avi,0.0,0.0,0.0
+v_Nunchucks_g05_c01_3ef8ae3c.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/Nunchucks/v_Nunchucks_g05_c01.avi,0.0,0.0,0.0
+v_PullUps_g06_c01_cb063848.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/PullUps/v_PullUps_g06_c01.avi,0.0,0.0,0.0
+v_Basketball_g17_c02_a5e2ac95.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/Basketball/v_Basketball_g17_c02.avi,0.0,0.0,0.0
+v_HighJump_g07_c06_7638178a.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/HighJump/v_HighJump_g07_c06.avi,0.0,0.0,0.0
+v_CleanAndJerk_g08_c03_c4d87b12.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/CleanAndJerk/v_CleanAndJerk_g08_c03.avi,0.0,0.0,0.0
+v_Diving_g13_c05_4d92e8b1.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/Diving/v_Diving_g13_c05.avi,0.0,0.0,0.0
+v_Haircut_g07_c02_76af6773.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/Haircut/v_Haircut_g07_c02.avi,0.0,0.0,0.0
+v_Drumming_g16_c04_f8e871f0.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/Drumming/v_Drumming_g16_c04.avi,0.0,0.0,0.0
+v_BalanceBeam_g19_c02_9fb3891f.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/BalanceBeam/v_BalanceBeam_g19_c02.avi,0.0,0.0,0.0
+v_BrushingTeeth_g24_c01_5dc7b886.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/BrushingTeeth/v_BrushingTeeth_g24_c01.avi,0.0,0.0,0.0
+v_BlowDryHair_g21_c05_05530427.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/BlowDryHair/v_BlowDryHair_g21_c05.avi,0.0,0.0,0.0
+v_CuttingInKitchen_g06_c01_235b94d6.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/CuttingInKitchen/v_CuttingInKitchen_g06_c01.avi,0.0,0.0,0.0
+v_BabyCrawling_g16_c04_8dc7729c.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/BabyCrawling/v_BabyCrawling_g16_c04.avi,0.0,0.0,0.0
+v_BabyCrawling_g02_c01_5301fb34.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/BabyCrawling/v_BabyCrawling_g02_c01.avi,0.0,0.0,0.0
+v_Knitting_g04_c02_087d00d7.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/Knitting/v_Knitting_g04_c02.avi,0.0,0.0,0.0
+v_Swing_g04_c05_f2c203df.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/Swing/v_Swing_g04_c05.avi,0.0,0.0,0.0
+v_TaiChi_g05_c04_42c584ce.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/TaiChi/v_TaiChi_g05_c04.avi,0.0,0.0,0.0
+v_Skijet_g09_c04_202dacb7.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/Skijet/v_Skijet_g09_c04.avi,0.0,0.0,0.0
+v_PlayingPiano_g12_c02_fc52d936.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/PlayingPiano/v_PlayingPiano_g12_c02.avi,0.0,0.0,0.0
+v_TrampolineJumping_g06_c02_c8d8eda7.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/TrampolineJumping/v_TrampolineJumping_g06_c02.avi,0.0,0.0,0.0
+v_PlayingDaf_g04_c01_738f7e60.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/PlayingDaf/v_PlayingDaf_g04_c01.avi,0.0,0.0,0.0
+v_FrontCrawl_g07_c01_90261cae.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/FrontCrawl/v_FrontCrawl_g07_c01.avi,0.0,0.0,0.0
+v_Billiards_g22_c03_6825a830.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/Billiards/v_Billiards_g22_c03.avi,0.0,0.0,0.0
+v_RockClimbingIndoor_g20_c03_10bf5eda.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/RockClimbingIndoor/v_RockClimbingIndoor_g20_c03.avi,0.0,0.0,0.0
+v_PullUps_g15_c04_b50036dc.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/PullUps/v_PullUps_g15_c04.avi,0.0,0.0,0.0
+v_RockClimbingIndoor_g12_c01_0244bb76.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/RockClimbingIndoor/v_RockClimbingIndoor_g12_c01.avi,0.0,0.0,0.0
+v_RockClimbingIndoor_g13_c01_1146ff3a.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/RockClimbingIndoor/v_RockClimbingIndoor_g13_c01.avi,0.0,0.0,0.0
+v_WritingOnBoard_g08_c03_2daf8032.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/WritingOnBoard/v_WritingOnBoard_g08_c03.avi,0.0,0.0,0.0
+v_FrontCrawl_g24_c05_b46cabe8.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/FrontCrawl/v_FrontCrawl_g24_c05.avi,0.0,0.0,0.0
+v_HeadMassage_g06_c01_a6105639.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/HeadMassage/v_HeadMassage_g06_c01.avi,0.0,0.0,0.0
+v_CricketShot_g19_c02_fb14e7aa.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/CricketShot/v_CricketShot_g19_c02.avi,0.0,0.0,0.0
+v_PizzaTossing_g24_c06_fca0647e.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/PizzaTossing/v_PizzaTossing_g24_c06.avi,0.0,0.0,0.0
+v_HandStandPushups_g08_c04_f9d8b899.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/HandstandPushups/v_HandStandPushups_g08_c04.avi,0.0,0.0,0.0
+v_SumoWrestling_g11_c02_6de10281.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/SumoWrestling/v_SumoWrestling_g11_c02.avi,0.0,0.0,0.0
+v_BodyWeightSquats_g08_c02_9655869f.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/BodyWeightSquats/v_BodyWeightSquats_g08_c02.avi,0.0,0.0,0.0
+v_HandstandWalking_g16_c01_36c5fccc.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/HandstandWalking/v_HandstandWalking_g16_c01.avi,0.0,0.0,0.0
+v_SkateBoarding_g18_c01_62ab9256.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/SkateBoarding/v_SkateBoarding_g18_c01.avi,0.0,0.0,0.0
+v_PlayingCello_g12_c03_e4fec67c.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/PlayingCello/v_PlayingCello_g12_c03.avi,0.0,0.0,0.0
+v_Archery_g13_c03_031ae7e4.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/Archery/v_Archery_g13_c03.avi,0.0,0.0,0.0
+v_GolfSwing_g12_c03_f98068c7.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/GolfSwing/v_GolfSwing_g12_c03.avi,0.0,0.0,0.0
+v_CricketBowling_g14_c04_8aa735fe.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/CricketBowling/v_CricketBowling_g14_c04.avi,0.0,0.0,0.0
+v_TaiChi_g03_c04_4a71f848.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/TaiChi/v_TaiChi_g03_c04.avi,0.0,0.0,0.0
+v_BoxingPunchingBag_g21_c04_45c30174.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/BoxingPunchingBag/v_BoxingPunchingBag_g21_c04.avi,0.0,0.0,0.0
+v_PullUps_g22_c01_97e61bf0.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/PullUps/v_PullUps_g22_c01.avi,0.0,0.0,0.0
+v_WalkingWithDog_g16_c04_75524a91.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/WalkingWithDog/v_WalkingWithDog_g16_c04.avi,0.0,0.0,0.0
+v_Skiing_g01_c03_ca8ec1e4.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/Skiing/v_Skiing_g01_c03.avi,0.0,0.0,0.0
+v_HulaHoop_g12_c06_940f58a5.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/HulaHoop/v_HulaHoop_g12_c06.avi,0.0,0.0,0.0
+v_Drumming_g04_c01_5ed209ad.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/Drumming/v_Drumming_g04_c01.avi,0.0,0.0,0.0
+v_FrontCrawl_g05_c02_5d5fd038.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/FrontCrawl/v_FrontCrawl_g05_c02.avi,0.0,0.0,0.0
+v_BaseballPitch_g15_c04_9615ded7.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/BaseballPitch/v_BaseballPitch_g15_c04.avi,0.0,0.0,0.0
+v_FloorGymnastics_g07_c03_37a77d71.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/FloorGymnastics/v_FloorGymnastics_g07_c03.avi,0.0,0.0,0.0
+v_HandstandWalking_g20_c04_26db02f5.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/HandstandWalking/v_HandstandWalking_g20_c04.avi,0.0,0.0,0.0
+v_VolleyballSpiking_g01_c02_3fbd2bab.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/VolleyballSpiking/v_VolleyballSpiking_g01_c02.avi,0.0,0.0,0.0
+v_BrushingTeeth_g06_c05_1dd72e61.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/BrushingTeeth/v_BrushingTeeth_g06_c05.avi,0.0,0.0,0.0
+v_HulaHoop_g08_c01_fc62b047.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/HulaHoop/v_HulaHoop_g08_c01.avi,0.0,0.0,0.0
+v_Surfing_g08_c06_85658d28.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/Surfing/v_Surfing_g08_c06.avi,0.0,0.0,0.0
+v_FrisbeeCatch_g17_c05_be14c917.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/FrisbeeCatch/v_FrisbeeCatch_g17_c05.avi,0.0,0.0,0.0
+v_UnevenBars_g08_c04_e7e45f4c.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/UnevenBars/v_UnevenBars_g08_c04.avi,0.0,0.0,0.0
+v_Typing_g22_c03_35ed1078.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/Typing/v_Typing_g22_c03.avi,0.0,0.0,0.0
+v_Archery_g19_c01_9d805cbb.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/Archery/v_Archery_g19_c01.avi,0.0,0.0,0.0
+v_TableTennisShot_g19_c05_cd5b0452.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/TableTennisShot/v_TableTennisShot_g19_c05.avi,0.0,0.0,0.0
+v_JugglingBalls_g02_c03_04e5dff5.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/JugglingBalls/v_JugglingBalls_g02_c03.avi,0.0,0.0,0.0
+v_YoYo_g01_c01_4b377c85.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/YoYo/v_YoYo_g01_c01.avi,0.0,0.0,0.0
+v_Hammering_g14_c02_4998251a.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/Hammering/v_Hammering_g14_c02.avi,0.0,0.0,0.0
+v_PullUps_g11_c04_89b6fb5c.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/PullUps/v_PullUps_g11_c04.avi,0.0,0.0,0.0
+v_CuttingInKitchen_g25_c01_e7205761.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/CuttingInKitchen/v_CuttingInKitchen_g25_c01.avi,0.0,0.0,0.0
+v_JavelinThrow_g03_c03_b35cb66f.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/JavelinThrow/v_JavelinThrow_g03_c03.avi,0.0,0.0,0.0
+v_Mixing_g21_c01_46568a18.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/Mixing/v_Mixing_g21_c01.avi,0.0,0.0,0.0
+v_CliffDiving_g12_c02_9288ab57.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/CliffDiving/v_CliffDiving_g12_c02.avi,0.0,0.0,0.0
+v_Nunchucks_g23_c03_45d22bb1.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/Nunchucks/v_Nunchucks_g23_c03.avi,0.0,0.0,0.0
+v_TrampolineJumping_g19_c02_8941c60b.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/TrampolineJumping/v_TrampolineJumping_g19_c02.avi,0.0,0.0,0.0
+v_JavelinThrow_g01_c01_b3d26c94.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/JavelinThrow/v_JavelinThrow_g01_c01.avi,0.0,0.0,0.0
+v_BlowingCandles_g01_c01_3acbdd04.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/BlowingCandles/v_BlowingCandles_g01_c01.avi,0.0,0.0,0.0
+v_FloorGymnastics_g08_c01_84bb2bfa.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/FloorGymnastics/v_FloorGymnastics_g08_c01.avi,0.0,0.0,0.0
+v_StillRings_g21_c07_735be0b7.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/StillRings/v_StillRings_g21_c07.avi,0.0,0.0,0.0
+v_HorseRiding_g15_c06_412a43d5.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/HorseRiding/v_HorseRiding_g15_c06.avi,0.0,0.0,0.0
+v_PoleVault_g05_c03_07c7c0b2.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/PoleVault/v_PoleVault_g05_c03.avi,0.0,0.0,0.0
+v_RopeClimbing_g20_c04_76b1ae9a.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/RopeClimbing/v_RopeClimbing_g20_c04.avi,0.0,0.0,0.0
+v_SkyDiving_g16_c02_92af7359.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/SkyDiving/v_SkyDiving_g16_c02.avi,0.0,0.0,0.0
+v_Basketball_g02_c05_9c164208.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/Basketball/v_Basketball_g02_c05.avi,0.0,0.0,0.0
+v_BlowDryHair_g12_c04_5f4b85dd.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/BlowDryHair/v_BlowDryHair_g12_c04.avi,0.0,0.0,0.0
+v_JumpRope_g20_c02_1de63a48.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/JumpRope/v_JumpRope_g20_c02.avi,0.0,0.0,0.0
+v_WritingOnBoard_g24_c03_4cadac06.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/WritingOnBoard/v_WritingOnBoard_g24_c03.avi,0.0,0.0,0.0
+v_HorseRiding_g20_c03_061a0ff2.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/HorseRiding/v_HorseRiding_g20_c03.avi,0.0,0.0,0.0
+v_SkyDiving_g19_c03_fe0f348a.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/SkyDiving/v_SkyDiving_g19_c03.avi,0.0,0.0,0.0
+v_PlayingPiano_g17_c03_9c244546.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/PlayingPiano/v_PlayingPiano_g17_c03.avi,0.0,0.0,0.0
+v_TaiChi_g24_c02_0abaa439.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/TaiChi/v_TaiChi_g24_c02.avi,0.0,0.0,0.0
+v_MilitaryParade_g16_c02_f5a65e64.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/MilitaryParade/v_MilitaryParade_g16_c02.avi,0.0,0.0,0.0
+v_LongJump_g04_c07_d6df4dd9.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/LongJump/v_LongJump_g04_c07.avi,0.0,0.0,0.0
+v_SumoWrestling_g06_c06_bc3e1218.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/SumoWrestling/v_SumoWrestling_g06_c06.avi,0.0,0.0,0.0
+v_BandMarching_g11_c04_71d19ffa.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/BandMarching/v_BandMarching_g11_c04.avi,0.0,0.0,0.0
+v_Surfing_g22_c01_66cdb8b0.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/Surfing/v_Surfing_g22_c01.avi,0.0,0.0,0.0
+v_SkyDiving_g07_c02_178aaae0.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/SkyDiving/v_SkyDiving_g07_c02.avi,0.0,0.0,0.0
+v_BaseballPitch_g21_c01_8728da61.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/BaseballPitch/v_BaseballPitch_g21_c01.avi,0.0,0.0,0.0
+v_CricketShot_g23_c04_e3326677.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/CricketShot/v_CricketShot_g23_c04.avi,0.0,0.0,0.0
+v_FrontCrawl_g23_c06_02e00a6c.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/FrontCrawl/v_FrontCrawl_g23_c06.avi,0.0,0.0,0.0
+v_PlayingSitar_g06_c02_d195b9ce.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/PlayingSitar/v_PlayingSitar_g06_c02.avi,0.0,0.0,0.0
+v_Bowling_g05_c07_60d3b677.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/Bowling/v_Bowling_g05_c07.avi,0.0,0.0,0.0
+v_Surfing_g15_c02_154c4f9c.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/Surfing/v_Surfing_g15_c02.avi,0.0,0.0,0.0
+v_JumpingJack_g11_c04_e7a9590b.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/JumpingJack/v_JumpingJack_g11_c04.avi,0.0,0.0,0.0
+v_TaiChi_g07_c04_7900d4bc.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/TaiChi/v_TaiChi_g07_c04.avi,0.0,0.0,0.0
+v_Rowing_g15_c04_55acd51c.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/Rowing/v_Rowing_g15_c04.avi,0.0,0.0,0.0
+v_UnevenBars_g15_c05_0f0958da.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/UnevenBars/v_UnevenBars_g15_c05.avi,0.0,0.0,0.0
+v_Rowing_g02_c02_62bfb4d1.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/Rowing/v_Rowing_g02_c02.avi,0.0,0.0,0.0
+v_ApplyEyeMakeup_g03_c06_7cc41d6a.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/ApplyEyeMakeup/v_ApplyEyeMakeup_g03_c06.avi,0.0,0.0,0.0
+v_Knitting_g23_c02_30077ac6.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/Knitting/v_Knitting_g23_c02.avi,0.0,0.0,0.0
+v_BlowingCandles_g11_c01_6bdb5d99.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/BlowingCandles/v_BlowingCandles_g11_c01.avi,0.0,0.0,0.0
+v_Mixing_g13_c03_59628911.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/Mixing/v_Mixing_g13_c03.avi,0.0,0.0,0.0
+v_HeadMassage_g14_c07_46b29759.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/HeadMassage/v_HeadMassage_g14_c07.avi,0.0,0.0,0.0
+v_Lunges_g24_c03_8bb01368.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/Lunges/v_Lunges_g24_c03.avi,0.0,0.0,0.0
+v_Rowing_g04_c05_ecf755c9.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/Rowing/v_Rowing_g04_c05.avi,0.0,0.0,0.0
+v_HammerThrow_g02_c01_77a8bcdf.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/HammerThrow/v_HammerThrow_g02_c01.avi,0.0,0.0,0.0
+v_YoYo_g03_c01_2f427127.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/YoYo/v_YoYo_g03_c01.avi,0.0,0.0,0.0
+v_Lunges_g06_c01_055c22b1.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/Lunges/v_Lunges_g06_c01.avi,0.0,0.0,0.0
+v_PlayingSitar_g06_c03_ad861640.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/PlayingSitar/v_PlayingSitar_g06_c03.avi,0.0,0.0,0.0
+v_Diving_g21_c04_d02cf406.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/Diving/v_Diving_g21_c04.avi,0.0,0.0,0.0
+v_FrisbeeCatch_g21_c05_34175606.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/FrisbeeCatch/v_FrisbeeCatch_g21_c05.avi,0.0,0.0,0.0
+v_SalsaSpin_g05_c01_cede4810.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/SalsaSpin/v_SalsaSpin_g05_c01.avi,0.0,0.0,0.0
+v_FieldHockeyPenalty_g11_c04_acdb072b.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/FieldHockeyPenalty/v_FieldHockeyPenalty_g11_c04.avi,0.0,0.0,0.0
+v_CuttingInKitchen_g14_c02_260fd94d.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/CuttingInKitchen/v_CuttingInKitchen_g14_c02.avi,0.0,0.0,0.0
+v_SoccerJuggling_g21_c03_f7d21685.npy,/kaggle/input/datasets/pevogam/ucf101/UCF101/UCF-101/SoccerJuggling/v_SoccerJuggling_g21_c03.avi,0.0,0.0,0.0

@@ -1,0 +1,3 @@
+relative_path,label,sample_id,split,source,group_id,media_type
+rwf2000/RWF-2000/val/Fight/fight_1.avi,1,rwf2000_98d3d96fba0f,test,rwf2000,rwf2000:fight,video
+ucf/Real-world Anomaly Detection in Surveillance Videos (UCF)/Testing_Normal_Videos_Anomaly/normal_test001.mp4,0,ucf_crimes_8deec04792f2,test,ucf_crimes,ucf_crimes:normal_test001,video

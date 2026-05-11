@@ -1,0 +1,20 @@
+inherits: configs/base.yaml
+stage: temporal_ssl_pretext
+data:
+  train_manifest: artifacts\manifests\temporal_train.csv
+  val_manifest: artifacts\manifests\temporal_val.csv
+  test_manifest: artifacts\manifests\temporal_test.csv
+  frames_per_clip: 64
+model:
+  name: task_prompted_transformer
+  d_model: 768
+  aux_dim: 3
+  qformer_layers: 2
+optimizer:
+  name: adamw
+  lr: 0.0002
+  weight_decay: 0.01
+target:
+  epochs: 15
+  batch_size: 4
+  early_stopping_patience: 3

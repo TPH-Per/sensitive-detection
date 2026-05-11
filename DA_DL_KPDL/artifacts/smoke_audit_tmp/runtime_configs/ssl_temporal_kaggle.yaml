@@ -1,0 +1,38 @@
+inherits: configs/base.yaml
+stage: ssl_temporal
+data:
+  train_manifest: D:\python\DA_DL_KPDL\artifacts\smoke_audit_tmp\manifests\temporal_train.csv
+  val_manifest: D:\python\DA_DL_KPDL\artifacts\smoke_audit_tmp\manifests\temporal_val.csv
+  test_manifest: D:\python\DA_DL_KPDL\artifacts\smoke_audit_tmp\manifests\temporal_test.csv
+  frames_per_clip: 64
+  frame_size: 224
+model:
+  name: task_prompted_transformer
+  temporal_layers: 4
+  n_heads: 8
+  d_model: 768
+  input_dim: 768
+  aux_dim: 6
+  hidden_dim: 512
+  dropout: 0.2
+  qformer_layers: 2
+  freeze_spatial_backbone: true
+optimizer:
+  name: adamw
+  lr: 0.0002
+  weight_decay: 0.01
+target:
+  epochs: 15
+  batch_size: 4
+  grad_accum_steps: 4
+  decision_threshold: 0.5
+  label_smoothing: 0.05
+  early_stopping_patience: 4
+  use_pos_weight: true
+  pos_weight_cap: 20.0
+  use_weighted_sampler: true
+  sampler_weight_cap: 10.0
+checkpoint:
+  monitor: val_loss
+  mode: min
+  save_last: true

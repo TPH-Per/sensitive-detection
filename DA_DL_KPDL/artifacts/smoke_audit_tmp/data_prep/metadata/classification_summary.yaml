@@ -1,0 +1,73 @@
+by_source:
+  ucf101:
+    count: 2
+    train: 0
+    val: 0
+    test: 1
+    challenge: 1
+    media_type:
+    - video
+by_branch:
+  proxy:
+    count: 2
+    train: 0
+    val: 0
+    test: 1
+    challenge: 1
+  temporal:
+    count: 2
+    train: 0
+    val: 0
+    test: 1
+    challenge: 1
+  spatial:
+    count: 0
+    train: 0
+    val: 0
+    test: 0
+    challenge: 0
+  multitask:
+    count: 2
+    train: 0
+    val: 0
+    test: 1
+    challenge: 1
+challenge_holdout:
+  normal_hard:
+    count: 1
+    challenge: 1
+    train: 0
+    val: 0
+    test: 0
+warnings: []
+unmatched_roots: []
+master_csv: D:\python\DA_DL_KPDL\artifacts\smoke_audit_tmp\data_prep\metadata\classification_master.csv
+label_exports:
+  temporal_train: D:\python\DA_DL_KPDL\artifacts\smoke_audit_tmp\data_prep\labels\labels_temporal_train.csv
+  temporal_val: D:\python\DA_DL_KPDL\artifacts\smoke_audit_tmp\data_prep\labels\labels_temporal_val.csv
+  temporal_test: D:\python\DA_DL_KPDL\artifacts\smoke_audit_tmp\data_prep\labels\labels_temporal_test.csv
+  temporal_challenge: D:\python\DA_DL_KPDL\artifacts\smoke_audit_tmp\data_prep\labels\labels_temporal_challenge.csv
+  multitask_train: D:\python\DA_DL_KPDL\artifacts\smoke_audit_tmp\data_prep\labels\labels_multitask_train.csv
+  multitask_val: D:\python\DA_DL_KPDL\artifacts\smoke_audit_tmp\data_prep\labels\labels_multitask_val.csv
+  multitask_test: D:\python\DA_DL_KPDL\artifacts\smoke_audit_tmp\data_prep\labels\labels_multitask_test.csv
+  multitask_challenge: D:\python\DA_DL_KPDL\artifacts\smoke_audit_tmp\data_prep\labels\labels_multitask_challenge.csv
+  spatial_train: D:\python\DA_DL_KPDL\artifacts\smoke_audit_tmp\data_prep\labels\labels_spatial_train.csv
+  spatial_val: D:\python\DA_DL_KPDL\artifacts\smoke_audit_tmp\data_prep\labels\labels_spatial_val.csv
+  spatial_test: D:\python\DA_DL_KPDL\artifacts\smoke_audit_tmp\data_prep\labels\labels_spatial_test.csv
+  spatial_challenge: D:\python\DA_DL_KPDL\artifacts\smoke_audit_tmp\data_prep\labels\labels_spatial_challenge.csv
+  nsfw_train: D:\python\DA_DL_KPDL\artifacts\smoke_audit_tmp\data_prep\labels\labels_nsfw_train.csv
+  nsfw_val: D:\python\DA_DL_KPDL\artifacts\smoke_audit_tmp\data_prep\labels\labels_nsfw_val.csv
+  nsfw_test: D:\python\DA_DL_KPDL\artifacts\smoke_audit_tmp\data_prep\labels\labels_nsfw_test.csv
+  nsfw_challenge: D:\python\DA_DL_KPDL\artifacts\smoke_audit_tmp\data_prep\labels\labels_nsfw_challenge.csv
+  proxy_train: D:\python\DA_DL_KPDL\artifacts\smoke_audit_tmp\data_prep\labels\proxy_video_train.csv
+  proxy_val: D:\python\DA_DL_KPDL\artifacts\smoke_audit_tmp\data_prep\labels\proxy_video_val.csv
+  proxy_test: D:\python\DA_DL_KPDL\artifacts\smoke_audit_tmp\data_prep\labels\proxy_video_test.csv
+  proxy_challenge: D:\python\DA_DL_KPDL\artifacts\smoke_audit_tmp\data_prep\labels\proxy_video_challenge.csv
+runtime_configs:
+  proxy_efficientnet_kaggle.yaml: D:\python\DA_DL_KPDL\artifacts\smoke_audit_tmp\runtime_configs\proxy_efficientnet_kaggle.yaml
+  nsfw_scorer_kaggle.yaml: D:\python\DA_DL_KPDL\artifacts\smoke_audit_tmp\runtime_configs\nsfw_scorer_kaggle.yaml
+  ssl_spatial_kaggle.yaml: D:\python\DA_DL_KPDL\artifacts\smoke_audit_tmp\runtime_configs\ssl_spatial_kaggle.yaml
+  temporal_ssl_pretext_kaggle.yaml: D:\python\DA_DL_KPDL\artifacts\smoke_audit_tmp\runtime_configs\temporal_ssl_pretext_kaggle.yaml
+  ssl_temporal_kaggle.yaml: D:\python\DA_DL_KPDL\artifacts\smoke_audit_tmp\runtime_configs\ssl_temporal_kaggle.yaml
+  finetune_multitask_kaggle.yaml: D:\python\DA_DL_KPDL\artifacts\smoke_audit_tmp\runtime_configs\finetune_multitask_kaggle.yaml
+  yolov8_nano_kaggle.yaml: D:\python\DA_DL_KPDL\artifacts\smoke_audit_tmp\runtime_configs\yolov8_nano_kaggle.yaml
