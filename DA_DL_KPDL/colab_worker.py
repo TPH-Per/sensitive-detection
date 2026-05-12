@@ -18,6 +18,7 @@ db = firestore.client()
 processed_posts = set()
 processed_comments = set()
 processed_messages = set()
+processed_avatars = {}
 
 def download_file(url, temp_path):
     try:
@@ -170,11 +171,62 @@ def process_messages():
             
         processed_messages.add(msg_id)
 
+def process_users():
+    docs = db.collection('users').stream()
+    for doc in docs:
+        data = doc.to_dict()
+        user_id = doc.id
+        avatar = data.get('avatar', {})
+        avatar_url = avatar.get('url', '')
+        
+        if not avatar_url:
+            continue
+            
+        # Check if we already processed this exact avatar url for this user
+        if processed_avatars.get(user_id) == avatar_url:
+            continue
+            
+        print(f"[USER] Quét Avatar của user {user_id}: {avatar_url}")
+        is_flagged, reason = moderate_url(avatar_url, is_video=False)
+        
+        if is_flagged:
+            print(f"  -> Phát hiện Avatar vi phạm: {reason}")
+            # Reset avatar to empty
+            doc.reference.update({
+                'avatar': {
+                    'url': '',
+                    'fileName': '',
+                    'mimeType': '',
+                    'size': 0
+                }
+            })
+            # Send notification
+            db.collection('notifications').add({
+                'receiverId': user_id,
+                'actorId': 'system',
+                'type': 'system',
+                'data': {
+                    'contentSnippet': f"Ảnh đại diện của bạn đã bị gỡ do: {reason}",
+                    'isReply': False
+                },
+                'isRead': False,
+                'status': 'unseen',
+                'createdAt': firestore.SERVER_TIMESTAMP,
+                'actorName': 'Hệ thống Quản trị',
+                'actorAvatar': ''
+            })
+        else:
+            print("  -> Avatar An toàn")
+            
+        # Record that we processed this avatar url
+        processed_avatars[user_id] = avatar_url
+
 print("Bắt đầu Worker lắng nghe Firebase (Demo Mode)...")
 while True:
     try:
         process_posts()
         process_messages()
+        process_users()
     except Exception as e:
         print(f"Lỗi vòng lặp: {e}")
     time.sleep(5)
