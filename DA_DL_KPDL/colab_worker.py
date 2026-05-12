@@ -63,7 +63,7 @@ def moderate_video(url):
         if n_score > 0.999:
             level = 2
             reasons.append("khiêu dâm / khỏa thân")
-        if v_score > 0.0591:
+        if v_score > 0.9136:
             level = 2
             reasons.append("bạo lực / vũ khí")
 
