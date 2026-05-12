@@ -56,21 +56,16 @@ def moderate_video(url):
         v_score = float(v_match.group(1)) if v_match else 0.0
         n_score = float(n_match.group(1)) if n_match else 0.0
 
+        # Use same thresholds as Gradio web (calibration_v6.json + V7 checkpoint)
+        # V=0.0591 (V7), N=0.999 (calibration), S=0.995 (calibration)
         level = 0
         reasons = []
-        if n_score > 0.85:
+        if n_score > 0.999:
             level = 2
             reasons.append("khiêu dâm / khỏa thân")
-        if v_score > 0.8:
+        if v_score > 0.0591:
             level = 2
             reasons.append("bạo lực / vũ khí")
-        if level < 2:
-            if n_score > 0.45:
-                level = 1
-                reasons.append("nhạy cảm / hở hang")
-            if v_score > 0.45:
-                level = 1
-                reasons.append("bạo lực nhẹ")
 
         if level == 2:
             reason = "Phát hiện nội dung: " + ", ".join(reasons)
