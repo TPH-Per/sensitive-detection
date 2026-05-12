@@ -1502,6 +1502,7 @@ def load_vit_models():
             remapped["classifier.bias"] = v
 
     missing, unexpected = violence_model.load_state_dict(remapped, strict=False)
+    violence_model.to(DEVICE)
     violence_model.eval()
     violence_processor = ViTImageProcessor.from_pretrained(VIT_VIOLENCE_MODEL)
     print(f"  [ViT] Violence model loaded: {len(remapped)} keys remapped, {len(missing)} missing, {len(unexpected)} unexpected")
