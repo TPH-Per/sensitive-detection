@@ -1599,6 +1599,93 @@ def process_image_vit(image_path: str):
         return (f"## Processing Error\n`{exc}`", "", None)
 
 
+def process_images_batch(image_paths: list[str], batch_size: int = 8) -> list[tuple[int, str]]:
+    """Batch process images through ViT models. Returns list of (level, reason)."""
+    load_vit_models()
+    violence_model = MODEL_CACHE["vit_violence_model"]
+    violence_proc = MODEL_CACHE["vit_violence_processor"]
+    nsfw_pipe = MODEL_CACHE["vit_nsfw"]
+
+    thresh_v_ban = 0.80
+    thresh_n_ban = 0.90
+    thresh_blur = 0.60
+
+    results = []
+    valid_indices = []
+    valid_images = []
+
+    # Load all images
+    for i, path in enumerate(image_paths):
+        try:
+            img = Image.open(path).convert("RGB")
+            valid_images.append(img)
+            valid_indices.append(i)
+        except Exception:
+            results.append((0, ""))
+
+    if not valid_images:
+        # Fill remaining with error
+        while len(results) < len(image_paths):
+            results.append((0, ""))
+        return results
+
+    # Batch violence detection
+    v_probs_list = []
+    for start in range(0, len(valid_images), batch_size):
+        batch = valid_images[start:start + batch_size]
+        inputs = violence_proc(images=batch, return_tensors="pt").to(DEVICE)
+        with torch.no_grad():
+            logits = violence_model(**inputs).logits
+            probs = torch.softmax(logits, dim=1)
+        v_probs_list.extend(probs[:, 1].cpu().tolist())
+
+    # Batch NSFW detection
+    nsfw_probs_list = []
+    for start in range(0, len(valid_images), batch_size):
+        batch = valid_images[start:start + batch_size]
+        for img in batch:
+            nsfw_results = nsfw_pipe(img, top_k=5)
+            nsfw_scores = {r["label"].lower(): r["score"] for r in nsfw_results}
+            nsfw_probs_list.append(nsfw_scores.get("nsfw", 0.0))
+
+    # Build results
+    valid_idx = 0
+    final_results = []
+    for i in range(len(image_paths)):
+        if i in valid_indices:
+            v_prob = v_probs_list[valid_idx]
+            n_prob = nsfw_probs_list[valid_idx]
+            valid_idx += 1
+
+            level = 0
+            reasons = []
+            if n_prob >= thresh_n_ban:
+                level = 2
+                reasons.append("khỏa thân / khiêu dâm")
+            if v_prob >= thresh_v_ban:
+                level = 2
+                reasons.append("bạo lực")
+            if level < 2:
+                if n_prob >= thresh_blur:
+                    level = 1
+                    reasons.append("nhạy cảm / sexy / bikini")
+                if v_prob >= thresh_blur:
+                    level = 1
+                    reasons.append("bạo lực nhẹ")
+
+            if level == 2:
+                reason = "Phát hiện nội dung: " + ", ".join(reasons)
+            elif level == 1:
+                reason = "Nội dung có yếu tố: " + ", ".join(reasons)
+            else:
+                reason = ""
+            final_results.append((level, reason))
+        else:
+            final_results.append((0, ""))
+
+    return final_results
+
+
 with gr.Blocks(title="Video & Image Moderation Debug Lab (V6 + V7)", theme=gr.themes.Soft()) as demo:
     gr.Markdown("# Video & Image Moderation Debug Lab (V6 + V7)")
     gr.Markdown(
