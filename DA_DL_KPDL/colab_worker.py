@@ -100,19 +100,19 @@ def moderate_url(url, is_video):
             level = 0
             reason = ""
 
-            # Image thresholds (ViT-based, phân biệt sexy vs nudity)
-            # NSFW: 0.90+ = khỏa thân thật sự (ban), 0.70+ = sexy/bikini (blur)
-            # Violence: 0.70+ = bạo lực
+            # Image thresholds (ViT-based, match app.py)
+            # NSFW >= 0.90 = ban, Violence >= 0.80 = ban
+            # Both >= 0.60 = blur (level 1)
             if n_score >= 0.90:
                 level = 2
                 reason = "Phát hiện nội dung khỏa thân / khiêu dâm"
-            elif v_score >= 0.70:
+            elif v_score >= 0.80:
                 level = 2
                 reason = "Phát hiện nội dung bạo lực"
-            elif n_score >= 0.70:
+            elif n_score >= 0.60:
                 level = 1
                 reason = "Nội dung có yếu tố nhạy cảm / sexy / bikini"
-            elif v_score >= 0.45:
+            elif v_score >= 0.60:
                 level = 1
                 reason = "Nội dung có yếu tố bạo lực nhẹ"
 

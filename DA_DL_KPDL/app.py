@@ -1477,45 +1477,43 @@ def process_image_vit(image_path: str):
         load_vit_models()
         img = Image.open(image_path).convert("RGB")
 
-        thresh_v = 0.70
-        thresh_n = 0.70
-        thresh_n_ban = 0.90
+        # Thresholds
+        thresh_v_ban = 0.80   # violence ban
+        thresh_n_ban = 0.90   # nudity ban
+        thresh_blur = 0.60    # both: blur threshold
 
-        # STEP 1: Violence detection (run first, higher priority)
+        # STEP 1: Violence detection
         violence_proc = MODEL_CACHE["vit_violence_processor"]
         violence_model = MODEL_CACHE["vit_violence_model"]
         v_inputs = violence_proc(images=img, return_tensors="pt").to(DEVICE)
         with torch.no_grad():
             v_logits = violence_model(**v_inputs).logits
             v_probs = torch.softmax(v_logits, dim=1).squeeze()
-        # Label 1 = violence (based on model config)
         v_prob = float(v_probs[1].item())
         violence_results = [
             {"label": "non-violence", "score": float(v_probs[0].item())},
             {"label": "violence", "score": v_prob},
         ]
-        nsfw_skipped = False
 
-        if v_prob >= thresh_v:
-            # Violence detected → skip NSFW
-            nsfw_skipped = True
-            verdict_md = "## FLAGGED\n**Reason:** Violence"
-            nsfw_prob = 0.0
-            nsfw_results = []
-        else:
-            # STEP 2: NSFW detection (only if no violence)
-            nsfw_results = MODEL_CACHE["vit_nsfw"](img, top_k=5)
-            nsfw_scores = {r["label"].lower(): r["score"] for r in nsfw_results}
-            nsfw_prob = nsfw_scores.get("nsfw", 0.0)
+        # STEP 2: NSFW detection (always run)
+        nsfw_results = MODEL_CACHE["vit_nsfw"](img, top_k=5)
+        nsfw_scores = {r["label"].lower(): r["score"] for r in nsfw_results}
+        nsfw_prob = nsfw_scores.get("nsfw", 0.0)
 
-            verdict_flags: list[str] = []
-            if nsfw_prob >= thresh_n_ban:
-                verdict_flags.append("NSFW (nudity)")
-            elif nsfw_prob >= thresh_n:
-                verdict_flags.append("NSFW (sexy)")
-            verdict_str = "FLAGGED" if verdict_flags else "SAFE"
-            reasons = ", ".join(verdict_flags) if verdict_flags else "No label exceeds threshold"
-            verdict_md = f"## {verdict_str}\n**Reason:** {reasons}"
+        # Verdict logic
+        verdict_flags: list[str] = []
+        if v_prob >= thresh_v_ban:
+            verdict_flags.append("Violence (ban)")
+        if nsfw_prob >= thresh_n_ban:
+            verdict_flags.append("NSFW (nudity ban)")
+        if not verdict_flags:
+            if v_prob >= thresh_blur:
+                verdict_flags.append("Violence (blur)")
+            if nsfw_prob >= thresh_blur:
+                verdict_flags.append("NSFW (blur)")
+        verdict_str = "FLAGGED" if verdict_flags else "SAFE"
+        reasons = ", ".join(verdict_flags) if verdict_flags else "No label exceeds threshold"
+        verdict_md = f"## {verdict_str}\n**Reason:** {reasons}"
 
         # Build output
         nsfw_10 = round(nsfw_prob * 10, 1)
