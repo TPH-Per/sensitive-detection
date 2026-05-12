@@ -100,7 +100,7 @@ def compute_flow_features(frames: list[Image.Image]) -> np.ndarray:
 def load_clip(device: torch.device):
     """Load CLIP ViT-B/32."""
     from transformers import CLIPImageProcessor, CLIPVisionModel
-    print("  📷 Đang tải CLIP ViT-B/32...")
+    print("  [CLIP] Dang tai CLIP ViT-B/32...")
     processor = CLIPImageProcessor.from_pretrained("openai/clip-vit-base-patch32")
     model = CLIPVisionModel.from_pretrained("openai/clip-vit-base-patch32").to(device)
     model.eval()
@@ -558,7 +558,7 @@ def main():
         from torchvision.models import resnet18
         swav_model = resnet18(weights=None)
         swav_ckpt = weights_dir / "ssl_spatial_best.pth"
-        print(f"  📷 Đang tải SwAV ResNet18: {swav_ckpt.name}")
+        print(f"  [SwAV] Dang tai SwAV ResNet18: {swav_ckpt.name}")
         if swav_ckpt.exists():
             state = torch.load(swav_ckpt, map_location=device, weights_only=False)
             model_state = state.get('model_state', state)
