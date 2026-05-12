@@ -5,7 +5,7 @@ from firebase_admin import credentials, firestore, db as rtdb
 import time
 import re
 
-from app import process_image, process_video
+from app import process_video, process_image_vit
 
 # Khởi tạo Firebase Admin
 cred = credentials.Certificate('firebase_credentials.json')
@@ -33,67 +33,90 @@ def download_file(url, temp_path):
 def moderate_url(url, is_video):
     ext = ".mp4" if is_video else ".jpg"
     temp_path = f"temp_worker_{int(time.time())}{ext}"
-    
+
     if not download_file(url, temp_path):
         return 0, "Lỗi tải file"
-        
+
     try:
         if is_video:
+            # Video: dùng pipeline V6 (YOLO đã tắt)
             res = process_video(
                 video_path=temp_path,
                 top_k=6,
                 apply_guard=True,
-                model_variant="V6 Task-Gated", 
+                model_variant="V6 Task-Gated",
                 enabled_branches=["V", "S", "N"],
                 enabled_modalities=["CLIP", "Flow", "YOLO", "Gore", "SelfHarm", "NSFW"]
             )
+            score_md = res[1]
+            os.remove(temp_path)
+
+            # Parse video scores (V6 format)
+            v_match = re.search(r'- Violence raw: \*\*([0-9.]+)\*\*', score_md)
+            s_match = re.search(r'- Self-harm score: \*\*([0-9.]+)\*\*', score_md)
+            n_match = re.search(r'- NSFW score: \*\*([0-9.]+)\*\*', score_md)
+
+            v_score = float(v_match.group(1)) if v_match else 0.0
+            s_score = float(s_match.group(1)) if s_match else 0.0
+            n_score = float(n_match.group(1)) if n_match else 0.0
+
+            level = 0
+            reason = ""
+
+            # Video thresholds (giữ nguyên)
+            if n_score > 0.85:
+                level = 2
+                reason = "Phát hiện nội dung khiêu dâm / khỏa thân mức độ cao"
+            elif v_score > 0.8:
+                level = 2
+                reason = "Phát hiện nội dung bạo lực / vũ khí nguy hiểm"
+            elif s_score > 0.8:
+                level = 2
+                reason = "Phát hiện nội dung tự hại nghiêm trọng"
+            elif n_score > 0.45:
+                level = 1
+                reason = "Nội dung có yếu tố nhạy cảm / hở hang"
+            elif v_score > 0.45:
+                level = 1
+                reason = "Nội dung có yếu tố bạo lực nhẹ"
+            elif s_score > 0.45:
+                level = 1
+                reason = "Nội dung có yếu tố tự hại"
+
+            return level, reason
         else:
-            res = process_image(
-                image_path=temp_path,
-                apply_guard=True,
-                model_variant="V6 Task-Gated",
-                enabled_branches=["V", "S", "N"],
-                enabled_modalities=["CLIP", "YOLO", "Gore", "SelfHarm", "NSFW"]
-            )
-        
-        verdict_md = res[0]
-        score_md = res[1]
-        os.remove(temp_path)
-        
-        # Parse scores
-        v_match = re.search(r'- Violence raw: \*\*([0-9.]+)\*\*', score_md)
-        s_match = re.search(r'- Self-harm score: \*\*([0-9.]+)\*\*', score_md)
-        n_match = re.search(r'- NSFW score: \*\*([0-9.]+)\*\*', score_md)
-        
-        v_score = float(v_match.group(1)) if v_match else 0.0
-        s_score = float(s_match.group(1)) if s_match else 0.0
-        n_score = float(n_match.group(1)) if n_match else 0.0
-        
-        level = 0
-        reason = ""
-        
-        # Level 2 (Ban)
-        if n_score > 0.85:
-            level = 2
-            reason = "Phát hiện nội dung khiêu dâm / khỏa thân mức độ cao"
-        elif v_score > 0.8:
-            level = 2
-            reason = "Phát hiện nội dung bạo lực / vũ khí nguy hiểm"
-        elif s_score > 0.8:
-            level = 2
-            reason = "Phát hiện nội dung tự hại nghiêm trọng"
-        # Level 1 (Blur)
-        elif n_score > 0.45:
-            level = 1
-            reason = "Nội dung có yếu tố nhạy cảm / hở hang"
-        elif v_score > 0.45:
-            level = 1
-            reason = "Nội dung có yếu tố bạo lực nhẹ"
-        elif s_score > 0.45:
-            level = 1
-            reason = "Nội dung có yếu tố tự hại"
-            
-        return level, reason
+            # Image: dùng ViT models (nhẹ + chính xác hơn cho ảnh)
+            res = process_image_vit(image_path=temp_path)
+            score_md = res[1]
+            os.remove(temp_path)
+
+            # Parse ViT image scores
+            n_match = re.search(r'NSFW probability: ([0-9.]+)', score_md)
+            v_match = re.search(r'Violence probability: ([0-9.]+)', score_md)
+
+            n_score = float(n_match.group(1)) if n_match else 0.0
+            v_score = float(v_match.group(1)) if v_match else 0.0
+
+            level = 0
+            reason = ""
+
+            # Image thresholds (ViT-based, phân biệt sexy vs nudity)
+            # NSFW: 0.90+ = khỏa thân thật sự (ban), 0.70+ = sexy/bikini (blur)
+            # Violence: 0.70+ = bạo lực
+            if n_score >= 0.90:
+                level = 2
+                reason = "Phát hiện nội dung khỏa thân / khiêu dâm"
+            elif v_score >= 0.70:
+                level = 2
+                reason = "Phát hiện nội dung bạo lực"
+            elif n_score >= 0.70:
+                level = 1
+                reason = "Nội dung có yếu tố nhạy cảm / sexy / bikini"
+            elif v_score >= 0.45:
+                level = 1
+                reason = "Nội dung có yếu tố bạo lực nhẹ"
+
+            return level, reason
     except Exception as e:
         if os.path.exists(temp_path):
             os.remove(temp_path)

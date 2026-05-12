@@ -10,6 +10,7 @@ import numpy as np
 import pandas as pd
 import torch
 from PIL import Image
+from transformers import pipeline as hf_pipeline
 
 ROOT = Path(__file__).resolve().parent
 if str(ROOT) not in sys.path:
@@ -299,13 +300,13 @@ def load_common_models():
     if MODEL_CACHE.get("common_loaded", False):
         return
 
-    missing = [name for name, fn in WEIGHT_FILES_V6.items() if name != "task" and not (WEIGHTS_DIR / fn).exists()]
+    # YOLO DISABLED — skip loading yolo weights
+    missing = [name for name, fn in WEIGHT_FILES_V6.items() if name not in ("task", "yolo") and not (WEIGHTS_DIR / fn).exists()]
     if missing:
         missing_str = ", ".join(missing)
         raise FileNotFoundError(f"Missing common weight files in {WEIGHTS_DIR}: {missing_str}")
 
     processor, clip_model = load_clip(DEVICE)
-    yolo_model = load_yolo(WEIGHTS_DIR / WEIGHT_FILES_V6["yolo"])
 
     gore_model = GoreDetector(unfreeze_from_layer=0).to(DEVICE)
     _load_state_dict(gore_model, safe_torch_load(WEIGHTS_DIR / WEIGHT_FILES_V6["gore"]))
@@ -324,7 +325,7 @@ def load_common_models():
             "common_loaded": True,
             "processor": processor,
             "clip": clip_model,
-            "yolo": yolo_model,
+            "yolo": None,
             "gore": gore_model,
             "selfharm": selfharm_model,
             "nsfw": nsfw_model,
@@ -487,47 +488,9 @@ def batch_expert_probs(frames: list[Image.Image], model: torch.nn.Module, transf
 
 @torch.no_grad()
 def run_yolo_with_details(frames: list[Image.Image], yolo_model):
-    if yolo_model is None or not frames:
-        t = max(len(frames), 1)
-        return np.zeros((t, 1), dtype=np.float32), np.zeros((t, 1), dtype=np.float32), []
-
-    arrays = [np.array(f) for f in frames]
-    results = yolo_model.predict(arrays, verbose=False, imgsz=640)
-
-    weapon = np.zeros((len(frames), 1), dtype=np.float32)
-    medical = np.zeros((len(frames), 1), dtype=np.float32)
-    details = []
-
-    for i, res in enumerate(results):
-        info = {
-            "weapon_count": 0,
-            "medical_count": 0,
-            "weapon_max": 0.0,
-            "medical_max": 0.0,
-            "boxes": [],
-        }
-        if res.boxes is not None and len(res.boxes) > 0:
-            confs = res.boxes.conf.detach().cpu().numpy()
-            classes = res.boxes.cls.detach().cpu().numpy().astype(int)
-            boxes = res.boxes.xyxy.detach().cpu().numpy()
-            for cls_id, conf, box in zip(classes, confs, boxes):
-                box_data = {
-                    "cls": int(cls_id),
-                    "conf": float(conf),
-                    "xyxy": [float(v) for v in box.tolist()],
-                }
-                info["boxes"].append(box_data)
-                if cls_id == 0:
-                    info["weapon_count"] += 1
-                    info["weapon_max"] = max(info["weapon_max"], float(conf))
-                elif cls_id == 1:
-                    info["medical_count"] += 1
-                    info["medical_max"] = max(info["medical_max"], float(conf))
-        weapon[i, 0] = info["weapon_max"]
-        medical[i, 0] = info["medical_max"]
-        details.append(info)
-
-    return weapon, medical, details
+    # YOLO DISABLED — always return zeros
+    t = max(len(frames), 1)
+    return np.zeros((t, 1), dtype=np.float32), np.zeros((t, 1), dtype=np.float32), [{} for _ in range(t)]
 
 
 def normalize01(x: np.ndarray) -> np.ndarray:
@@ -1474,6 +1437,114 @@ def process_image(
         )
 
 
+# ═══════════════════════════════════════════════════════════════
+# ViT-BASED IMAGE MODERATION (lightweight, image-only)
+# ═══════════════════════════════════════════════════════════════
+
+VIT_NSFW_MODEL = "Falconsai/nsfw-image-detector"
+VIT_VIOLENCE_MODEL = "DunnBC22/vit-base-patch16-224-in21k-violence-image-detection"
+
+
+def load_vit_models():
+    if MODEL_CACHE.get("vit_loaded", False):
+        return
+    print("  🖼️  Đang tải ViT NSFW classifier...")
+    nsfw_pipe = hf_pipeline("image-classification", model=VIT_NSFW_MODEL, device=DEVICE)
+    print("  🖼️  Đang tải ViT Violence classifier...")
+    violence_pipe = hf_pipeline("image-classification", model=VIT_VIOLENCE_MODEL, device=DEVICE)
+    MODEL_CACHE.update({
+        "vit_loaded": True,
+        "vit_nsfw": nsfw_pipe,
+        "vit_violence": violence_pipe,
+    })
+
+
+def process_image_vit(image_path: str):
+    """Process a single image using lightweight ViT classifiers (NSFW + Violence)."""
+    empty = (
+        "### Error\nImage is invalid or processing failed.",
+        "",
+        None,
+    )
+
+    if isinstance(image_path, dict):
+        image_path = image_path.get("path") or image_path.get("name") or image_path.get("url")
+    if not image_path:
+        return empty
+
+    try:
+        t0 = time.time()
+        load_vit_models()
+
+        img = Image.open(image_path).convert("RGB")
+
+        # Run both ViT classifiers
+        nsfw_results = MODEL_CACHE["vit_nsfw"](img, top_k=5)
+        violence_results = MODEL_CACHE["vit_violence"](img, top_k=5)
+
+        # Parse NSFW scores
+        nsfw_scores = {r["label"].lower(): r["score"] for r in nsfw_results}
+        nsfw_prob = nsfw_scores.get("nsfw", 0.0)
+
+        # Parse Violence scores
+        violence_scores = {r["label"].lower(): r["score"] for r in violence_results}
+        v_prob = max(violence_scores.get("violence", 0.0), violence_scores.get("violent", 0.0))
+
+        # Convert to 1-10 scale for display
+        nsfw_10 = round(nsfw_prob * 10, 1)
+        v_10 = round(v_prob * 10, 1)
+
+        # Thresholds (0-1 scale)
+        thresh_n = 0.70   # bikini/sexy blur threshold
+        thresh_n_ban = 0.90  # explicit nudity ban threshold
+        thresh_v = 0.70
+
+        verdict_flags: list[str] = []
+        if v_prob >= thresh_v:
+            verdict_flags.append("Violence")
+        if nsfw_prob >= thresh_n_ban:
+            verdict_flags.append("NSFW (nudity)")
+        elif nsfw_prob >= thresh_n:
+            verdict_flags.append("NSFW (sexy)")
+
+        is_flagged = bool(verdict_flags)
+        verdict_str = "FLAGGED" if is_flagged else "SAFE"
+        reasons = ", ".join(verdict_flags) if verdict_flags else "No label exceeds threshold"
+        verdict_md = f"## {verdict_str}\n**Reason:** {reasons}"
+
+        # Detail markdown
+        nsfw_detail_lines = "\n".join(
+            f"  - {r['label']}: {r['score']:.4f}" for r in nsfw_results
+        )
+        violence_detail_lines = "\n".join(
+            f"  - {r['label']}: {r['score']:.4f}" for r in violence_results
+        )
+
+        score_md = (
+            "### ViT Image Moderation Scores\n"
+            f"- Model NSFW: **{VIT_NSFW_MODEL}**\n"
+            f"- Model Violence: **{VIT_VIOLENCE_MODEL}**\n"
+            f"- **NSFW probability: {nsfw_prob:.4f}** (1-10: {nsfw_10})\n"
+            f"- **Violence probability: {v_prob:.4f}** (1-10: {v_10})\n"
+            f"- NSFW threshold (blur): {thresh_n:.2f} | NSFW threshold (ban): {thresh_n_ban:.2f}\n"
+            f"- Violence threshold: {thresh_v:.2f}\n"
+            "### NSFW detail\n"
+            f"{nsfw_detail_lines}\n"
+            "### Violence detail\n"
+            f"{violence_detail_lines}\n"
+            f"- Runtime: **{time.time() - t0:.2f}s**"
+        )
+
+        return verdict_md, score_md, img
+
+    except Exception as exc:
+        return (
+            f"## Processing Error\n`{exc}`",
+            "",
+            None,
+        )
+
+
 with gr.Blocks(title="Video & Image Moderation Debug Lab (V6 + V7)", theme=gr.themes.Soft()) as demo:
     gr.Markdown("# Video & Image Moderation Debug Lab (V6 + V7)")
     gr.Markdown(
@@ -1531,50 +1602,24 @@ with gr.Blocks(title="Video & Image Moderation Debug Lab (V6 + V7)", theme=gr.th
                 outputs=[vid_verdict_out, vid_score_out, vid_yolo_metrics_out, vid_debug_out, vid_yolo_img_out, vid_attn_plot_out, vid_v_gallery_out, vid_s_gallery_out, vid_n_gallery_out],
             )
 
-        # ─── IMAGE TAB ──────────────────────────────────────────────
-        with gr.Tab("Image Analysis"):
+        # ─── IMAGE TAB (ViT-based) ────────────────────────────────
+        with gr.Tab("Image Analysis (ViT)"):
             with gr.Row():
                 with gr.Column(scale=1):
                     image_input = gr.Image(label="Input image", type="filepath")
-                    img_model_variant = gr.Radio(
-                        choices=list(MODEL_VARIANTS),
-                        value="V6 Task-Gated",
-                        label="Model variant",
-                    )
-                    img_enabled_branches = gr.CheckboxGroup(
-                        choices=["V", "S", "N"],
-                        value=["V", "S", "N"],
-                        label="Enable/Disable branches (V/S/N)",
-                    )
-                    img_enabled_modalities = gr.CheckboxGroup(
-                        choices=["CLIP", "YOLO", "Gore", "SelfHarm", "NSFW"],
-                        value=["CLIP", "YOLO", "Gore", "SelfHarm", "NSFW"],
-                        label="Enable/Disable input modalities (Flow disabled for images)",
-                    )
-                    img_apply_guard = gr.Checkbox(
-                        value=True,
-                        label="Enable guard: reduce false-positive Violence when clip-dominant + NSFW context",
-                    )
                     img_run_btn = gr.Button("Run Image Inference", variant="primary")
 
                 with gr.Column(scale=1):
                     img_verdict_out = gr.Markdown()
                     img_score_out = gr.Markdown()
-                    img_yolo_metrics_out = gr.Markdown()
 
             with gr.Row():
-                img_yolo_img_out = gr.Image(label="YOLO detection", type="pil")
-                img_attn_plot_out = gr.Image(label="Expert scores", type="pil")
-
-            with gr.Row():
-                img_v_gallery_out = gr.Gallery(label="V token overlay", columns=1, height=300)
-                img_s_gallery_out = gr.Gallery(label="S token overlay", columns=1, height=300)
-                img_n_gallery_out = gr.Gallery(label="N token overlay", columns=1, height=300)
+                img_preview_out = gr.Image(label="Input preview", type="pil")
 
             img_run_btn.click(
-                fn=process_image,
-                inputs=[image_input, img_apply_guard, img_model_variant, img_enabled_branches, img_enabled_modalities],
-                outputs=[img_verdict_out, img_score_out, img_yolo_metrics_out, img_yolo_img_out, img_attn_plot_out, img_v_gallery_out, img_s_gallery_out, img_n_gallery_out],
+                fn=process_image_vit,
+                inputs=[image_input],
+                outputs=[img_verdict_out, img_score_out, img_preview_out],
             )
 
 
