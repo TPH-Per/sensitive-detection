@@ -122,9 +122,9 @@ def process_posts():
         processed_posts.add(doc.id)
 
 def process_messages():
-    # Lấy 20 tin nhắn mới nhất
+    # Lấy 20 tin nhắn mới nhất dựa theo key (Push ID mặc định được sắp xếp theo thời gian)
     ref = rtdb.reference('messages')
-    messages = ref.order_by_child('createdAt').limit_to_last(20).get()
+    messages = ref.order_by_key().limit_to_last(20).get()
     
     if not messages:
         return
