@@ -99,12 +99,17 @@ def moderate_url(url, is_video):
             score_md = res[1]
             os.remove(temp_path)
 
+            # Debug: print raw output
+            print(f"  [DEBUG] process_image_vit returned: {res[0][:100]}")
+            print(f"  [DEBUG] score_md: {score_md[:200]}")
+
             # Parse ViT image scores
             n_match = re.search(r'NSFW probability: ([0-9.]+)', score_md)
             v_match = re.search(r'Violence probability: ([0-9.]+)', score_md)
 
             n_score = float(n_match.group(1)) if n_match else 0.0
             v_score = float(v_match.group(1)) if v_match else 0.0
+            print(f"  [DEBUG] Parsed scores: NSFW={n_score:.4f}, Violence={v_score:.4f}")
 
             level = 0
             reasons = []
