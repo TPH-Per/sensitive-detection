@@ -106,23 +106,30 @@ def moderate_url(url, is_video):
             v_score = float(v_match.group(1)) if v_match else 0.0
 
             level = 0
-            reason = ""
+            reasons = []
 
             # Image thresholds (ViT-based, match app.py)
-            # NSFW >= 0.90 = ban, Violence >= 0.80 = ban
-            # Both >= 0.60 = blur (level 1)
+            # Collect ALL violations, combine reasons
             if n_score >= 0.90:
                 level = 2
-                reason = "Phát hiện nội dung khỏa thân / khiêu dâm"
-            elif v_score >= 0.80:
+                reasons.append("khỏa thân / khiêu dâm")
+            if v_score >= 0.80:
                 level = 2
-                reason = "Phát hiện nội dung bạo lực"
-            elif n_score >= 0.60:
-                level = 1
-                reason = "Nội dung có yếu tố nhạy cảm / sexy / bikini"
-            elif v_score >= 0.60:
-                level = 1
-                reason = "Nội dung có yếu tố bạo lực nhẹ"
+                reasons.append("bạo lực")
+            if level < 2:
+                if n_score >= 0.60:
+                    level = 1
+                    reasons.append("nhạy cảm / sexy / bikini")
+                if v_score >= 0.60:
+                    level = 1
+                    reasons.append("bạo lực nhẹ")
+
+            if level == 2:
+                reason = "Phát hiện nội dung: " + ", ".join(reasons)
+            elif level == 1:
+                reason = "Nội dung có yếu tố: " + ", ".join(reasons)
+            else:
+                reason = ""
 
             return level, reason
     except Exception as e:
