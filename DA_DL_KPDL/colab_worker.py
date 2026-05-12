@@ -61,27 +61,35 @@ def moderate_url(url, is_video):
             n_score = float(n_match.group(1)) if n_match else 0.0
 
             level = 0
-            reason = ""
+            reasons = []
 
-            # Video thresholds (giữ nguyên)
+            # Video thresholds: collect ALL violations, combine reasons
             if n_score > 0.85:
                 level = 2
-                reason = "Phát hiện nội dung khiêu dâm / khỏa thân mức độ cao"
-            elif v_score > 0.8:
+                reasons.append("khiêu dâm / khỏa thân")
+            if v_score > 0.8:
                 level = 2
-                reason = "Phát hiện nội dung bạo lực / vũ khí nguy hiểm"
-            elif s_score > 0.8:
+                reasons.append("bạo lực / vũ khí")
+            if s_score > 0.8:
                 level = 2
-                reason = "Phát hiện nội dung tự hại nghiêm trọng"
-            elif n_score > 0.45:
-                level = 1
-                reason = "Nội dung có yếu tố nhạy cảm / hở hang"
-            elif v_score > 0.45:
-                level = 1
-                reason = "Nội dung có yếu tố bạo lực nhẹ"
-            elif s_score > 0.45:
-                level = 1
-                reason = "Nội dung có yếu tố tự hại"
+                reasons.append("tự hại nghiêm trọng")
+            if level < 2:
+                if n_score > 0.45:
+                    level = 1
+                    reasons.append("nhạy cảm / hở hang")
+                if v_score > 0.45:
+                    level = 1
+                    reasons.append("bạo lực nhẹ")
+                if s_score > 0.45:
+                    level = 1
+                    reasons.append("tự hại")
+
+            if level == 2:
+                reason = "Phát hiện nội dung: " + ", ".join(reasons)
+            elif level == 1:
+                reason = "Nội dung có yếu tố: " + ", ".join(reasons)
+            else:
+                reason = ""
 
             return level, reason
         else:
