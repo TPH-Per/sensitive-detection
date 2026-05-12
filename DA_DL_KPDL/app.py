@@ -1448,17 +1448,13 @@ VIT_NSFW_MODEL = "AdamCodd/vit-base-nsfw-detector"
 def load_vit_models():
     if MODEL_CACHE.get("vit_loaded", False):
         return
-    from transformers import ViTForImageClassification, ViTImageProcessor
     print("  [ViT] Loading ViT Violence classifier...")
-    violence_model = ViTForImageClassification.from_pretrained(VIT_VIOLENCE_MODEL).to(DEVICE)
-    violence_model.eval()
-    violence_processor = ViTImageProcessor.from_pretrained("google/vit-base-patch16-224-in21k")
+    violence_pipe = hf_pipeline("image-classification", model=VIT_VIOLENCE_MODEL, device=DEVICE)
     print("  [ViT] Loading ViT NSFW classifier...")
     nsfw_pipe = hf_pipeline("image-classification", model=VIT_NSFW_MODEL, device=DEVICE)
     MODEL_CACHE.update({
         "vit_loaded": True,
-        "vit_violence_model": violence_model,
-        "vit_violence_processor": violence_processor,
+        "vit_violence_pipe": violence_pipe,
         "vit_nsfw": nsfw_pipe,
     })
 
@@ -1482,18 +1478,10 @@ def process_image_vit(image_path: str):
         thresh_n_ban = 0.90   # nudity ban
         thresh_blur = 0.60    # both: blur threshold
 
-        # STEP 1: Violence detection
-        violence_proc = MODEL_CACHE["vit_violence_processor"]
-        violence_model = MODEL_CACHE["vit_violence_model"]
-        v_inputs = violence_proc(images=img, return_tensors="pt").to(DEVICE)
-        with torch.no_grad():
-            v_logits = violence_model(**v_inputs).logits
-            v_probs = torch.softmax(v_logits, dim=1).squeeze()
-        v_prob = float(v_probs[1].item())
-        violence_results = [
-            {"label": "non-violence", "score": float(v_probs[0].item())},
-            {"label": "violence", "score": v_prob},
-        ]
+        # STEP 1: Violence detection (pipeline handles key mapping)
+        violence_results = MODEL_CACHE["vit_violence_pipe"](img, top_k=5)
+        v_scores = {r["label"].lower(): r["score"] for r in violence_results}
+        v_prob = v_scores.get("violence", 0.0)
 
         # STEP 2: NSFW detection (always run)
         nsfw_results = MODEL_CACHE["vit_nsfw"](img, top_k=5)
