@@ -3,6 +3,7 @@ import urllib.request
 import firebase_admin
 from firebase_admin import credentials, firestore, db as rtdb
 import time
+import re
 
 from app import process_image, process_video
 
@@ -34,7 +35,7 @@ def moderate_url(url, is_video):
     temp_path = f"temp_worker_{int(time.time())}{ext}"
     
     if not download_file(url, temp_path):
-        return False, "Lỗi tải file"
+        return 0, "Lỗi tải file"
         
     try:
         if is_video:
@@ -56,22 +57,47 @@ def moderate_url(url, is_video):
             )
         
         verdict_md = res[0]
+        score_md = res[1]
         os.remove(temp_path)
         
-        is_flagged = "FLAGGED" in verdict_md or "VI PHẠM" in verdict_md
-        # Trích xuất một phần lý do từ verdict
-        lines = verdict_md.split('\n')
-        reason = "Vi phạm tiêu chuẩn cộng đồng"
-        for line in lines:
-            if "Phát hiện" in line or "Dấu hiệu" in line or "Score" in line:
-                reason = line.replace("*", "").strip()
-                break
-                
-        return is_flagged, reason
+        # Parse scores
+        v_match = re.search(r'- Violence raw: \*\*([0-9.]+)\*\*', score_md)
+        s_match = re.search(r'- Self-harm score: \*\*([0-9.]+)\*\*', score_md)
+        n_match = re.search(r'- NSFW score: \*\*([0-9.]+)\*\*', score_md)
+        
+        v_score = float(v_match.group(1)) if v_match else 0.0
+        s_score = float(s_match.group(1)) if s_match else 0.0
+        n_score = float(n_match.group(1)) if n_match else 0.0
+        
+        level = 0
+        reason = ""
+        
+        # Level 2 (Ban)
+        if n_score > 0.85:
+            level = 2
+            reason = "Phát hiện nội dung khiêu dâm / khỏa thân mức độ cao"
+        elif v_score > 0.8:
+            level = 2
+            reason = "Phát hiện nội dung bạo lực / vũ khí nguy hiểm"
+        elif s_score > 0.8:
+            level = 2
+            reason = "Phát hiện nội dung tự hại nghiêm trọng"
+        # Level 1 (Blur)
+        elif n_score > 0.45:
+            level = 1
+            reason = "Nội dung có yếu tố nhạy cảm / hở hang"
+        elif v_score > 0.45:
+            level = 1
+            reason = "Nội dung có yếu tố bạo lực nhẹ"
+        elif s_score > 0.45:
+            level = 1
+            reason = "Nội dung có yếu tố tự hại"
+            
+        return level, reason
     except Exception as e:
         if os.path.exists(temp_path):
             os.remove(temp_path)
-        return False, str(e)
+        return 0, str(e)
 
 def process_posts():
     docs = db.collection('posts').order_by('createdAt', direction=firestore.Query.DESCENDING).limit(15).stream()
@@ -86,7 +112,7 @@ def process_posts():
             
         media_list = data.get('media', [])
         
-        has_violation = False
+        highest_level = 0
         violation_reason = ""
         updated_media = []
         
@@ -100,30 +126,81 @@ def process_posts():
             if mimeType.startswith('image/') or mimeType.startswith('video/'):
                 print(f"[POST] Quét media: {url}")
                 is_video = mimeType.startswith('video/')
-                is_flagged, reason = moderate_url(url, is_video)
+                level, reason = moderate_url(url, is_video)
                 
-                if is_flagged:
-                    has_violation = True
-                    violation_reason = reason
+                if level > 0:
                     m['isSensitive'] = True
                     m['moderationReason'] = reason
-                    print(f"  -> Phát hiện vi phạm: {reason}")
+                    if level > highest_level:
+                        highest_level = level
+                        violation_reason = reason
+                    print(f"  -> Phát hiện: {reason} (Level {level})")
                 else:
                     print("  -> An toàn")
             updated_media.append(m)
             
-        if has_violation:
-            print(f"[POST] Xử lý Post {doc.id} -> policy_violation")
+        if highest_level == 2:
+            print(f"[POST] Xử lý Post {doc.id} -> BAN (policy_violation)")
             doc.reference.update({
                 'status': 'policy_violation',
                 'moderationReason': violation_reason,
                 'media': updated_media
             })
+        elif highest_level == 1:
+            print(f"[POST] Xử lý Post {doc.id} -> BLUR (isSensitive)")
+            doc.reference.update({
+                'media': updated_media
+            })
             
         processed_posts.add(doc.id)
 
+def process_comments():
+    docs = db.collection('comments').order_by('createdAt', direction=firestore.Query.DESCENDING).limit(15).stream()
+    for doc in docs:
+        if doc.id in processed_comments:
+            continue
+            
+        data = doc.to_dict()
+        if data.get('status') != 'active':
+            processed_comments.add(doc.id)
+            continue
+            
+        image = data.get('image', None)
+        if not image or image.get('isSensitive', False):
+            processed_comments.add(doc.id)
+            continue
+            
+        url = image.get('url', '')
+        mimeType = image.get('mimeType', '')
+        
+        if mimeType.startswith('image/') or mimeType.startswith('video/'):
+            print(f"[COMMENT] Quét media: {url}")
+            is_video = mimeType.startswith('video/')
+            level, reason = moderate_url(url, is_video)
+            
+            if level == 2:
+                print(f"[COMMENT] Xử lý Comment {doc.id} -> BAN (policy_violation)")
+                image['isSensitive'] = True
+                image['moderationReason'] = reason
+                doc.reference.update({
+                    'status': 'policy_violation',
+                    'moderationReason': reason,
+                    'image': image
+                })
+            elif level == 1:
+                print(f"[COMMENT] Xử lý Comment {doc.id} -> BLUR (isSensitive)")
+                image['isSensitive'] = True
+                image['moderationReason'] = reason
+                doc.reference.update({
+                    'image': image
+                })
+            else:
+                print("  -> An toàn")
+                
+        processed_comments.add(doc.id)
+
 def process_messages():
-    # Lấy 20 tin nhắn mới nhất dựa theo key (Push ID mặc định được sắp xếp theo thời gian)
+    # Lấy 20 tin nhắn mới nhất dựa theo key
     ref = rtdb.reference('messages')
     messages = ref.order_by_key().limit_to_last(20).get()
     
@@ -152,19 +229,20 @@ def process_messages():
             if mimeType.startswith('image/') or mimeType.startswith('video/'):
                 print(f"[CHAT] Quét media: {url}")
                 is_video = mimeType.startswith('video/')
-                is_flagged, reason = moderate_url(url, is_video)
+                level, reason = moderate_url(url, is_video)
                 
-                if is_flagged:
+                # Chat thì bất kể level 1 hay 2 đều chỉ che mờ (không ban)
+                if level > 0:
                     has_violation = True
                     m['isSensitive'] = True
                     m['moderationReason'] = reason
-                    print(f"  -> Phát hiện vi phạm: {reason}")
+                    print(f"  -> Phát hiện: {reason} (Level {level})")
                 else:
                     print("  -> An toàn")
             updated_media.append(m)
             
         if has_violation:
-            print(f"[CHAT] Xử lý Chat {msg_id} -> isSensitive (che mờ)")
+            print(f"[CHAT] Xử lý Chat {msg_id} -> BLUR (isSensitive)")
             ref.child(msg_id).update({
                 'media': updated_media
             })
@@ -182,16 +260,15 @@ def process_users():
         if not avatar_url:
             continue
             
-        # Check if we already processed this exact avatar url for this user
         if processed_avatars.get(user_id) == avatar_url:
             continue
             
         print(f"[USER] Quét Avatar của user {user_id}: {avatar_url}")
-        is_flagged, reason = moderate_url(avatar_url, is_video=False)
+        level, reason = moderate_url(avatar_url, is_video=False)
         
-        if is_flagged:
+        # Avatar nếu vi phạm (dù level 1 hay 2) thì xóa luôn (ban)
+        if level > 0:
             print(f"  -> Phát hiện Avatar vi phạm: {reason}")
-            # Reset avatar to empty
             doc.reference.update({
                 'avatar': {
                     'url': '',
@@ -200,7 +277,6 @@ def process_users():
                     'size': 0
                 }
             })
-            # Send notification
             db.collection('notifications').add({
                 'receiverId': user_id,
                 'actorId': 'system',
@@ -218,13 +294,13 @@ def process_users():
         else:
             print("  -> Avatar An toàn")
             
-        # Record that we processed this avatar url
         processed_avatars[user_id] = avatar_url
 
-print("Bắt đầu Worker lắng nghe Firebase (Demo Mode)...")
+print("Bắt đầu Worker lắng nghe Firebase (Demo Mode - Phân cấp Vi Phạm)...")
 while True:
     try:
         process_posts()
+        process_comments()
         process_messages()
         process_users()
     except Exception as e:
