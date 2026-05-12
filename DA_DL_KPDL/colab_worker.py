@@ -259,6 +259,18 @@ def process_all(items):
                 enabled_modalities=["CLIP", "Flow", "Gore", "NSFW"]
             )
             verdict_md = res[0]
+            score_md = res[1]
+
+            # Debug: print score details
+            print(f"[VIDEO] Score details:")
+            for line in score_md.split("\n"):
+                line = line.strip()
+                if line and any(k in line for k in [
+                    "Calibration thresholds", "Violence raw", "NSFW score",
+                    "Self-harm score", "Guard fired", "Runtime",
+                    "Branch toggles", "Modality toggles"
+                ]):
+                    print(f"  {line}")
 
             # Read verdict directly (same as web GUI)
             if "FLAGGED" in verdict_md:
@@ -266,12 +278,15 @@ def process_all(items):
                 reason = reason_match.group(1).strip() if reason_match else "Vi phạm nội dung"
                 item.level = 2
                 item.reason = "Phát hiện nội dung: " + reason
+                print(f"[VIDEO] FLAGGED: {item.reason}")
             else:
                 item.level = 0
                 item.reason = ""
+                print(f"[VIDEO] SAFE")
         except Exception as e:
             item.level = 0
             item.reason = str(e)
+            print(f"[VIDEO] ERROR: {e}")
 
     # Cleanup temp files
     for item in items:
