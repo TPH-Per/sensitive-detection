@@ -48,32 +48,18 @@ def moderate_video(url):
             enabled_branches=["V", "N"],
             enabled_modalities=["CLIP", "Flow", "Gore", "NSFW"]
         )
+        verdict_md = res[0]
         score_md = res[1]
         os.remove(temp_path)
 
-        v_match = re.search(r'- Violence raw: \*\*([0-9.]+)\*\*', score_md)
-        n_match = re.search(r'- NSFW score: \*\*([0-9.]+)\*\*', score_md)
-        v_score = float(v_match.group(1)) if v_match else 0.0
-        n_score = float(n_match.group(1)) if n_match else 0.0
-
-        # Use same thresholds as Gradio web (calibration_v6.json + V7 checkpoint)
-        # V=0.0591 (V7), N=0.999 (calibration), S=0.995 (calibration)
-        level = 0
-        reasons = []
-        if n_score > 0.999:
-            level = 2
-            reasons.append("khiêu dâm / khỏa thân")
-        if v_score > 0.9136:
-            level = 2
-            reasons.append("bạo lực / vũ khí")
-
-        if level == 2:
-            reason = "Phát hiện nội dung: " + ", ".join(reasons)
-        elif level == 1:
-            reason = "Nội dung có yếu tố: " + ", ".join(reasons)
+        # Read the verdict directly from process_video (same as web GUI)
+        if "FLAGGED" in verdict_md:
+            # Parse the reason from verdict
+            reason_match = re.search(r'Lý do:\s*(.*)', verdict_md)
+            reason = reason_match.group(1).strip() if reason_match else "Vi phạm nội dung"
+            return 2, "Phát hiện nội dung: " + reason
         else:
-            reason = ""
-        return level, reason
+            return 0, ""
     except Exception as e:
         if os.path.exists(temp_path):
             os.remove(temp_path)
@@ -264,7 +250,6 @@ def process_all(items):
     for item in video_items:
         print(f"[VIDEO] Processing: {item.url[:80]}...")
         try:
-            # Video already downloaded, use the temp file directly
             res = process_video(
                 video_path=item.temp_path,
                 top_k=6,
@@ -273,37 +258,17 @@ def process_all(items):
                 enabled_branches=["V", "N"],
                 enabled_modalities=["CLIP", "Flow", "Gore", "NSFW"]
             )
-            score_md = res[1]
+            verdict_md = res[0]
 
-            v_match = re.search(r'- Violence raw: \*\*([0-9.]+)\*\*', score_md)
-            n_match = re.search(r'- NSFW score: \*\*([0-9.]+)\*\*', score_md)
-            v_score = float(v_match.group(1)) if v_match else 0.0
-            n_score = float(n_match.group(1)) if n_match else 0.0
-
-            level = 0
-            reasons = []
-            if n_score > 0.85:
-                level = 2
-                reasons.append("khiêu dâm / khỏa thân")
-            if v_score > 0.8:
-                level = 2
-                reasons.append("bạo lực / vũ khí")
-            if level < 2:
-                if n_score > 0.45:
-                    level = 1
-                    reasons.append("nhạy cảm / hở hang")
-                if v_score > 0.45:
-                    level = 1
-                    reasons.append("bạo lực nhẹ")
-
-            if level == 2:
-                reason = "Phát hiện nội dung: " + ", ".join(reasons)
-            elif level == 1:
-                reason = "Nội dung có yếu tố: " + ", ".join(reasons)
+            # Read verdict directly (same as web GUI)
+            if "FLAGGED" in verdict_md:
+                reason_match = re.search(r'Lý do:\s*(.*)', verdict_md)
+                reason = reason_match.group(1).strip() if reason_match else "Vi phạm nội dung"
+                item.level = 2
+                item.reason = "Phát hiện nội dung: " + reason
             else:
-                reason = ""
-            item.level = level
-            item.reason = reason
+                item.level = 0
+                item.reason = ""
         except Exception as e:
             item.level = 0
             item.reason = str(e)
