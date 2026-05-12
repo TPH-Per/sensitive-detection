@@ -1002,7 +1002,8 @@ def process_video(
         yolo_weapon, yolo_medical, yolo_details = run_yolo_with_details(frames, MODEL_CACHE["yolo"])
 
         gore_probs = batch_expert_probs(frames, MODEL_CACHE["gore"], gore_val_transform(is_train=False))
-        selfharm_probs = batch_expert_probs(frames, MODEL_CACHE["selfharm"], selfharm_val_transform())
+        # SELFHARM DISABLED — always return zeros
+        selfharm_probs = np.zeros((len(frames), 1), dtype=np.float32)
         nsfw_probs = batch_expert_probs(frames, MODEL_CACHE["nsfw"], nsfw_val_transform())
 
         clip_f_raw, flow_f_raw, yolo_w_raw, gore_p_raw, sh_p_raw, nsfw_p_raw = pad_to_match(
@@ -1276,7 +1277,8 @@ def process_image(
         yolo_weapon, yolo_medical, yolo_details = run_yolo_with_details(frames, MODEL_CACHE["yolo"])
 
         gore_probs = batch_expert_probs(frames, MODEL_CACHE["gore"], gore_val_transform(is_train=False))
-        selfharm_probs = batch_expert_probs(frames, MODEL_CACHE["selfharm"], selfharm_val_transform())
+        # SELFHARM DISABLED — always return zeros
+        selfharm_probs = np.zeros((len(frames), 1), dtype=np.float32)
         nsfw_probs = batch_expert_probs(frames, MODEL_CACHE["nsfw"], nsfw_val_transform())
 
         clip_f_raw, flow_f_raw, yolo_w_raw, gore_p_raw, sh_p_raw, nsfw_p_raw = pad_to_match(

@@ -4,6 +4,7 @@ import firebase_admin
 from firebase_admin import credentials, firestore, db as rtdb
 import time
 import re
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from app import process_video, process_image_vit
 
@@ -45,8 +46,8 @@ def moderate_url(url, is_video):
                 top_k=6,
                 apply_guard=True,
                 model_variant="V7 VideoMAE-LoRA",
-                enabled_branches=["V", "S", "N"],
-                enabled_modalities=["CLIP", "Flow", "YOLO", "Gore", "SelfHarm", "NSFW"]
+                enabled_branches=["V", "N"],
+                enabled_modalities=["CLIP", "Flow", "Gore", "NSFW"]
             )
             score_md = res[1]
             os.remove(temp_path)
@@ -343,13 +344,21 @@ def process_users():
             
         processed_avatars[user_id] = avatar_url
 
-print("Bắt đầu Worker lắng nghe Firebase (Demo Mode - Phân cấp Vi Phạm)...")
+print("Bắt đầu Worker lắng nghe Firebase (Demo Mode - Phân cấp Vi Phạm, Multi-thread)...")
+executor = ThreadPoolExecutor(max_workers=4)
 while True:
     try:
-        process_posts()
-        process_comments()
-        process_messages()
-        process_users()
+        futures = [
+            executor.submit(process_posts),
+            executor.submit(process_comments),
+            executor.submit(process_messages),
+            executor.submit(process_users),
+        ]
+        for f in as_completed(futures):
+            try:
+                f.result()
+            except Exception as e:
+                print(f"Lỗi thread: {e}")
     except Exception as e:
         print(f"Lỗi vòng lặp: {e}")
     time.sleep(5)
