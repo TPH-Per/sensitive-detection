@@ -73,12 +73,16 @@ def moderate_url(url, is_video):
         return False, str(e)
 
 def process_posts():
-    docs = db.collection('posts').where('status', '==', 'active').order_by('createdAt', direction=firestore.Query.DESCENDING).limit(10).stream()
+    docs = db.collection('posts').order_by('createdAt', direction=firestore.Query.DESCENDING).limit(15).stream()
     for doc in docs:
         if doc.id in processed_posts:
             continue
             
         data = doc.to_dict()
+        if data.get('status') != 'active':
+            processed_posts.add(doc.id)
+            continue
+            
         media_list = data.get('media', [])
         
         has_violation = False
