@@ -1448,13 +1448,70 @@ VIT_NSFW_MODEL = "AdamCodd/vit-base-nsfw-detector"
 def load_vit_models():
     if MODEL_CACHE.get("vit_loaded", False):
         return
-    print("  [ViT] Loading ViT Violence classifier...")
-    violence_pipe = hf_pipeline("image-classification", model=VIT_VIOLENCE_MODEL, device=DEVICE)
+    from transformers import ViTForImageClassification, ViTImageProcessor
+    from safetensors.torch import load_file as st_load_file
+    from huggingface_hub import hf_hub_download
+
+    # --- Violence model: checkpoint uses non-standard key names (blocks.*)
+    # Must manually remap to ViTForImageClassification format (vit.encoder.layer.*)
+    print("  [ViT] Loading ViT Violence classifier (with key remapping)...")
+    violence_model = ViTForImageClassification.from_pretrained(VIT_VIOLENCE_MODEL, ignore_mismatched_sizes=True)
+    ckpt_path = hf_hub_download(repo_id=VIT_VIOLENCE_MODEL, filename="model.safetensors")
+    raw_ckpt = st_load_file(ckpt_path)
+
+    # Remap keys: blocks.* → vit.encoder.layer.*
+    remapped = {}
+    for k, v in raw_ckpt.items():
+        if k.startswith("blocks."):
+            parts = k.split(".", 2)
+            idx = parts[1]
+            rest = parts[2]
+            if rest.startswith("attn.qkv."):
+                suffix = rest.replace("attn.qkv.", "")
+                dim = v.shape[0] // 3
+                remapped[f"vit.encoder.layer.{idx}.attention.attention.query.{suffix}"] = v[:dim]
+                remapped[f"vit.encoder.layer.{idx}.attention.attention.key.{suffix}"] = v[dim:2*dim]
+                remapped[f"vit.encoder.layer.{idx}.attention.attention.value.{suffix}"] = v[2*dim:]
+            elif rest.startswith("attn.proj."):
+                remapped[f"vit.encoder.layer.{idx}.attention.output.dense.{rest.replace('attn.proj.', '')}"] = v
+            elif rest.startswith("norm1."):
+                remapped[f"vit.encoder.layer.{idx}.layernorm_before.{rest.replace('norm1.', '')}"] = v
+            elif rest.startswith("norm2."):
+                remapped[f"vit.encoder.layer.{idx}.layernorm_after.{rest.replace('norm2.', '')}"] = v
+            elif rest.startswith("mlp.fc1."):
+                remapped[f"vit.encoder.layer.{idx}.intermediate.dense.{rest.replace('mlp.fc1.', '')}"] = v
+            elif rest.startswith("mlp.fc2."):
+                remapped[f"vit.encoder.layer.{idx}.output.dense.{rest.replace('mlp.fc2.', '')}"] = v
+        elif k == "patch_embed.proj.weight":
+            remapped["vit.embeddings.patch_embeddings.projection.weight"] = v
+        elif k == "patch_embed.proj.bias":
+            remapped["vit.embeddings.patch_embeddings.projection.bias"] = v
+        elif k == "cls_token":
+            remapped["vit.embeddings.cls_token"] = v
+        elif k == "pos_embed":
+            remapped["vit.embeddings.position_embeddings"] = v
+        elif k == "norm.weight":
+            remapped["vit.layernorm.weight"] = v
+        elif k == "norm.bias":
+            remapped["vit.layernorm.bias"] = v
+        elif k == "head.weight":
+            remapped["classifier.weight"] = v
+        elif k == "head.bias":
+            remapped["classifier.bias"] = v
+
+    missing, unexpected = violence_model.load_state_dict(remapped, strict=False)
+    violence_model.eval()
+    violence_processor = ViTImageProcessor.from_pretrained(VIT_VIOLENCE_MODEL)
+    print(f"  [ViT] Violence model loaded: {len(remapped)} keys remapped, {len(missing)} missing, {len(unexpected)} unexpected")
+
+    # --- NSFW model: standard format, load normally
     print("  [ViT] Loading ViT NSFW classifier...")
     nsfw_pipe = hf_pipeline("image-classification", model=VIT_NSFW_MODEL, device=DEVICE)
+
     MODEL_CACHE.update({
         "vit_loaded": True,
-        "vit_violence_pipe": violence_pipe,
+        "vit_violence_model": violence_model,
+        "vit_violence_processor": violence_processor,
         "vit_nsfw": nsfw_pipe,
     })
 
@@ -1478,10 +1535,18 @@ def process_image_vit(image_path: str):
         thresh_n_ban = 0.90   # nudity ban
         thresh_blur = 0.60    # both: blur threshold
 
-        # STEP 1: Violence detection (pipeline handles key mapping)
-        violence_results = MODEL_CACHE["vit_violence_pipe"](img, top_k=5)
-        v_scores = {r["label"].lower(): r["score"] for r in violence_results}
-        v_prob = v_scores.get("violence", 0.0)
+        # STEP 1: Violence detection (manually remapped weights)
+        violence_model = MODEL_CACHE["vit_violence_model"]
+        violence_proc = MODEL_CACHE["vit_violence_processor"]
+        v_inputs = violence_proc(images=img, return_tensors="pt").to(DEVICE)
+        with torch.no_grad():
+            v_logits = violence_model(**v_inputs).logits
+            v_probs = torch.softmax(v_logits, dim=1).squeeze()
+        v_prob = float(v_probs[1].item())
+        violence_results = [
+            {"label": "non-violence", "score": float(v_probs[0].item())},
+            {"label": "violence", "score": v_prob},
+        ]
 
         # STEP 2: NSFW detection (always run)
         nsfw_results = MODEL_CACHE["vit_nsfw"](img, top_k=5)
