@@ -1486,6 +1486,14 @@ def process_image_vit(image_path: str):
         with torch.no_grad():
             gore_prob = float(MODEL_CACHE["gore"].predict_proba(gore_tensor).squeeze().item())
 
+        # VIOLENCE GUARD: GoreDetector confuses skin exposure with gore.
+        # If NSFW is high, the violence score is likely a false positive.
+        gore_raw = gore_prob
+        gore_suppressed = False
+        if nsfw_prob >= 0.50:
+            gore_prob = gore_prob * 0.15  # suppress 85%
+            gore_suppressed = True
+
         # Display on 1-10 scale
         nsfw_10 = round(nsfw_prob * 10, 1)
         gore_10 = round(gore_prob * 10, 1)
@@ -1514,6 +1522,10 @@ def process_image_vit(image_path: str):
         nsfw_detail_lines = "\n".join(
             f"  - {r['label']}: {r['score']:.4f}" for r in nsfw_results
         )
+        gore_guard_line = (
+            f"- Gore raw: {gore_raw:.4f} -> suppressed to {gore_prob:.4f} (NSFW high)\n"
+            if gore_suppressed else ""
+        )
 
         score_md = (
             "### Image Moderation Scores\n"
@@ -1521,6 +1533,7 @@ def process_image_vit(image_path: str):
             f"- Model Violence: **GoreDetector (project)**\n"
             f"- **NSFW probability: {nsfw_prob:.4f}** (1-10: {nsfw_10})\n"
             f"- **Violence (gore) probability: {gore_prob:.4f}** (1-10: {gore_10})\n"
+            f"{gore_guard_line}"
             f"- NSFW threshold (blur): {thresh_n:.2f} | NSFW threshold (ban): {thresh_n_ban:.2f}\n"
             f"- Violence threshold (blur): {thresh_v_blur:.2f} | Violence threshold (ban): {thresh_v:.2f}\n"
             "### NSFW detail\n"
