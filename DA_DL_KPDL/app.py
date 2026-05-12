@@ -1438,31 +1438,30 @@ def process_image(
 
 
 # ═══════════════════════════════════════════════════════════════
-# IMAGE MODERATION (ViT NSFW + project GoreDetector for violence)
+# IMAGE MODERATION (ViT Violence + ViT NSFW, sequential pipeline)
 # ═══════════════════════════════════════════════════════════════
 
+VIT_VIOLENCE_MODEL = "jaranohaal/vit-base-violence-detection"
 VIT_NSFW_MODEL = "AdamCodd/vit-base-nsfw-detector"
 
 
 def load_vit_models():
     if MODEL_CACHE.get("vit_loaded", False):
         return
-    load_common_models()
+    print("  [ViT] Loading ViT Violence classifier...")
+    violence_pipe = hf_pipeline("image-classification", model=VIT_VIOLENCE_MODEL, device=DEVICE)
     print("  [ViT] Loading ViT NSFW classifier...")
     nsfw_pipe = hf_pipeline("image-classification", model=VIT_NSFW_MODEL, device=DEVICE)
     MODEL_CACHE.update({
         "vit_loaded": True,
+        "vit_violence": violence_pipe,
         "vit_nsfw": nsfw_pipe,
     })
 
 
 def process_image_vit(image_path: str):
-    """Process a single image: ViT NSFW + project GoreDetector for violence."""
-    empty = (
-        "### Error\nImage is invalid or processing failed.",
-        "",
-        None,
-    )
+    """Process image with sequential ViT pipeline: Violence first, then NSFW if safe."""
+    empty = ("### Error\nImage is invalid or processing failed.", "", None)
 
     if isinstance(image_path, dict):
         image_path = image_path.get("path") or image_path.get("name") or image_path.get("url")
@@ -1472,83 +1471,66 @@ def process_image_vit(image_path: str):
     try:
         t0 = time.time()
         load_vit_models()
-
         img = Image.open(image_path).convert("RGB")
 
-        # 1) ViT NSFW classifier
-        nsfw_results = MODEL_CACHE["vit_nsfw"](img, top_k=5)
-        nsfw_scores = {r["label"].lower(): r["score"] for r in nsfw_results}
-        nsfw_prob = nsfw_scores.get("nsfw", 0.0)
+        thresh_v = 0.70
+        thresh_n = 0.70
+        thresh_n_ban = 0.90
 
-        # 2) GoreDetector (project's own model) for violence
-        gore_transform = gore_val_transform(is_train=False)
-        gore_tensor = gore_transform(img).unsqueeze(0).to(DEVICE)
-        with torch.no_grad():
-            gore_prob = float(MODEL_CACHE["gore"].predict_proba(gore_tensor).squeeze().item())
+        # STEP 1: Violence detection (run first, higher priority)
+        violence_results = MODEL_CACHE["vit_violence"](img, top_k=5)
+        violence_scores = {r["label"].lower(): r["score"] for r in violence_results}
+        v_prob = violence_scores.get("violence", 0.0)
+        nsfw_skipped = False
 
-        # VIOLENCE GUARD: GoreDetector confuses skin exposure with gore.
-        # If NSFW is high, the violence score is likely a false positive.
-        gore_raw = gore_prob
-        gore_suppressed = False
-        if nsfw_prob >= 0.50:
-            gore_prob = gore_prob * 0.15  # suppress 85%
-            gore_suppressed = True
+        if v_prob >= thresh_v:
+            # Violence detected → skip NSFW
+            nsfw_skipped = True
+            verdict_md = "## FLAGGED\n**Reason:** Violence"
+            nsfw_prob = 0.0
+            nsfw_results = []
+        else:
+            # STEP 2: NSFW detection (only if no violence)
+            nsfw_results = MODEL_CACHE["vit_nsfw"](img, top_k=5)
+            nsfw_scores = {r["label"].lower(): r["score"] for r in nsfw_results}
+            nsfw_prob = nsfw_scores.get("nsfw", 0.0)
 
-        # Display on 1-10 scale
+            verdict_flags: list[str] = []
+            if nsfw_prob >= thresh_n_ban:
+                verdict_flags.append("NSFW (nudity)")
+            elif nsfw_prob >= thresh_n:
+                verdict_flags.append("NSFW (sexy)")
+            verdict_str = "FLAGGED" if verdict_flags else "SAFE"
+            reasons = ", ".join(verdict_flags) if verdict_flags else "No label exceeds threshold"
+            verdict_md = f"## {verdict_str}\n**Reason:** {reasons}"
+
+        # Build output
         nsfw_10 = round(nsfw_prob * 10, 1)
-        gore_10 = round(gore_prob * 10, 1)
+        v_10 = round(v_prob * 10, 1)
 
-        # Thresholds
-        thresh_n = 0.70       # sexy/bikini blur
-        thresh_n_ban = 0.90   # nudity ban
-        thresh_v = 0.70       # violence ban
-        thresh_v_blur = 0.45  # violence blur
-
-        verdict_flags: list[str] = []
-        if gore_prob >= thresh_v:
-            verdict_flags.append("Violence (gore)")
-        if nsfw_prob >= thresh_n_ban:
-            verdict_flags.append("NSFW (nudity)")
-        elif nsfw_prob >= thresh_n:
-            verdict_flags.append("NSFW (sexy)")
-        if gore_prob >= thresh_v_blur and gore_prob < thresh_v:
-            verdict_flags.append("Violence (mild)")
-
-        is_flagged = bool(verdict_flags)
-        verdict_str = "FLAGGED" if is_flagged else "SAFE"
-        reasons = ", ".join(verdict_flags) if verdict_flags else "No label exceeds threshold"
-        verdict_md = f"## {verdict_str}\n**Reason:** {reasons}"
-
-        nsfw_detail_lines = "\n".join(
-            f"  - {r['label']}: {r['score']:.4f}" for r in nsfw_results
-        )
-        gore_guard_line = (
-            f"- Gore raw: {gore_raw:.4f} -> suppressed to {gore_prob:.4f} (NSFW high)\n"
-            if gore_suppressed else ""
-        )
+        violence_detail = "\n".join(f"  - {r['label']}: {r['score']:.4f}" for r in violence_results)
+        nsfw_detail = "\n".join(f"  - {r['label']}: {r['score']:.4f}" for r in nsfw_results) if nsfw_results else "  - SKIPPED (violence detected)"
 
         score_md = (
-            "### Image Moderation Scores\n"
+            "### Image Moderation Scores (ViT Pipeline)\n"
+            f"- Model Violence: **{VIT_VIOLENCE_MODEL}**\n"
             f"- Model NSFW: **{VIT_NSFW_MODEL}**\n"
-            f"- Model Violence: **GoreDetector (project)**\n"
+            f"- **Violence probability: {v_prob:.4f}** (1-10: {v_10})\n"
             f"- **NSFW probability: {nsfw_prob:.4f}** (1-10: {nsfw_10})\n"
-            f"- **Violence (gore) probability: {gore_prob:.4f}** (1-10: {gore_10})\n"
-            f"{gore_guard_line}"
+            f"- NSFW skipped: {nsfw_skipped}\n"
+            f"- Violence threshold: {thresh_v:.2f}\n"
             f"- NSFW threshold (blur): {thresh_n:.2f} | NSFW threshold (ban): {thresh_n_ban:.2f}\n"
-            f"- Violence threshold (blur): {thresh_v_blur:.2f} | Violence threshold (ban): {thresh_v:.2f}\n"
+            "### Violence detail\n"
+            f"{violence_detail}\n"
             "### NSFW detail\n"
-            f"{nsfw_detail_lines}\n"
+            f"{nsfw_detail}\n"
             f"- Runtime: **{time.time() - t0:.2f}s**"
         )
 
         return verdict_md, score_md, img
 
     except Exception as exc:
-        return (
-            f"## Processing Error\n`{exc}`",
-            "",
-            None,
-        )
+        return (f"## Processing Error\n`{exc}`", "", None)
 
 
 with gr.Blocks(title="Video & Image Moderation Debug Lab (V6 + V7)", theme=gr.themes.Soft()) as demo:
