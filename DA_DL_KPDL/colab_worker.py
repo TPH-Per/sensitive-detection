@@ -238,54 +238,63 @@ def process_comments():
         processed_comments.add(doc.id)
 
 def process_messages():
-    # Lấy 20 tin nhắn mới nhất dựa theo key
-    ref = rtdb.reference('messages')
-    messages = ref.order_by_key().limit_to_last(20).get()
-    
-    if not messages:
+    # RTDB structure: messages/{convId}/{msgId}
+    # Duyệt qua từng conversation, lấy 10 tin nhắn mới nhất mỗi conv
+    convs_ref = rtdb.reference('messages')
+    convs = convs_ref.get()
+    if not convs:
         return
-        
-    for msg_id, data in messages.items():
-        if msg_id in processed_messages:
+
+    for conv_id, msgs in convs.items():
+        if not isinstance(msgs, dict):
             continue
-            
-        media_list = data.get('media', [])
-        if not media_list:
-            processed_messages.add(msg_id)
-            continue
-            
-        has_violation = False
-        updated_media = []
-        
-        for m in media_list:
-            if m.get('isSensitive', False):
-                updated_media.append(m)
+        # Lấy 10 tin nhắn mới nhất mỗi conversation
+        sorted_msgs = sorted(msgs.items(), key=lambda x: x[0], reverse=True)[:10]
+        for msg_id, data in sorted_msgs:
+            if msg_id in processed_messages:
                 continue
-                
-            mimeType = m.get('mimeType', '')
-            url = m.get('url', '')
-            if mimeType.startswith('image/') or mimeType.startswith('video/'):
-                print(f"[CHAT] Quét media: {url}")
-                is_video = mimeType.startswith('video/')
-                level, reason = moderate_url(url, is_video)
-                
-                # Chat thì bất kể level 1 hay 2 đều chỉ che mờ (không ban)
-                if level > 0:
-                    has_violation = True
-                    m['isSensitive'] = True
-                    m['moderationReason'] = reason
-                    print(f"  -> Phát hiện: {reason} (Level {level})")
-                else:
-                    print("  -> An toàn")
-            updated_media.append(m)
-            
-        if has_violation:
-            print(f"[CHAT] Xử lý Chat {msg_id} -> BLUR (isSensitive)")
-            ref.child(msg_id).update({
-                'media': updated_media
-            })
-            
-        processed_messages.add(msg_id)
+
+            if not isinstance(data, dict):
+                processed_messages.add(msg_id)
+                continue
+
+            media_list = data.get('media', [])
+            if not media_list:
+                processed_messages.add(msg_id)
+                continue
+
+            has_violation = False
+            updated_media = []
+
+            for m in media_list:
+                if m.get('isSensitive', False):
+                    updated_media.append(m)
+                    continue
+
+                mimeType = m.get('mimeType', '')
+                url = m.get('url', '')
+                if mimeType.startswith('image/') or mimeType.startswith('video/'):
+                    print(f"[CHAT] Quét media ({conv_id}): {url}")
+                    is_video = mimeType.startswith('video/')
+                    level, reason = moderate_url(url, is_video)
+
+                    # Chat thì bất kể level 1 hay 2 đều chỉ che mờ (không ban)
+                    if level > 0:
+                        has_violation = True
+                        m['isSensitive'] = True
+                        m['moderationReason'] = reason
+                        print(f"  -> Phát hiện: {reason} (Level {level})")
+                    else:
+                        print("  -> An toàn")
+                updated_media.append(m)
+
+            if has_violation:
+                print(f"[CHAT] Xử lý Chat {conv_id}/{msg_id} -> BLUR (isSensitive)")
+                rtdb.reference(f'messages/{conv_id}/{msg_id}').update({
+                    'media': updated_media
+                })
+
+            processed_messages.add(msg_id)
 
 def process_users():
     docs = db.collection('users').stream()
