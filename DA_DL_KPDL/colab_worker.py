@@ -39,12 +39,12 @@ def moderate_url(url, is_video):
 
     try:
         if is_video:
-            # Video: dùng pipeline V6 (YOLO đã tắt)
+            # Video: dùng V7 VideoMAE-LoRA (production default)
             res = process_video(
                 video_path=temp_path,
                 top_k=6,
                 apply_guard=True,
-                model_variant="V6 Task-Gated",
+                model_variant="V7 VideoMAE-LoRA",
                 enabled_branches=["V", "S", "N"],
                 enabled_modalities=["CLIP", "Flow", "YOLO", "Gore", "SelfHarm", "NSFW"]
             )
