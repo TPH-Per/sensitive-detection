@@ -111,14 +111,14 @@ def load_yolo(weights_path):
     """Load YOLOv8 detector."""
     weights_path = Path(weights_path)
     if not weights_path.exists():
-        print(f"  ⚠️  YOLO weights không tìm thấy: {weights_path} → Bỏ qua")
+        print(f"  [WARN]  YOLO weights không tìm thấy: {weights_path} → Bỏ qua")
         return None
     try:
         from ultralytics import YOLO
-        print(f"  🔫 Đang tải YOLO: {weights_path.name}")
+        print(f"  [YOLO] Đang tải YOLO: {weights_path.name}")
         return YOLO(str(weights_path))
     except ImportError:
-        print("  ⚠️  ultralytics chưa cài → Bỏ qua YOLO")
+        print("  [WARN]  ultralytics chưa cài → Bỏ qua YOLO")
         return None
 
 
@@ -126,10 +126,10 @@ def load_nsfw_scorer(weights_path, device: torch.device):
     """Load NSFW scorer (EfficientNet)."""
     weights_path = Path(weights_path)
     if not weights_path.exists():
-        print(f"  ⚠️  NSFW scorer weights không tìm thấy → Bỏ qua")
+        print(f"  [WARN]  NSFW scorer weights không tìm thấy → Bỏ qua")
         return None
     from src.models.proxy_efficientnet import build_proxy_efficientnet
-    print(f"  🔞 Đang tải NSFW Scorer: {weights_path.name}")
+    print(f"  [NSFW] Đang tải NSFW Scorer: {weights_path.name}")
     model = build_proxy_efficientnet(num_classes=2, pretrained=False).to(device)
     state = torch.load(weights_path, map_location=device, weights_only=False)
     model.load_state_dict(state.get("model_state", state))
@@ -141,10 +141,10 @@ def load_proxy(weights_path, device: torch.device):
     """Load Proxy EfficientNet."""
     weights_path = Path(weights_path)
     if not weights_path.exists():
-        print(f"  ⚠️  Proxy weights không tìm thấy → Bỏ qua proxy gate")
+        print(f"  [WARN]  Proxy weights không tìm thấy → Bỏ qua proxy gate")
         return None
     from src.models.proxy_efficientnet import build_proxy_efficientnet
-    print(f"  🛡️  Đang tải Proxy: {weights_path.name}")
+    print(f"  [PROXY]  Đang tải Proxy: {weights_path.name}")
     model = build_proxy_efficientnet(num_classes=2, pretrained=False).to(device)
     state = torch.load(weights_path, map_location=device, weights_only=False)
     model.load_state_dict(state.get("model_state", state))
@@ -167,7 +167,7 @@ def _infer_ff_dim_from_checkpoint(model_state: dict) -> int:
 def load_multitask_model(weights_path: Path, device: torch.device, input_dim: int = 768):
     """Load TaskPromptedTemporalModel — tự detect ff_dim từ checkpoint."""
     from src.models.task_prompted_model import TaskPromptedTemporalModel
-    print(f"  🧠 Đang tải Model chính: {weights_path.name} ({weights_path.stat().st_size / 1e6:.0f} MB)")
+    print(f"  [MODEL] Đang tải Model chính: {weights_path.name} ({weights_path.stat().st_size / 1e6:.0f} MB)")
     state = torch.load(weights_path, map_location=device, weights_only=False)
     model_state = state.get("model_state", state)
 
@@ -296,7 +296,7 @@ def run_inference(video_path: Path, models: dict, device: torch.device,
     risky_prob = proxy_score(models.get("proxy"), frames, device)
     passed_proxy = (not use_proxy) or (risky_prob >= proxy_threshold)
     if debug:
-        print(f"  [DEBUG] Proxy score: {risky_prob:.4f} → {'PASS ✅' if passed_proxy else 'FILTERED ❌'}")
+        print(f"  [DEBUG] Proxy score: {risky_prob:.4f} → {'PASS [OK]' if passed_proxy else 'FILTERED [ERR]'}")
 
     if not passed_proxy:
         return {
@@ -374,7 +374,7 @@ def run_inference(video_path: Path, models: dict, device: torch.device,
     model_raw_n = scores["nsfw"]   # Score N thuần từ model (trước bất kỳ boost nào)
     n_was_boosted = False          # Cờ: Expert có boost N không?
 
-    # ── N TOKEN ────────────────────────────────────────────────────────────
+    # ── N TOKEN ------------------------------------------------------------
     # nsfw_scorer là Proxy Risky Detector (không phải NSFW-only):
     # → Chỉ dùng scorer để BOOST N khi V model output THẤP
     # → Điều này an toàn vì nếu V thấp, scorer cao chứng tỏ NSFW thật
@@ -398,7 +398,7 @@ def run_inference(video_path: Path, models: dict, device: torch.device,
         if debug:
             print(f"  [EXPERT] N boost SKIPPED: V={scores['violence']:.3f}≥0.4 → scorer đang báo gore/máu")
 
-    # ── Chống nhiễu chéo N←V ────────────────────────────────────────────
+    # ── Chống nhiễu chéo N←V ------------------------------------------──
     # Vấn đề: V cao → frame_tokens bị "màu V" → N token bị nhiễu lên
     # Nguyên tắc QUAN TRỌNG:
     #   - Nếu N score cao là do Expert BOOST (n_was_boosted=True) → rollback
@@ -414,7 +414,7 @@ def run_inference(video_path: Path, models: dict, device: torch.device,
         if debug:
             print(f"  [EXPERT] V+N SIMULTANEOUS: V={scores['violence']:.3f}>0.5 và N={scores['nsfw']:.3f} (model tự output) → GIỮ CẢ 2")
 
-    # ── V TOKEN ────────────────────────────────────────────────────────────
+    # ── V TOKEN ------------------------------------------------------------
     has_strong_motion = flow_mean > 0.15
     has_very_strong_motion = flow_mean > 0.35   # Gore/action mạnh
     has_weapons = yolo_weapon_max > 0.3
@@ -444,7 +444,7 @@ def run_inference(video_path: Path, models: dict, device: torch.device,
                 print(f"  [EXPERT] V BOOSTED (high flow, gore-without-weapon): flow={flow_mean:.3f} → {raw_scores['violence']:.4f} → {scores['violence']:.4f}")
 
 
-    # ── S TOKEN ────────────────────────────────────────────────────────────
+    # ── S TOKEN ------------------------------------------------------------
     yolo_medical_max = float(yolo_feat[:, 1].max())  # Class 1: Y tế / Hành vi tự hại (treo cổ, v.v.)
 
     if yolo_medical_max > 0.3 and scores["self_harm"] < 0.4:
@@ -516,7 +516,7 @@ def main():
         payload = _json.loads(thresholds_file.read_text(encoding="utf-8"))
         # Ưu tiên recommended_thresholds (từ f2-calibration của Cell 18b)
         thresholds = payload.get("recommended_thresholds", {})
-        print(f"  🎯 Đã tải ngưỡng tối ưu Cell 18b: {thresholds_file.name}")
+        print(f"  [OPT] Đã tải ngưỡng tối ưu Cell 18b: {thresholds_file.name}")
     else:
         # Fallback hardcode nếu không có file
         thresholds = {
@@ -524,29 +524,29 @@ def main():
             "self_harm": 0.9263,
             "nsfw": 0.2394,
         }
-        print("  ⚠️  Không tìm thấy thresholds_FINAL.json → dùng giá trị mặc định")
+        print("  [WARN]  Không tìm thấy thresholds_FINAL.json → dùng giá trị mặc định")
 
     # Cho phép override ngưỡng NSFW từ CLI
     if args.nsfw_threshold is not None:
         thresholds["nsfw"] = args.nsfw_threshold
-        print(f"  ⚙️  Override NSFW threshold = {args.nsfw_threshold}")
+        print(f"  [CFG]  Override NSFW threshold = {args.nsfw_threshold}")
 
     if args.debug:
-        print(f"  🐛 DEBUG MODE: In raw scores từng bước")
-        print(f"  📋 Ngưỡng hiện tại: V={thresholds.get('violence', '?'):.4f} "
+        print(f"  [DBG] DEBUG MODE: In raw scores từng bước")
+        print(f"  [INFO] Ngưỡng hiện tại: V={thresholds.get('violence', '?'):.4f} "
               f"S={thresholds.get('self_harm', '?'):.4f} "
               f"N={thresholds.get('nsfw', '?'):.4f}")
 
     print("=" * 60)
 
-    print("  🎬 VIDEO MODERATION SYSTEM v5.2")
+    print("  [VIDEO] VIDEO MODERATION SYSTEM v5.2")
     print("=" * 60)
     print(f"  Device: {device}")
     print(f"  Weights: {weights_dir}")
     print()
 
     # Load tất cả models
-    print("📦 Đang tải các model...")
+    print("[LOAD] Đang tải các model...")
     models = {}
     if args.extractor == "clip":
         clip_processor, clip_model = load_clip(device)
@@ -580,7 +580,7 @@ def main():
     
     mt_path = weights_dir / multitask_name
     if not mt_path.exists():
-        print(f"\n❌ LỖI: Không tìm thấy file {mt_path}.")
+        print(f"\n[ERR] LỖI: Không tìm thấy file {mt_path}.")
         print(f"   Bạn cần dùng lệnh sau để trích xuất đặc trưng mới:")
         print(f"   python scripts/build_clip_features.py --extractor swav --swav_ckpt {swav_ckpt}")
         print(f"   Sau đó chạy lại Cell 17 và 18 trên Kaggle để có được file trọng số này.")
@@ -590,10 +590,10 @@ def main():
 
     # Giải phóng bớt VRAM bằng cách chuyển sang eval + half precision
     torch.cuda.empty_cache()
-    print(f"\n✅ Tất cả model đã tải xong!")
+    print(f"\n[OK] Tất cả model đã tải xong!")
     if torch.cuda.is_available():
         mem = torch.cuda.memory_allocated() / 1e9
-        print(f"  📊 VRAM đang dùng: {mem:.2f} GB / 6 GB\n")
+        print(f"  [STAT] VRAM đang dùng: {mem:.2f} GB / 6 GB\n")
 
     # Thu thập danh sách video
     video_exts = {".mp4", ".avi", ".mov", ".mkv", ".webm"}
@@ -605,14 +605,14 @@ def main():
         videos.extend(sorted(p for p in folder.iterdir() if p.suffix.lower() in video_exts))
 
     if not videos:
-        print("❌ Không tìm thấy video nào!")
+        print("[ERR] Không tìm thấy video nào!")
         return
 
-    print(f"🎥 Đang xử lý {len(videos)} video...\n")
+    print(f"[VID] Đang xử lý {len(videos)} video...\n")
 
     results = []
     for idx, vp in enumerate(videos, 1):
-        print(f"─── [{idx}/{len(videos)}] {vp.name} ", end="", flush=True)
+        print(f"--- [{idx}/{len(videos)}] {vp.name} ", end="", flush=True)
         try:
             result = run_inference(vp, models, device, thresholds,
                                    use_proxy=not args.no_proxy,
@@ -621,7 +621,7 @@ def main():
             results.append(result)
 
             v = result.get("verdict", "?")
-            symbol = "🔴" if v == "FLAGGED" else "🟢"
+            symbol = "[VIOL]" if v == "FLAGGED" else "[SAFE]"
             detail = ""
             if "scores" in result:
                 s = result["scores"]
@@ -629,7 +629,7 @@ def main():
             print(f"→ {symbol} {v}{detail} ({result.get('time_seconds', 0)}s)")
 
         except Exception as e:
-            print(f"→ ❌ Lỗi: {e}")
+            print(f"→ [ERR] Lỗi: {e}")
             results.append({"video": str(vp), "error": str(e)})
 
     # Tổng kết
@@ -637,11 +637,11 @@ def main():
     flagged = sum(1 for r in results if r.get("verdict") == "FLAGGED")
     safe = sum(1 for r in results if r.get("verdict") == "SAFE")
     errors = sum(1 for r in results if "error" in r)
-    print(f"  📊 Tổng kết: {len(results)} video")
-    print(f"     🔴 Vi phạm: {flagged}")
-    print(f"     🟢 An toàn:  {safe}")
+    print(f"  [STAT] Tổng kết: {len(results)} video")
+    print(f"     [VIOL] Vi phạm: {flagged}")
+    print(f"     [SAFE] An toàn:  {safe}")
     if errors:
-        print(f"     ❌ Lỗi:     {errors}")
+        print(f"     [ERR] Lỗi:     {errors}")
     print(f"{'=' * 60}")
 
     # Lưu kết quả
@@ -649,7 +649,7 @@ def main():
         out_path = Path(args.output)
         out_path.parent.mkdir(parents=True, exist_ok=True)
         out_path.write_text(json.dumps(results, indent=2, ensure_ascii=False), encoding="utf-8")
-        print(f"\n💾 Kết quả đã lưu: {out_path}")
+        print(f"\n[SAVE] Kết quả đã lưu: {out_path}")
 
 
 if __name__ == "__main__":
