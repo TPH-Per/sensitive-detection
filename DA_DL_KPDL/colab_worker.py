@@ -6,7 +6,7 @@ import time
 import re
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-from app import process_video, process_images_batch, load_vit_models, load_common_models
+from app import process_video, process_images_batch, load_vit_models, load_common_models, get_thresholds_for_variant
 
 # Khởi tạo Firebase Admin
 cred = credentials.Certificate('firebase_credentials.json')
@@ -467,6 +467,10 @@ print("Dang tai tat ca model...")
 load_common_models()
 load_vit_models()
 print("Tat ca model da san sang!")
+
+# Show V7 thresholds at startup
+thresh, src = get_thresholds_for_variant("V7 VideoMAE-LoRA")
+print(f"V7 thresholds ({src}): V={thresh['thresh_v']:.4f} | S={thresh['thresh_s']:.4f} | N={thresh['thresh_n']:.4f}")
 
 print("Bat dau Worker lang nghe Firebase (Batch Mode - GPU Optimized)...")
 while True:

@@ -452,19 +452,15 @@ def get_thresholds_for_variant(model_variant: str) -> tuple[dict, str]:
                 }, f"calibration_v7.json ({CALIBRATION_V7_PATH.name})"
             except Exception:
                 pass
-        try:
-            load_task_model_v7()
-            ckpt = MODEL_CACHE.get("v7_ckpt", {})
-            v7_thresh_v = _coerce_float(ckpt.get("thresh_v", 0.5), 0.5) if isinstance(ckpt, dict) else 0.5
-        except Exception:
-            v7_thresh_v = 0.5
-
+        # Use V6 calibration thresholds as safe fallback for V7.
+        # Do NOT read thresh_v from V7 checkpoint — it stores a very low
+        # value (e.g. 0.0591) from training that causes massive false positives.
         fallback = PIPELINE_META.get("thresholds", {})
         return {
-            "thresh_v": v7_thresh_v,
+            "thresh_v": _coerce_float(fallback.get("thresh_v", 0.9136363636363637)),
             "thresh_s": _coerce_float(fallback.get("thresh_s", 0.995), 0.995),
             "thresh_n": _coerce_float(fallback.get("thresh_n", 0.999), 0.999),
-        }, "fallback: V7 ckpt(thresh_v) + V6 calibration(S/N)"
+        }, "V6 calibration fallback (V7 ckpt thresh_v ignored)"
 
     thresholds = PIPELINE_META.get("thresholds", {})
     return {
@@ -1035,13 +1031,13 @@ def process_video(
             with torch.no_grad():
                 v_logit, s_logit, n_logit = task_v7(x_v7, aux_t)
                 v_prob = float(torch.sigmoid(v_logit)[0].item())
-                s_prob = float(torch.sigmoid(s_logit)[0].item())
+                s_prob = 0.0  # SELFHARM DISABLED — always zero
                 n_prob = float(torch.sigmoid(n_logit)[0].item())
                 v_ablation = compute_v7_ablation(task_v7, x_v7, aux_t)
 
             # V7 does not expose token-level attentions in this implementation.
             v_attn = normalize01((0.5 * yolo_w[:, 0] + 0.5 * gore_p[:, 0]).astype(np.float32))
-            s_attn = normalize01(sh_p[:, 0].astype(np.float32))
+            s_attn = np.zeros((len(frames),), dtype=np.float32)
             n_attn = normalize01(nsfw_p[:, 0].astype(np.float32)
             )
         else:
@@ -1058,13 +1054,13 @@ def process_video(
                     x, flow_t, yolo_t, gore_t, nsfw_t, selfharm_t
                 )
                 v_prob = float(torch.sigmoid(v_logit)[0, 0].item())
-                s_prob = float(s_score[0].item())
+                s_prob = 0.0  # SELFHARM DISABLED — always zero
                 n_prob = float(n_score[0].item())
                 v_ablation = compute_v_ablation(
                     MODEL_CACHE["task_v6"], x, flow_t, yolo_t, gore_t, nsfw_t, selfharm_t
                 )
                 v_attn = saliency["violence"][0].detach().cpu().numpy()
-                s_attn = saliency["self_harm"][0].detach().cpu().numpy()
+                s_attn = np.zeros((len(frames),), dtype=np.float32)
                 n_attn = saliency["nsfw"][0].detach().cpu().numpy()
 
         if apply_guard:
@@ -1331,13 +1327,13 @@ def process_image(
                     x, flow_t, yolo_t, gore_t, nsfw_t, selfharm_t
                 )
                 v_prob = float(torch.sigmoid(v_logit)[0, 0].item())
-                s_prob = float(s_score[0].item())
+                s_prob = 0.0  # SELFHARM DISABLED — always zero
                 n_prob = float(n_score[0].item())
                 v_ablation = compute_v_ablation(
                     MODEL_CACHE["task_v6"], x, flow_t, yolo_t, gore_t, nsfw_t, selfharm_t
                 )
                 v_attn = saliency["violence"][0].detach().cpu().numpy()
-                s_attn = saliency["self_harm"][0].detach().cpu().numpy()
+                s_attn = np.zeros((len(frames),), dtype=np.float32)
                 n_attn = saliency["nsfw"][0].detach().cpu().numpy()
 
         if apply_guard:
