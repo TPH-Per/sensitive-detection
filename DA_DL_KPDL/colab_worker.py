@@ -1,4 +1,5 @@
 import os
+import hashlib
 import urllib.request
 import firebase_admin
 from firebase_admin import credentials, firestore, db as rtdb
@@ -8,7 +9,8 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from app import process_video, process_images_batch, load_vit_models, load_common_models, get_thresholds_for_variant
 
-# Khởi tạo Firebase Admin
+# ─── FIREBASE INIT ──────────────────────────────────────────────
+
 cred = credentials.Certificate('firebase_credentials.json')
 firebase_admin.initialize_app(cred, {
     'databaseURL': 'https://smurfy-138c1-default-rtdb.asia-southeast1.firebasedatabase.app'
@@ -16,14 +18,16 @@ firebase_admin.initialize_app(cred, {
 
 db = firestore.client()
 
-# Tránh check lại các bài đã check
+# De-duplication sets
 processed_posts = set()
 processed_comments = set()
 processed_messages = set()
-processed_avatars = {}
+processed_avatars = {}  # key: "{user_id}_{type}" -> url
 
 executor = ThreadPoolExecutor(max_workers=4)
 
+
+# ─── HELPERS ────────────────────────────────────────────────────
 
 def download_file(url, temp_path):
     try:
@@ -34,61 +38,41 @@ def download_file(url, temp_path):
         return False
 
 
-def moderate_video(url):
-    """Process a single video through V7 pipeline."""
-    temp_path = f"temp_worker_{int(time.time())}.mp4"
-    if not download_file(url, temp_path):
-        return 0, "Loi tai file"
-    try:
-        res = process_video(
-            video_path=temp_path,
-            top_k=6,
-            apply_guard=True,
-            model_variant="V7 VideoMAE-LoRA",
-            enabled_branches=["V", "N"],
-            enabled_modalities=["CLIP", "Flow", "Gore", "NSFW"]
-        )
-        verdict_md = res[0]
-        score_md = res[1]
-        os.remove(temp_path)
-
-        # Read the verdict directly from process_video (same as web GUI)
-        if "FLAGGED" in verdict_md:
-            # Parse the reason from verdict
-            reason_match = re.search(r'Lý do:\s*(.*)', verdict_md)
-            reason = reason_match.group(1).strip() if reason_match else "Vi phạm nội dung"
-            return 2, "Phát hiện nội dung: " + reason
-        else:
-            return 0, ""
-    except Exception as e:
-        if os.path.exists(temp_path):
-            os.remove(temp_path)
-        return 0, str(e)
+def parse_verdict(verdict_md):
+    """Extract (level, reason) from a verdict markdown string."""
+    if "FLAGGED" in verdict_md:
+        reason_match = re.search(r'L[ýy] do:\s*(.*)', verdict_md)
+        reason = reason_match.group(1).strip() if reason_match else "Vi pham noi dung"
+        return 2, "Phat hien noi dung: " + reason
+    return 0, ""
 
 
-# ─── COLLECT PHASE ───────────────────────────────────────────────
-# Gather all pending media items with their context (source, doc_id, etc.)
+# ─── DATA MODEL ─────────────────────────────────────────────────
 
 class MediaItem:
+    __slots__ = ('url', 'is_video', 'source', 'doc_id', 'media_index',
+                 'extra', 'temp_path', 'level', 'reason')
+
     def __init__(self, url, is_video, source, doc_id, media_index=None, extra=None):
         self.url = url
         self.is_video = is_video
         self.source = source  # 'post', 'comment', 'message', 'avatar'
         self.doc_id = doc_id
-        self.media_index = media_index  # index in media list (for posts/messages)
-        self.extra = extra or {}  # conv_id for messages, user_id for avatars
+        self.media_index = media_index
+        self.extra = extra or {}
         self.temp_path = None
         self.level = 0
         self.reason = ""
 
 
-def collect_pending_media():
-    """Collect all media items that need processing from all sources."""
-    items = []
+# ─── COLLECT PHASE ──────────────────────────────────────────────
 
-    # Posts
+def _collect_posts():
+    items = []
     try:
-        docs = db.collection('posts').order_by('createdAt', direction=firestore.Query.DESCENDING).limit(15).stream()
+        docs = db.collection('posts') \
+            .order_by('createdAt', direction=firestore.Query.DESCENDING) \
+            .limit(15).stream()
         for doc in docs:
             if doc.id in processed_posts:
                 continue
@@ -96,26 +80,27 @@ def collect_pending_media():
             if data.get('status') != 'active':
                 processed_posts.add(doc.id)
                 continue
-            media_list = data.get('media', [])
-            for i, m in enumerate(media_list):
+            for i, m in enumerate(data.get('media', [])):
                 if m.get('isSensitive', False):
                     continue
-                mimeType = m.get('mimeType', '')
-                url = m.get('url', '')
-                if mimeType.startswith('image/') or mimeType.startswith('video/'):
+                mime = m.get('mimeType', '')
+                if mime.startswith(('image/', 'video/')):
                     items.append(MediaItem(
-                        url=url,
-                        is_video=mimeType.startswith('video/'),
-                        source='post',
-                        doc_id=doc.id,
-                        media_index=i
+                        url=m.get('url', ''),
+                        is_video=mime.startswith('video/'),
+                        source='post', doc_id=doc.id, media_index=i,
                     ))
     except Exception as e:
         print(f"[POST] Loi collect: {e}")
+    return items
 
-    # Comments
+
+def _collect_comments():
+    items = []
     try:
-        docs = db.collection('comments').order_by('createdAt', direction=firestore.Query.DESCENDING).limit(15).stream()
+        docs = db.collection('comments') \
+            .order_by('createdAt', direction=firestore.Query.DESCENDING) \
+            .limit(15).stream()
         for doc in docs:
             if doc.id in processed_comments:
                 continue
@@ -123,96 +108,101 @@ def collect_pending_media():
             if data.get('status') != 'active':
                 processed_comments.add(doc.id)
                 continue
-            image = data.get('image', None)
+            image = data.get('image')
             if not image or image.get('isSensitive', False):
                 processed_comments.add(doc.id)
                 continue
-            url = image.get('url', '')
-            mimeType = image.get('mimeType', '')
-            if mimeType.startswith('image/') or mimeType.startswith('video/'):
+            mime = image.get('mimeType', '')
+            if mime.startswith(('image/', 'video/')):
                 items.append(MediaItem(
-                    url=url,
-                    is_video=mimeType.startswith('video/'),
-                    source='comment',
-                    doc_id=doc.id
+                    url=image.get('url', ''),
+                    is_video=mime.startswith('video/'),
+                    source='comment', doc_id=doc.id,
                 ))
     except Exception as e:
         print(f"[COMMENT] Loi collect: {e}")
+    return items
 
-    # Messages (RTDB: messages/{convId}/{msgId})
+
+def _collect_messages():
+    items = []
     try:
         convs = rtdb.reference('messages').get()
-        if convs:
-            for conv_id, msgs in convs.items():
-                if not isinstance(msgs, dict):
+        if not convs:
+            return items
+        for conv_id, msgs in convs.items():
+            if not isinstance(msgs, dict):
+                continue
+            for msg_id, data in sorted(msgs.items(), key=lambda x: x[0], reverse=True)[:10]:
+                if msg_id in processed_messages:
                     continue
-                sorted_msgs = sorted(msgs.items(), key=lambda x: x[0], reverse=True)[:10]
-                for msg_id, data in sorted_msgs:
-                    if msg_id in processed_messages:
+                if not isinstance(data, dict):
+                    processed_messages.add(msg_id)
+                    continue
+                media_list = data.get('media', [])
+                if not media_list:
+                    processed_messages.add(msg_id)
+                    continue
+                for i, m in enumerate(media_list):
+                    if m.get('isSensitive', False):
                         continue
-                    if not isinstance(data, dict):
-                        processed_messages.add(msg_id)
-                        continue
-                    media_list = data.get('media', [])
-                    if not media_list:
-                        processed_messages.add(msg_id)
-                        continue
-                    for i, m in enumerate(media_list):
-                        if m.get('isSensitive', False):
-                            continue
-                        mimeType = m.get('mimeType', '')
-                        url = m.get('url', '')
-                        if mimeType.startswith('image/') or mimeType.startswith('video/'):
-                            items.append(MediaItem(
-                                url=url,
-                                is_video=mimeType.startswith('video/'),
-                                source='message',
-                                doc_id=msg_id,
-                                media_index=i,
-                                extra={'conv_id': conv_id}
-                            ))
+                    mime = m.get('mimeType', '')
+                    if mime.startswith(('image/', 'video/')):
+                        items.append(MediaItem(
+                            url=m.get('url', ''),
+                            is_video=mime.startswith('video/'),
+                            source='message', doc_id=msg_id,
+                            media_index=i, extra={'conv_id': conv_id},
+                        ))
     except Exception as e:
         print(f"[CHAT] Loi collect: {e}")
+    return items
 
-    # Avatars
+
+def _collect_profile_media():
+    """Scan avatar + cover photos for all users."""
+    items = []
     try:
         docs = db.collection('users').stream()
         for doc in docs:
             data = doc.to_dict()
-            user_id = doc.id
-            avatar = data.get('avatar', {})
-            avatar_url = avatar.get('url', '')
-            if not avatar_url:
-                continue
-            if processed_avatars.get(user_id) == avatar_url:
-                continue
-            items.append(MediaItem(
-                url=avatar_url,
-                is_video=False,
-                source='avatar',
-                doc_id=doc.id,
-                extra={'user_id': user_id}
-            ))
+            uid = doc.id
+            for media_type in ('avatar', 'cover'):
+                url = (data.get(media_type) or {}).get('url', '')
+                if not url:
+                    continue
+                cache_key = f"{uid}_{media_type}"
+                if processed_avatars.get(cache_key) == url:
+                    continue
+                items.append(MediaItem(
+                    url=url, is_video=False,
+                    source='avatar', doc_id=doc.id,
+                    extra={'user_id': uid, 'type': media_type},
+                ))
     except Exception as e:
         print(f"[USER] Loi collect: {e}")
-
     return items
 
 
-# ─── DOWNLOAD PHASE ──────────────────────────────────────────────
+def collect_pending_media():
+    """Collect all media items that need processing from all sources."""
+    items = _collect_posts()
+    items += _collect_comments()
+    items += _collect_messages()
+    items += _collect_profile_media()
+    return items
+
+
+# ─── DOWNLOAD PHASE ─────────────────────────────────────────────
 
 def download_item(item):
-    """Download a single media item to a temp file."""
     ext = ".mp4" if item.is_video else ".jpg"
-    # Use URL hash + timestamp to avoid filename collisions
-    import hashlib
     url_hash = hashlib.md5(item.url.encode()).hexdigest()[:8]
     item.temp_path = f"temp_{url_hash}_{int(time.time())}{ext}"
     return download_file(item.url, item.temp_path)
 
 
 def download_all(items):
-    """Download all media items in parallel."""
     futures = {executor.submit(download_item, item): item for item in items}
     for f in as_completed(futures):
         item = futures[f]
@@ -223,103 +213,90 @@ def download_all(items):
             item.temp_path = None
 
 
-# ─── INFERENCE PHASE ─────────────────────────────────────────────
+# ─── INFERENCE PHASE ────────────────────────────────────────────
+
+def _process_video_item(item):
+    """Run V7 moderation on a single video file."""
+    print(f"[VIDEO] Processing: {item.url[:80]}...")
+    try:
+        res = process_video(
+            video_path=item.temp_path,
+            top_k=6, apply_guard=True,
+            model_variant="V7 VideoMAE-LoRA",
+            enabled_branches=["V", "N"],
+            enabled_modalities=["CLIP", "Flow", "Gore", "NSFW"],
+        )
+        verdict_md, score_md = res[0], res[1]
+
+        # Debug logging
+        for line in score_md.split("\n"):
+            line = line.strip()
+            if line and any(k in line for k in [
+                "Calibration thresholds", "Violence raw", "NSFW score",
+                "Self-harm score", "Guard fired", "Runtime",
+            ]):
+                print(f"  {line}")
+
+        item.level, item.reason = parse_verdict(verdict_md)
+        print(f"[VIDEO] {'FLAGGED: ' + item.reason if item.level else 'SAFE'}")
+    except Exception as e:
+        item.level = 0
+        item.reason = str(e)
+        print(f"[VIDEO] ERROR: {e}")
+
 
 def process_all(items):
     """Process all media items. Images batched, videos sequential."""
-    # Split into images and videos
-    image_items = [item for item in items if not item.is_video and item.temp_path]
-    video_items = [item for item in items if item.is_video and item.temp_path]
+    image_items = [it for it in items if not it.is_video and it.temp_path]
+    video_items = [it for it in items if it.is_video and it.temp_path]
 
-    # Batch process images through ViT
+    # Batch images through ViT
     if image_items:
         print(f"[BATCH] Processing {len(image_items)} images through ViT...")
-        image_paths = [item.temp_path for item in image_items]
         try:
-            results = process_images_batch(image_paths, batch_size=8)
+            results = process_images_batch(
+                [it.temp_path for it in image_items], batch_size=8)
             for item, (level, reason) in zip(image_items, results):
                 item.level = level
                 item.reason = reason
         except Exception as e:
             print(f"[BATCH] Loi batch images: {e}")
             for item in image_items:
-                item.level = 0
                 item.reason = str(e)
 
-    # Process videos sequentially (V7 doesn't support batching)
+    # Videos sequential
     for item in video_items:
-        print(f"[VIDEO] Processing: {item.url[:80]}...")
-        try:
-            res = process_video(
-                video_path=item.temp_path,
-                top_k=6,
-                apply_guard=True,
-                model_variant="V7 VideoMAE-LoRA",
-                enabled_branches=["V", "N"],
-                enabled_modalities=["CLIP", "Flow", "Gore", "NSFW"]
-            )
-            verdict_md = res[0]
-            score_md = res[1]
+        _process_video_item(item)
 
-            # Debug: print score details
-            print(f"[VIDEO] Score details:")
-            for line in score_md.split("\n"):
-                line = line.strip()
-                if line and any(k in line for k in [
-                    "Calibration thresholds", "Violence raw", "NSFW score",
-                    "Self-harm score", "Guard fired", "Runtime",
-                    "Branch toggles", "Modality toggles"
-                ]):
-                    print(f"  {line}")
-
-            # Read verdict directly (same as web GUI)
-            if "FLAGGED" in verdict_md:
-                reason_match = re.search(r'Lý do:\s*(.*)', verdict_md)
-                reason = reason_match.group(1).strip() if reason_match else "Vi phạm nội dung"
-                item.level = 2
-                item.reason = "Phát hiện nội dung: " + reason
-                print(f"[VIDEO] FLAGGED: {item.reason}")
-            else:
-                item.level = 0
-                item.reason = ""
-                print(f"[VIDEO] SAFE")
-        except Exception as e:
-            item.level = 0
-            item.reason = str(e)
-            print(f"[VIDEO] ERROR: {e}")
-
-    # Cleanup temp files
+    # Cleanup
     for item in items:
         if item.temp_path and os.path.exists(item.temp_path):
             os.remove(item.temp_path)
 
 
-# ─── APPLY RESULTS PHASE ─────────────────────────────────────────
+# ─── APPLY RESULTS PHASE ────────────────────────────────────────
 
-def apply_results(items):
-    """Write moderation results back to Firebase."""
-    # Group by source and doc_id for posts (need to update all media at once)
-    post_items = {}
-    comment_items = []
-    message_items = {}
-    avatar_items = []
+def _send_notification(receiver_id, post_id=None, comment_id=None, content=""):
+    """Send a system notification to a user."""
+    data = {'contentSnippet': content, 'isReply': False}
+    if post_id:
+        data['postId'] = post_id
+    if comment_id:
+        data['commentId'] = comment_id
+    db.collection('notifications').add({
+        'receiverId': receiver_id,
+        'actorId': 'system',
+        'type': 'system',
+        'data': data,
+        'isRead': False,
+        'status': 'unseen',
+        'createdAt': firestore.SERVER_TIMESTAMP,
+        'actorName': 'He thong Quan tri',
+        'actorAvatar': '',
+    })
 
-    for item in items:
-        if item.source == 'post':
-            if item.doc_id not in post_items:
-                post_items[item.doc_id] = []
-            post_items[item.doc_id].append(item)
-        elif item.source == 'comment':
-            comment_items.append(item)
-        elif item.source == 'message':
-            key = (item.extra['conv_id'], item.doc_id)
-            if key not in message_items:
-                message_items[key] = []
-            message_items[key].append(item)
-        elif item.source == 'avatar':
-            avatar_items.append(item)
 
-    # Apply post results
+def _apply_posts(post_items):
     for doc_id, doc_items in post_items.items():
         try:
             doc = db.collection('posts').document(doc_id).get()
@@ -329,27 +306,41 @@ def apply_results(items):
             media_list = data.get('media', [])
             highest_level = 0
             violation_reason = ""
+            post_type = data.get('type', 'regular')
 
             for item in doc_items:
                 idx = item.media_index
-                if idx is not None and idx < len(media_list):
-                    if item.level > 0:
-                        media_list[idx]['isSensitive'] = True
-                        media_list[idx]['moderationReason'] = item.reason
-                        if item.level > highest_level:
-                            highest_level = item.level
-                            violation_reason = item.reason
-                        print(f"[POST] {doc_id} media[{idx}]: {item.reason} (Level {item.level})")
-                    else:
-                        print(f"[POST] {doc_id} media[{idx}]: An toàn")
+                if idx is None or idx >= len(media_list):
+                    continue
+                if item.level > 0:
+                    media_list[idx]['isSensitive'] = True
+                    media_list[idx]['moderationReason'] = item.reason
+                    # Escalate Level 1 -> 2 for profile update posts
+                    effective_level = item.level
+                    if effective_level == 1 and post_type in ('avatar_update', 'cover_update'):
+                        effective_level = 2
+                    if effective_level > highest_level:
+                        highest_level = effective_level
+                        violation_reason = item.reason
+                    print(f"[POST] {doc_id} media[{idx}]: {item.reason} (Level {item.level})"
+                          + (f" -> escalated {effective_level}" if effective_level != item.level else ""))
+                else:
+                    print(f"[POST] {doc_id} media[{idx}]: An toan")
 
             if highest_level == 2:
                 print(f"[POST] Post {doc_id} -> BAN")
                 doc.reference.update({
                     'status': 'policy_violation',
                     'moderationReason': violation_reason,
-                    'media': media_list
+                    'media': media_list,
                 })
+                # Notify author (skip for auto-generated profile updates)
+                author_id = data.get('authorId')
+                if author_id and post_type not in ('avatar_update', 'cover_update'):
+                    _send_notification(
+                        author_id, post_id=doc_id,
+                        content=f"Bai viet cua ban da bi an do vi pham: {violation_reason}",
+                    )
             elif highest_level == 1:
                 print(f"[POST] Post {doc_id} -> BLUR")
                 doc.reference.update({'media': media_list})
@@ -358,7 +349,8 @@ def apply_results(items):
         except Exception as e:
             print(f"[POST] Loi apply {doc_id}: {e}")
 
-    # Apply comment results
+
+def _apply_comments(comment_items):
     for item in comment_items:
         try:
             doc = db.collection('comments').document(item.doc_id).get()
@@ -374,21 +366,30 @@ def apply_results(items):
                 doc.reference.update({
                     'status': 'policy_violation',
                     'moderationReason': item.reason,
-                    'image': image
+                    'image': image,
                 })
+                author_id = data.get('authorId')
+                if author_id:
+                    _send_notification(
+                        author_id,
+                        post_id=data.get('postId'),
+                        comment_id=item.doc_id,
+                        content=f"Binh luan cua ban da bi an do vi pham: {item.reason}",
+                    )
             elif item.level == 1:
                 print(f"[COMMENT] {item.doc_id} -> BLUR")
                 image['isSensitive'] = True
                 image['moderationReason'] = item.reason
                 doc.reference.update({'image': image})
             else:
-                print(f"[COMMENT] {item.doc_id}: An toàn")
+                print(f"[COMMENT] {item.doc_id}: An toan")
 
             processed_comments.add(item.doc_id)
         except Exception as e:
             print(f"[COMMENT] Loi apply {item.doc_id}: {e}")
 
-    # Apply message results
+
+def _apply_messages(message_items):
     for (conv_id, msg_id), msg_items in message_items.items():
         try:
             msg_ref = rtdb.reference(f'messages/{conv_id}/{msg_id}')
@@ -400,14 +401,15 @@ def apply_results(items):
 
             for item in msg_items:
                 idx = item.media_index
-                if idx is not None and idx < len(media_list):
-                    if item.level > 0:
-                        has_violation = True
-                        media_list[idx]['isSensitive'] = True
-                        media_list[idx]['moderationReason'] = item.reason
-                        print(f"[CHAT] {conv_id}/{msg_id} media[{idx}]: {item.reason}")
-                    else:
-                        print(f"[CHAT] {conv_id}/{msg_id} media[{idx}]: An toàn")
+                if idx is None or idx >= len(media_list):
+                    continue
+                if item.level > 0:
+                    has_violation = True
+                    media_list[idx]['isSensitive'] = True
+                    media_list[idx]['moderationReason'] = item.reason
+                    print(f"[CHAT] {conv_id}/{msg_id} media[{idx}]: {item.reason}")
+                else:
+                    print(f"[CHAT] {conv_id}/{msg_id} media[{idx}]: An toan")
 
             if has_violation:
                 print(f"[CHAT] {conv_id}/{msg_id} -> BLUR")
@@ -417,40 +419,59 @@ def apply_results(items):
         except Exception as e:
             print(f"[CHAT] Loi apply {msg_id}: {e}")
 
-    # Apply avatar results
+
+def _apply_profile_media(avatar_items):
     for item in avatar_items:
         try:
-            user_id = item.extra['user_id']
+            uid = item.extra['user_id']
+            media_type = item.extra.get('type', 'avatar')
+            label = "Anh dai dien" if media_type == 'avatar' else "Anh bia"
+            cache_key = f"{uid}_{media_type}"
+
             if item.level > 0:
-                print(f"[USER] Avatar {user_id} -> REMOVED: {item.reason}")
+                print(f"[USER] {label} {uid} -> REMOVED: {item.reason}")
                 db.collection('users').document(item.doc_id).update({
-                    'avatar': {'url': '', 'fileName': '', 'mimeType': '', 'size': 0}
+                    media_type: {'url': '', 'fileName': '', 'mimeType': '', 'size': 0}
                 })
-                db.collection('notifications').add({
-                    'receiverId': user_id,
-                    'actorId': 'system',
-                    'type': 'system',
-                    'data': {
-                        'contentSnippet': f"Ảnh đại diện của bạn đã bị gỡ do: {item.reason}",
-                        'isReply': False
-                    },
-                    'isRead': False,
-                    'status': 'unseen',
-                    'createdAt': firestore.SERVER_TIMESTAMP,
-                    'actorName': 'Hệ thống Quản trị',
-                    'actorAvatar': ''
-                })
+                _send_notification(
+                    uid,
+                    content=f"{label} cua ban da bi gỡ do: {item.reason}",
+                )
             else:
-                print(f"[USER] Avatar {user_id}: An toàn")
-            processed_avatars[user_id] = item.url
+                print(f"[USER] {label} {uid}: An toan")
+
+            processed_avatars[cache_key] = item.url
         except Exception as e:
-            print(f"[USER] Loi apply avatar: {e}")
+            print(f"[USER] Loi apply {media_type}: {e}")
 
 
-# ─── MARK UNPROCESSED ────────────────────────────────────────────
+def apply_results(items):
+    """Write moderation results back to Firebase."""
+    post_items = {}
+    comment_items = []
+    message_items = {}
+    avatar_items = []
+
+    for item in items:
+        if item.source == 'post':
+            post_items.setdefault(item.doc_id, []).append(item)
+        elif item.source == 'comment':
+            comment_items.append(item)
+        elif item.source == 'message':
+            key = (item.extra['conv_id'], item.doc_id)
+            message_items.setdefault(key, []).append(item)
+        elif item.source == 'avatar':
+            avatar_items.append(item)
+
+    _apply_posts(post_items)
+    _apply_comments(comment_items)
+    _apply_messages(message_items)
+    _apply_profile_media(avatar_items)
+
+
+# ─── MAIN LOOP ──────────────────────────────────────────────────
 
 def mark_processed(items):
-    """Mark all items as processed (even if not flagged) to avoid re-checking."""
     for item in items:
         if item.source == 'post':
             processed_posts.add(item.doc_id)
@@ -460,49 +481,39 @@ def mark_processed(items):
             processed_messages.add(item.doc_id)
 
 
-# ─── MAIN LOOP ───────────────────────────────────────────────────
+if __name__ == '__main__':
+    print("Dang tai tat ca model...")
+    load_common_models()
+    load_vit_models()
+    print("Tat ca model da san sang!")
 
-# Pre-load all models at startup
-print("Dang tai tat ca model...")
-load_common_models()
-load_vit_models()
-print("Tat ca model da san sang!")
+    thresh, src = get_thresholds_for_variant("V7 VideoMAE-LoRA")
+    print(f"V7 thresholds ({src}): V={thresh['thresh_v']:.4f} | S={thresh['thresh_s']:.4f} | N={thresh['thresh_n']:.4f}")
 
-# Show V7 thresholds at startup
-thresh, src = get_thresholds_for_variant("V7 VideoMAE-LoRA")
-print(f"V7 thresholds ({src}): V={thresh['thresh_v']:.4f} | S={thresh['thresh_s']:.4f} | N={thresh['thresh_n']:.4f}")
+    print("Bat dau Worker lang nghe Firebase (Batch Mode)...")
+    while True:
+        try:
+            t0 = time.time()
 
-print("Bat dau Worker lang nghe Firebase (Batch Mode - GPU Optimized)...")
-while True:
-    try:
-        t0 = time.time()
+            items = collect_pending_media()
+            if not items:
+                time.sleep(5)
+                continue
 
-        # 1. Collect all pending media
-        items = collect_pending_media()
-        if not items:
-            time.sleep(5)
-            continue
+            print(f"[COLLECT] Found {len(items)} media items to process")
 
-        print(f"[COLLECT] Found {len(items)} media items to process")
+            download_all(items)
+            downloaded = [it for it in items if it.temp_path]
+            print(f"[DOWNLOAD] Downloaded {len(downloaded)}/{len(items)} files")
 
-        # 2. Download all in parallel
-        download_all(items)
-        downloaded = [item for item in items if item.temp_path]
-        print(f"[DOWNLOAD] Downloaded {len(downloaded)}/{len(items)} files")
+            process_all(downloaded)
+            apply_results(downloaded)
+            mark_processed(items)
 
-        # 3. Process all (images batched, videos sequential)
-        process_all(downloaded)
+            elapsed = time.time() - t0
+            print(f"[DONE] Processed {len(downloaded)} items in {elapsed:.1f}s")
 
-        # 4. Apply results to Firebase
-        apply_results(downloaded)
+        except Exception as e:
+            print(f"Loi vong lap: {e}")
 
-        # 5. Mark unprocessed items as checked
-        mark_processed(items)
-
-        elapsed = time.time() - t0
-        print(f"[DONE] Processed {len(downloaded)} items in {elapsed:.1f}s")
-
-    except Exception as e:
-        print(f"Loi vong lap: {e}")
-
-    time.sleep(5)
+        time.sleep(5)
