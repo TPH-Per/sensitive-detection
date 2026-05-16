@@ -96,7 +96,14 @@ def load_v2_models():
         state = state["model"]
     elif isinstance(state, dict) and "model_state" in state:
         state = state["model_state"]
-    mil_model.load_state_dict(state, strict=True)
+    elif isinstance(state, dict) and "model_state_dict" in state:
+        state = state["model_state_dict"]
+
+    if not state:
+        print("  [WARNING] Loaded empty state dict. This is a dummy weight.")
+    else:
+        mil_model.load_state_dict(state, strict=True)
+        
     mil_model.eval()
 
     # 3. Load LoRA-only checkpoint (optional — merges into model)
