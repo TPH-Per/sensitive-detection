@@ -302,27 +302,28 @@ def run_vit_on_frames(frames_tensor: torch.Tensor) -> tuple:
     nsfw_pipe = MODEL_CACHE["vit_nsfw"]
 
     T = frames_tensor.shape[0]
-    v_scores = np.zeros(T, dtype=np.float32)
-    n_scores = np.zeros(T, dtype=np.float32)
 
+    # Convert all frames to PIL Images for the processors
+    pil_images = []
     for i in range(T):
-        # frame: [C,H,W] in [0,1] -> PIL Image
         frame_np = (frames_tensor[i].permute(1, 2, 0).cpu().numpy().clip(0, 1) * 255).astype(np.uint8)
-        img = Image.fromarray(frame_np)
+        pil_images.append(Image.fromarray(frame_np))
 
-        # Violence
-        v_inputs = violence_proc(images=img, return_tensors="pt").to(DEVICE)
+    # 1. GPU Batch Violence
+    v_inputs = violence_proc(images=pil_images, return_tensors="pt").to(DEVICE)
+    with torch.no_grad():
         v_logits = violence_model(**v_inputs).logits
-        v_probs = torch.softmax(v_logits, dim=1).squeeze()
-        v_scores[i] = float(v_probs[1].item())  # violence class
+        v_probs = torch.softmax(v_logits, dim=1)
+    v_scores = v_probs[:, 1].cpu().numpy().astype(np.float32)
 
-        # NSFW
-        nsfw_results = nsfw_pipe(img, top_k=5)
-        nsfw_map = {r["label"].lower(): r["score"] for r in nsfw_results}
+    # 2. GPU Batch NSFW
+    n_scores = np.zeros(T, dtype=np.float32)
+    nsfw_batch_results = nsfw_pipe(pil_images, batch_size=T)
+    for i, img_result in enumerate(nsfw_batch_results):
+        nsfw_map = {r["label"].lower(): r["score"] for r in img_result}
         n_scores[i] = nsfw_map.get("nsfw", 0.0)
 
     return v_scores, n_scores
-
 
 # ═══════════════════════════════════════════════════════════════
 # V2 VIDEO INFERENCE
