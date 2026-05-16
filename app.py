@@ -640,6 +640,51 @@ def process_images_batch(image_paths: list[str], batch_size: int = 8) -> list[tu
         batch = valid_images[start:start + batch_size]
         for img in batch:
             nsfw_result = classify_nsfw_v2(img, nsfw_pipe)
+            
+            # Integration with NudeNet for high-confidence SFW/NSFW overlaps (nude vs sexy)
+            nude_detector = MODEL_CACHE.get("nude_detector")
+            if nsfw_result["nsfw_score"] >= 0.90 and nude_detector is not None:
+                try:
+                    import tempfile
+                    import os
+                    import cv2
+                    import numpy as np
+                    
+                    # NudeNet requires a file path
+                    temp_path = os.path.join(tempfile.gettempdir(), f"temp_nudenet_{os.getpid()}.jpg")
+                    
+                    # Convert PIL Image to cv2 format and save
+                    img_cv = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGR)
+                    cv2.imwrite(temp_path, img_cv)
+                    
+                    # Run detection
+                    nude_results = nude_detector.detect(temp_path)
+                    
+                    # Clean up
+                    if os.path.exists(temp_path):
+                        os.remove(temp_path)
+                        
+                    # Analyze NudeNet results
+                    ban_triggers = []
+                    if nude_results:
+                        for res in nude_results:
+                            label = res['class']
+                            score = res['score']
+                            
+                            # Exact logic mirrored from run_v2_inference (video pipeline)
+                            if score >= 0.80 and label in ["FEMALE_BREAST_EXPOSED", "MALE_BREAST_EXPOSED"]:
+                                ban_triggers.append(label)
+                            elif label in ["FEMALE_GENITALIA_EXPOSED", "MALE_GENITALIA_EXPOSED", "ANUS_EXPOSED"]:
+                                ban_triggers.append(label)
+                    
+                    if ban_triggers:
+                        nsfw_result["action"] = "ban"
+                    else:
+                        nsfw_result["action"] = "blur"
+                        
+                except Exception as e:
+                    print(f"  [NudeNet] Error running detector on image: {e}")
+            
             nsfw_actions_list.append(nsfw_result)
 
     valid_idx = 0
