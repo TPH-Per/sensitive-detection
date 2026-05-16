@@ -132,7 +132,7 @@ def load_vit_models():
     from huggingface_hub import hf_hub_download
 
     VIT_VIOLENCE_MODEL = "jaranohaal/vit-base-violence-detection"
-    VIT_NSFW_MODEL = "trongso/nsfw_vit_finetuned_final"
+    VIT_NSFW_MODEL = "AdamCodd/vit-base-nsfw-detector"
 
     print("  [ViT] Loading ViT Violence classifier (with key remapping)...")
     violence_model = ViTForImageClassification.from_pretrained(
