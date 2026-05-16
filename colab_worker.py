@@ -82,7 +82,7 @@ def collect_pending_media():
 
     # Posts
     try:
-        docs = db.collection('posts').order_by('createdAt', direction=firestore.Query.DESCENDING).limit(15).stream()
+        docs = db.collection('posts').order_by('createdAt', direction=firestore.Query.DESCENDING).limit(100).stream()
         for doc in docs:
             if doc.id in processed_posts:
                 continue
@@ -109,7 +109,7 @@ def collect_pending_media():
 
     # Comments
     try:
-        docs = db.collection('comments').order_by('createdAt', direction=firestore.Query.DESCENDING).limit(15).stream()
+        docs = db.collection('comments').order_by('createdAt', direction=firestore.Query.DESCENDING).limit(100).stream()
         for doc in docs:
             if doc.id in processed_comments:
                 continue
