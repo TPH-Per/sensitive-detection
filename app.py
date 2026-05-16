@@ -596,7 +596,7 @@ def process_image_vit(image_path: str):
 
 
 @torch.no_grad()
-def process_images_batch(image_paths: list[str], batch_size: int = 8) -> list[tuple[int, str]]:
+def process_images_batch(image_paths: list[str], batch_size: int = 64) -> list[tuple[int, str]]:
     """Batch process images through ViT models. Returns list of (level, reason)."""
     load_vit_models()
     violence_model = MODEL_CACHE["vit_violence_model"]
@@ -624,54 +624,73 @@ def process_images_batch(image_paths: list[str], batch_size: int = 8) -> list[tu
             results.append((0, ""))
         return results
 
-    # Batch violence
+    # Optimize: Process both models in large chunks to saturate VRAM (15GB can hold massive batches)
     v_probs_list = []
+    nsfw_actions_list = []
+    
     for start in range(0, len(valid_images), batch_size):
         batch = valid_images[start:start + batch_size]
+        
+        # 1. GPU Batch Violence
         inputs = violence_proc(images=batch, return_tensors="pt").to(DEVICE)
         with torch.no_grad():
             logits = violence_model(**inputs).logits
             probs = torch.softmax(logits, dim=1)
         v_probs_list.extend(probs[:, 1].cpu().tolist())
 
-    # Batch NSFW (label-aware v2)
-    nsfw_actions_list = []
-    for start in range(0, len(valid_images), batch_size):
-        batch = valid_images[start:start + batch_size]
-        for img in batch:
-            nsfw_result = classify_nsfw_v2(img, nsfw_pipe)
+        # 2. GPU Batch NSFW (HuggingFace pipeline can handle lists of images natively and batch them)
+        nsfw_batch_results = nsfw_pipe(batch, batch_size=batch_size)
+        
+        for idx, img_result in enumerate(nsfw_batch_results):
+            # nsfw_batch_results is a list of lists of dicts: [[{'label': 'nsfw', 'score': 0.99}, {'label': 'sfw', 'score': 0.01}], ...]
+            nsfw_score = 0.0
+            sfw_score = 0.0
+            for item in img_result:
+                if item['label'] == 'nsfw':
+                    nsfw_score = item['score']
+                elif item['label'] == 'sfw':
+                    sfw_score = item['score']
+                    
+            nsfw_result = {
+                "action": "safe",
+                "reason": "",
+                "nsfw_score": nsfw_score,
+                "sfw_score": sfw_score
+            }
             
-            # Integration with NudeNet for high-confidence SFW/NSFW overlaps (nude vs sexy)
+            if nsfw_score >= 0.80:
+                nsfw_result["action"] = "ban"
+                nsfw_result["reason"] = f"Banned (nsfw={nsfw_score:.3f})"
+            elif nsfw_score >= 0.55:
+                nsfw_result["action"] = "blur"
+                nsfw_result["reason"] = f"Blurred (nsfw={nsfw_score:.3f})"
+            elif nsfw_score >= 0.35:
+                nsfw_result["action"] = "review"
+                nsfw_result["reason"] = f"Review (nsfw={nsfw_score:.3f})"
+                
+            # Integration with NudeNet for high-confidence SFW/NSFW overlaps
             nude_detector = MODEL_CACHE.get("nude_detector")
-            if nsfw_result["nsfw_score"] >= 0.90 and nude_detector is not None:
+            if nsfw_score >= 0.90 and nude_detector is not None:
                 try:
                     import tempfile
                     import os
                     import cv2
                     import numpy as np
                     
-                    # NudeNet requires a file path
-                    temp_path = os.path.join(tempfile.gettempdir(), f"temp_nudenet_{os.getpid()}.jpg")
-                    
-                    # Convert PIL Image to cv2 format and save
-                    img_cv = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGR)
+                    temp_path = os.path.join(tempfile.gettempdir(), f"temp_nudenet_{os.getpid()}_{idx}.jpg")
+                    img_cv = cv2.cvtColor(np.array(batch[idx]), cv2.COLOR_RGB2BGR)
                     cv2.imwrite(temp_path, img_cv)
                     
-                    # Run detection
                     nude_results = nude_detector.detect(temp_path)
                     
-                    # Clean up
                     if os.path.exists(temp_path):
                         os.remove(temp_path)
                         
-                    # Analyze NudeNet results
                     ban_triggers = []
                     if nude_results:
                         for res in nude_results:
                             label = res['class']
                             score = res['score']
-                            
-                            # Exact logic mirrored from run_v2_inference (video pipeline)
                             if score >= 0.80 and label in ["FEMALE_BREAST_EXPOSED", "MALE_BREAST_EXPOSED"]:
                                 ban_triggers.append(label)
                             elif label in ["FEMALE_GENITALIA_EXPOSED", "MALE_GENITALIA_EXPOSED", "ANUS_EXPOSED"]:
