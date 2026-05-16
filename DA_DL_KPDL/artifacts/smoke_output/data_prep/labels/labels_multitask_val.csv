@@ -1,3 +1,0 @@
-relative_path,violence,self_harm,nsfw,sample_id,split,source,group_id,media_type
-rwf2000/RWF-2000/train/NonFight/safe_0.avi,0,0,0,rwf2000_68d20e70fb7d,val,rwf2000,rwf2000:safe,video
-ucf/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/normal001.mp4,0,0,0,ucf_crimes_06bf0e988ab9,val,ucf_crimes,ucf_crimes:normal001,video

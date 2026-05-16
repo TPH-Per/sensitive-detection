@@ -1,3 +1,0 @@
-class=android.widget.FrameLayout | text= | id=android:id/content | bounds=[0,0][1080,1857]
-class=android.view.View | text= | id=android:id/statusBarBackground | bounds=[0,0][1080,63]
-class=android.view.View | text= | id=android:id/navigationBarBackground | bounds=[0,1857][1080,1920]

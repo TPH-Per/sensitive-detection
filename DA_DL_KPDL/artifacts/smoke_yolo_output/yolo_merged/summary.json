@@ -1,7 +1,0 @@
-{
-  "train": 1,
-  "val": 1,
-  "test": 0,
-  "boxes": 2,
-  "data_yaml": "D:\\python\\DA_DL_KPDL\\artifacts\\smoke_yolo_output\\yolo_merged\\data.yaml"
-}

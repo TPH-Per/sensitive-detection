@@ -1,3 +1,0 @@
-relative_path,label,sample_id,split,split_before_challenge,source,group_id,media_type,challenge_bucket
-data-dl/Adult content dataset/P2datasetFull/train/2/nsfw_b.jpg,1,adult_content_binary_10a415748847,challenge,train,adult_content_binary,adult_content_binary:nsfw_b,image,positive_hard
-data-dl/Surgical Tools Dataset.v2-labelled-set.yolov8/train/images/tool_001.jpg,0,surgical_tools_negative_a8c266b58f8a,challenge,train,surgical_tools_negative,surgical_tools_negative:tool_001,image,normal_hard

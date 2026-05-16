@@ -1,5 +1,0 @@
-sample_id,image_path,label,split,source
-proxy_0001,proxy_images/proxy_0001.jpg,1,train,mixed
-proxy_0002,proxy_images/proxy_0002.jpg,0,train,mixed
-proxy_0003,proxy_images/proxy_0003.jpg,1,train,mixed
-proxy_0004,proxy_images/proxy_0004.jpg,0,train,mixed

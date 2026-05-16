@@ -1,9 +1,0 @@
-{
-  "thresh_v": 0.9136363636363637,
-  "thresh_s": 0.995,
-  "thresh_n": 0.999,
-  "sn_pooling": "topk_noisy_or",
-  "sn_topk_ratio": 0.2,
-  "sn_topk_min": 3,
-  "source": "manual calibration matching V6 thresholds for V7 VideoMAE-LoRA"
-}

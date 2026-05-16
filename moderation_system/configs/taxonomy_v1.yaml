@@ -1,0 +1,49 @@
+# Current taxonomy snapshot (Phase 1 baseline)
+# Problems identified:
+# 1. "selfharm" conflates ligature (suicide) with self-injury instruments
+# 2. "gore" conflates medical gore with violence
+# 3. No distinction between ligature (noose) vs ligature setup (beam+rope)
+# 4. hard_negative is a detection class, not a content category
+
+version: v1_baseline
+date: 2026-05-14
+
+yolo_classes:
+  0: weapon_firearm
+  1: weapon_bladed
+  2: ligature_noose
+  3: ligature_setup
+  4: sh_instrument
+  5: hard_negative
+
+cnn_branches:
+  gore:
+    model: gore_detector_v6_best.pth
+    label: Gore/Violence
+    threshold_blur: 0.6
+    threshold_ban: 0.85
+  nsfw:
+    model: nsfw_classifier_v6_best.pth
+    label: NSFW
+    threshold_blur: 0.7
+    threshold_ban: 0.9
+  selfharm:
+    model: selfharm_detector_v6_best.pth
+    label: Self-Harm
+    threshold_blur: 0.4
+    threshold_ban: 0.7
+  suicide_vit:
+    model: vit_suicide_best
+    label: Suicide Risk (ViT)
+    threshold_blur: 0.4
+    threshold_ban: 0.7
+  suicide_clip:
+    model: openai/clip-vit-base-patch32
+    label: Suicide Risk (CLIP)
+    threshold_blur: 0.3
+    threshold_ban: 0.6
+
+ensemble:
+  sh_p_final: "0.50 * suicide_ensemble + 0.30 * yolo_selfharm + 0.20 * cnn_selfharm"
+  suicide_ensemble: "max(vit_score, clip_score * 0.8)"
+  weapon_p: "max(yolo_weapon, gore_branch * 0.5)"

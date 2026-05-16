@@ -1,8 +1,0 @@
-sample_id,source,relative_path,media_type,original_split,locked_split,group_id,violence,self_harm,nsfw,proxy_label,include_proxy,include_temporal,include_spatial,include_multitask,challenge_bucket,mapping_confidence,notes,label_signature,split,split_before_challenge
-adult_content_binary_10a415748847,adult_content_binary,data-dl/Adult content dataset/P2datasetFull/train/2/nsfw_b.jpg,image,train,,adult_content_binary:nsfw_b,0,0,1,0,0,0,1,1,positive_hard,high,"Confirmed mapping: folder ""1"" is safe (nsfw=0) and folder ""2"" is NSFW-positive (nsfw=1).
-",v0_s0_n1_p0,challenge,train
-adult_content_binary_7b9dd2618442,adult_content_binary,data-dl/Adult content dataset/P2datasetFull/train/1/safe_a.jpg,image,train,,adult_content_binary:safe_a,0,0,0,0,0,0,1,1,,high,"Confirmed mapping: folder ""1"" is safe (nsfw=0) and folder ""2"" is NSFW-positive (nsfw=1).
-",v0_s0_n0_p0,test,test
-surgical_tools_negative_a8c266b58f8a,surgical_tools_negative,data-dl/Surgical Tools Dataset.v2-labelled-set.yolov8/train/images/tool_001.jpg,image,train,,surgical_tools_negative:tool_001,0,0,0,0,0,0,1,1,normal_hard,high,medical hard negative from YOLO dataset,v0_s0_n0_p0,challenge,train
-ucf101_678d419d8488,ucf101,ucf101/UCF101/UCF-101/Punch/v_Punch_g01_c01.avi,video,train,,ucf101:punch/v_punch_g01_c01,0,0,0,0,1,1,0,1,normal_hard,high,ucf101 safe action class=Punch,v0_s0_n0_p0,challenge,train
-ucf101_bb1ce4d14268,ucf101,ucf101/UCF101/UCF-101/ApplyLipstick/v_ApplyLipstick_g01_c01.avi,video,test,test,ucf101:applylipstick/v_applylipstick_g01_c01,0,0,0,0,1,1,0,1,,high,ucf101 safe action class=ApplyLipstick,v0_s0_n0_p0,test,test

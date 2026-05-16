@@ -1,3 +1,0 @@
-relative_path,label,sample_id,split,source,group_id,media_type
-rwf2000/RWF-2000/train/Fight/fight_0.avi,1,rwf2000_a74183f21316,train,rwf2000,rwf2000:fight,video
-ucf/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Abuse/abuse001.mp4,1,ucf_crimes_f26c92e274a0,train,ucf_crimes,ucf_crimes:abuse001,video

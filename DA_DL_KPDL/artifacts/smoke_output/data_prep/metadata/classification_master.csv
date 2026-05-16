@@ -1,7 +1,0 @@
-sample_id,source,relative_path,media_type,original_split,locked_split,group_id,violence,self_harm,nsfw,proxy_label,include_proxy,include_temporal,include_spatial,include_multitask,mapping_confidence,notes,label_signature,split
-rwf2000_98d3d96fba0f,rwf2000,rwf2000/RWF-2000/val/Fight/fight_1.avi,video,val,test,rwf2000:fight,1,0,0,1,1,1,0,1,high,rwf2000 violence clip,v1_s0_n0_p1,test
-rwf2000_a74183f21316,rwf2000,rwf2000/RWF-2000/train/Fight/fight_0.avi,video,train,,rwf2000:fight,1,0,0,1,1,1,0,1,high,rwf2000 violence clip,v1_s0_n0_p1,train
-rwf2000_68d20e70fb7d,rwf2000,rwf2000/RWF-2000/train/NonFight/safe_0.avi,video,train,,rwf2000:safe,0,0,0,0,1,1,0,1,high,rwf2000 violence clip,v0_s0_n0_p0,val
-ucf_crimes_8deec04792f2,ucf_crimes,ucf/Real-world Anomaly Detection in Surveillance Videos (UCF)/Testing_Normal_Videos_Anomaly/normal_test001.mp4,video,test,test,ucf_crimes:normal_test001,0,0,0,0,1,1,0,1,high,ucf normal folder=Testing_Normal_Videos_Anomaly,v0_s0_n0_p0,test
-ucf_crimes_f26c92e274a0,ucf_crimes,ucf/Real-world Anomaly Detection in Surveillance Videos (UCF)/Anomaly-Videos/Abuse/abuse001.mp4,video,train,,ucf_crimes:abuse001,1,0,0,1,1,1,0,1,medium,ucf anomaly class=Abuse,v1_s0_n0_p1,train
-ucf_crimes_06bf0e988ab9,ucf_crimes,ucf/Real-world Anomaly Detection in Surveillance Videos (UCF)/Training-Normal-Videos/normal001.mp4,video,train,,ucf_crimes:normal001,0,0,0,0,1,1,0,1,high,ucf normal folder=Training-Normal-Videos,v0_s0_n0_p0,val

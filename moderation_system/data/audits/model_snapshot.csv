@@ -1,0 +1,8 @@
+model_name,description,size_mb,exists
+yolov8_v2_final.pt,YOLO v2 6-class detector,46.8,True
+yolov8_weapon_v6_best.pt,YOLO v6 weapon detector (old),6.2,True
+gore_detector_v6_best.pth,CNN gore/violence classifier,45.1,True
+nsfw_classifier_v6_best.pth,CNN NSFW classifier,45.1,True
+selfharm_detector_v6_best.pth,CNN self-harm classifier,44.9,True
+task_gated_v6_best.pth,Task-gated ensemble model,24.5,True
+vit_suicide_best,ViT suicide classifier (NSFW backbone),343.2,True

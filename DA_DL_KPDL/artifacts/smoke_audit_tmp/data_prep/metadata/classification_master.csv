@@ -1,3 +1,0 @@
-sample_id,source,relative_path,media_type,original_split,locked_split,group_id,violence,self_harm,nsfw,proxy_label,include_proxy,include_temporal,include_spatial,include_multitask,challenge_bucket,mapping_confidence,notes,label_signature,split,split_before_challenge
-ucf101_678d419d8488,ucf101,ucf101/UCF101/UCF-101/Punch/v_Punch_g01_c01.avi,video,train,,ucf101:punch/v_punch_g01_c01,0,0,0,0,1,1,0,1,normal_hard,high,ucf101 safe action class=Punch,v0_s0_n0_p0,challenge,train
-ucf101_bb1ce4d14268,ucf101,ucf101/UCF101/UCF-101/ApplyLipstick/v_ApplyLipstick_g01_c01.avi,video,test,test,ucf101:applylipstick/v_applylipstick_g01_c01,0,0,0,0,1,1,0,1,,high,ucf101 safe action class=ApplyLipstick,v0_s0_n0_p0,test,test

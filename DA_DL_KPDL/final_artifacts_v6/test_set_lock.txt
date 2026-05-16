@@ -1,4 +1,0 @@
-test_set_hash=b6beaddd500029ab8c76ef9857e71996
-n_test=760
-violence_ratio=0.3461
-WARNING: DO NOT USE test set for any tuning or hyperparameter selection!

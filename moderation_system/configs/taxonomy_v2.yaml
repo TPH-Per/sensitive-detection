@@ -1,0 +1,170 @@
+# Phase 2: Redesigned label taxonomy
+# Principle: Each class maps to ONE specific moderation action path
+# No conflation of distinct semantic categories
+
+version: v2_redesigned
+date: 2026-05-14
+
+# ============================================================
+# DETECTION CLASSES (YOLO — bounding box level)
+# ============================================================
+# These are what YOLO detects in individual frames/images.
+# Each class maps to exactly ONE policy category.
+
+detection_classes:
+  # --- Violence branch ---
+  weapon_firearm:
+    id: 0
+    description: "Guns, rifles, pistols — any firearm visible"
+    policy_category: violence_weapon
+    action: blur + escalate
+
+  weapon_bladed:
+    id: 1
+    description: "Knives, machetes, swords — bladed weapons"
+    policy_category: violence_weapon
+    action: blur + escalate
+
+  # --- Self-harm: Ligature branch (SUICIDE-SPECIFIC) ---
+  ligature_noose:
+    id: 2
+    description: "Tied noose/hanging loop — the primary suicide ligature signal"
+    policy_category: self_harm_ligature
+    action: immediate_escalate  # highest priority
+
+  ligature_setup:
+    id: 3
+    description: "Beam/anchor + rope setup — preparatory scene for hanging"
+    policy_category: self_harm_ligature
+    action: immediate_escalate
+
+  # --- Self-harm: Instrument branch ---
+  sh_instrument:
+    id: 4
+    description: "Sharp objects near body context — self-cutting signals"
+    policy_category: self_harm_instrument
+    action: blur + escalate
+
+  # --- Safe / hard negatives ---
+  hard_negative:
+    id: 5
+    description: "Safe rope scenarios: clothesline, climbing, coiled rope, knots"
+    policy_category: safe
+    action: none
+
+# ============================================================
+# CLASSIFICATION BRANCHES (CNN/ViT — image/frame level)
+# ============================================================
+# These are whole-image classifiers that run independently.
+# They feed into the ensemble, NOT into YOLO detection.
+
+classification_branches:
+  violence_gore:
+    model: gore_detector_v6_best.pth
+    description: "Graphic violence, blood, gore, injuries"
+    policy_category: violence_gore
+    action: blur + escalate
+
+  nsfw:
+    model: nsfw_classifier_v6_best.pth
+    description: "Sexual content, nudity"
+    policy_category: nsfw
+    action: blur + ban
+
+  self_harm_general:
+    model: selfharm_detector_v6_best.pth
+    description: "General self-harm imagery (cutting, burning, etc.)"
+    policy_category: self_harm_general
+    action: blur + escalate
+
+  suicide_vit:
+    model: vit_suicide_best
+    description: "ViT binary classifier: safe vs suicide_risk"
+    policy_category: self_harm_ligature
+    action: immediate_escalate
+
+  suicide_clip:
+    model: openai/clip-vit-base-patch32
+    description: "CLIP zero-shot: rope/noose scene detection"
+    policy_category: self_harm_ligature
+    action: immediate_escalate
+
+# ============================================================
+# POLICY CATEGORIES (rule engine level)
+# ============================================================
+# These are the final semantic categories that drive actions.
+# Multiple detection/classification outputs map to ONE policy category.
+
+policy_categories:
+  violence_weapon:
+    sources: [weapon_firearm, weapon_bladed]
+    priority: HIGH
+    thresholds:
+      blur: 0.5
+      ban: 0.8
+    action: "BLUR image, FLAG for review, BAN if repeated"
+
+  violence_gore:
+    sources: [violence_gore]
+    priority: HIGH
+    thresholds:
+      blur: 0.6
+      ban: 0.85
+    action: "BLUR image, FLAG for review"
+
+  nsfw:
+    sources: [nsfw]
+    priority: MEDIUM
+    thresholds:
+      blur: 0.7
+      ban: 0.9
+    action: "BLUR image, WARN user"
+
+  self_harm_ligature:
+    sources: [ligature_noose, ligature_setup, suicide_vit, suicide_clip]
+    priority: CRITICAL
+    thresholds:
+      blur: 0.3
+      ban: 0.5
+    action: "IMMEDIATE ESCALATE to safety team, BLUR, CRISIS resources"
+
+  self_harm_instrument:
+    sources: [sh_instrument]
+    priority: HIGH
+    thresholds:
+      blur: 0.5
+      ban: 0.7
+    action: "BLUR image, FLAG for review"
+
+  self_harm_general:
+    sources: [self_harm_general]
+    priority: HIGH
+    thresholds:
+      blur: 0.4
+      ban: 0.7
+    action: "BLUR image, FLAG for review, CRISIS resources"
+
+  safe:
+    sources: [hard_negative]
+    priority: NONE
+    action: "PASS — no action"
+
+# ============================================================
+# ENSEMBLE FORMULA (to be replaced by rule engine in Phase 8)
+# ============================================================
+current_ensemble:
+  sh_p_final: "0.50 * max(vit_score, clip_score * 0.8) + 0.30 * yolo_ligature + 0.20 * cnn_selfharm"
+  weapon_p: "max(yolo_weapon, gore_branch * 0.5)"
+
+# ============================================================
+# KEY DIFFERENCES FROM V1
+# ============================================================
+# 1. self_harm_ligature is SEPARATE from self_harm_instrument
+#    — Ligature = suicide method (hanging) → CRITICAL priority
+#    — Instrument = self-cutting tools → HIGH priority
+# 2. hard_negative is NOT a detection class for the rule engine
+#    — It's a YOLO training class that maps to "safe" policy
+# 3. violence_gore is separate from violence_weapon
+#    — Gore = blood/injuries (CNN branch)
+#    — Weapon = guns/knives (YOLO detection)
+# 4. Each policy category has explicit priority and thresholds

@@ -1,3 +1,0 @@
-sample_id,feature_path,violence,self_harm,nsfw,split,source
-sample_3101,features/sample_3101.npy,1,0,0,val,ucf101
-sample_3102,features/sample_3102.npy,0,1,0,val,nsfw_selfharm

@@ -1,5 +1,0 @@
-{
-  "name": "Smurfy",
-  "description": "Một ứng dụng mạng xã hội hiện đại, đầy đủ tính năng với giao diện chuyên nghiệp, responsive và Clean Architecture.",
-  "requestFramePermissions": ["camera", "microphone"]
-}
