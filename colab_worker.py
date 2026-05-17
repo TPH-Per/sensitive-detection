@@ -92,7 +92,7 @@ def collect_pending_media():
                 continue
             media_list = data.get('media', [])
             for i, m in enumerate(media_list):
-                if m.get('isSensitive', False):
+                if m.get('isSensitive', False) or m.get('isModerated', False):
                     continue
                 mimeType = m.get('mimeType', '')
                 url = m.get('url', '')
@@ -118,7 +118,7 @@ def collect_pending_media():
                 processed_comments.add(doc.id)
                 continue
             image = data.get('image', None)
-            if not image or image.get('isSensitive', False):
+            if not image or image.get('isSensitive', False) or image.get('isModerated', False):
                 processed_comments.add(doc.id)
                 continue
             url = image.get('url', '')
@@ -152,7 +152,7 @@ def collect_pending_media():
                         processed_messages.add(msg_id)
                         continue
                     for i, m in enumerate(media_list):
-                        if m.get('isSensitive', False):
+                        if m.get('isSensitive', False) or m.get('isModerated', False):
                             continue
                         mimeType = m.get('mimeType', '')
                         url = m.get('url', '')
@@ -177,7 +177,7 @@ def collect_pending_media():
             # Quét Avatar
             avatar = data.get('avatar', {})
             avatar_url = avatar.get('url', '')
-            if avatar_url and processed_avatars.get(user_id + "_avatar") != avatar_url:
+            if avatar_url and not avatar.get('isModerated', False) and processed_avatars.get(user_id + "_avatar") != avatar_url:
                 items.append(MediaItem(
                     url=avatar_url,
                     is_video=False,
@@ -189,7 +189,7 @@ def collect_pending_media():
             # Quét Cover
             cover = data.get('cover', {})
             cover_url = cover.get('url', '')
-            if cover_url and processed_avatars.get(user_id + "_cover") != cover_url:
+            if cover_url and not cover.get('isModerated', False) and processed_avatars.get(user_id + "_cover") != cover_url:
                 items.append(MediaItem(
                     url=cover_url,
                     is_video=False,
@@ -331,6 +331,7 @@ def apply_results(items):
             for item in doc_items:
                 idx = item.media_index
                 if idx is not None and idx < len(media_list):
+                    media_list[idx]['isModerated'] = True
                     if item.level > 0:
                         media_list[idx]['isSensitive'] = True
                         media_list[idx]['moderationReason'] = item.reason
@@ -377,6 +378,8 @@ def apply_results(items):
             elif highest_level == 1:
                 print(f"[POST] Post {doc_id} -> BLUR")
                 doc.reference.update({'media': media_list})
+            else:
+                doc.reference.update({'media': media_list})
 
             processed_posts.add(doc_id)
         except Exception as e:
@@ -390,6 +393,7 @@ def apply_results(items):
                 continue
             data = doc.to_dict()
             image = data.get('image', {})
+            image['isModerated'] = True
 
             if item.level == 2:
                 print(f"[COMMENT] {item.doc_id} -> BAN")
@@ -425,6 +429,7 @@ def apply_results(items):
                 image['moderationReason'] = item.reason
                 doc.reference.update({'image': image})
             else:
+                doc.reference.update({'image': image})
                 print(f"[COMMENT] {item.doc_id}: An toàn")
 
             processed_comments.add(item.doc_id)
@@ -444,6 +449,7 @@ def apply_results(items):
             for item in msg_items:
                 idx = item.media_index
                 if idx is not None and idx < len(media_list):
+                    media_list[idx]['isModerated'] = True
                     if item.level > 0:
                         has_violation = True
                         media_list[idx]['isSensitive'] = True
@@ -452,9 +458,7 @@ def apply_results(items):
                     else:
                         print(f"[CHAT] {conv_id}/{msg_id} media[{idx}]: An toàn")
 
-            if has_violation:
-                print(f"[CHAT] {conv_id}/{msg_id} -> BLUR")
-                msg_ref.update({'media': media_list})
+            msg_ref.update({'media': media_list})
 
             processed_messages.add(msg_id)
         except Exception as e:
@@ -471,7 +475,7 @@ def apply_results(items):
                 print(f"[USER] {type_label} {user_id} -> REMOVED: {item.reason}")
                 # Cập nhật xóa ảnh vi phạm (avatar hoặc cover)
                 db.collection('users').document(item.doc_id).update({
-                    media_type: {'url': '', 'fileName': '', 'mimeType': '', 'size': 0}
+                    media_type: {'url': '', 'fileName': '', 'mimeType': '', 'size': 0, 'isSensitive': False, 'isModerated': True}
                 })
                 # Gửi thông báo
                 db.collection('notifications').add({
@@ -489,6 +493,9 @@ def apply_results(items):
                     'actorAvatar': ''
                 })
             else:
+                db.collection('users').document(item.doc_id).update({
+                    f"{media_type}.isModerated": True
+                })
                 print(f"[USER] {type_label} {user_id}: An toàn")
             processed_avatars[user_id + "_" + media_type] = item.url
         except Exception as e:
