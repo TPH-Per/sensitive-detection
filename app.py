@@ -9,6 +9,7 @@ Tasks: Violence (V), NSFW (N). Self-harm removed. YOLO removed.
 import json
 import sys
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
 import cv2
@@ -69,6 +70,7 @@ MODEL_CACHE: dict = {}
 def load_v2_models():
     """Load V2 pipeline models: VideoMAE encoder + main MIL model.
     ViT teachers are loaded separately via load_vit_models().
+    MIL model is optional — pipeline falls back to ViT-only if weights missing.
     """
     if MODEL_CACHE.get("v2_loaded", False):
         return
@@ -81,45 +83,50 @@ def load_v2_models():
         checkpoint=VIDEOMAE_CHECKPOINT, device=DEVICE, frozen=True
     )
 
-    # 2. Main MIL model
+    # 2. Main MIL model (optional — skip if weights not found)
+    mil_model = None
     model_path = ARTIFACTS_DIR / WEIGHT_FILES["model"]
-    print(f"  [MIL] Loading {model_path.name}...")
-    mil_model = MultiTaskMILModel(
-        dim=V2_FEATURE_DIM,
-        attn_dim=V2_ATTN_DIM,
-        lora_rank=V2_LORA_RANK,
-        lora_alpha=V2_LORA_ALPHA,
-        lora_dropout=V2_LORA_DROPOUT,
-    ).to(DEVICE)
-    state = torch.load(model_path, map_location=DEVICE, weights_only=False)
-    if isinstance(state, dict) and "model" in state and isinstance(state["model"], dict):
-        state = state["model"]
-    elif isinstance(state, dict) and "model_state" in state:
-        state = state["model_state"]
-    elif isinstance(state, dict) and "model_state_dict" in state:
-        state = state["model_state_dict"]
+    if model_path.exists():
+        print(f"  [MIL] Loading {model_path.name}...")
+        mil_model = MultiTaskMILModel(
+            dim=V2_FEATURE_DIM,
+            attn_dim=V2_ATTN_DIM,
+            lora_rank=V2_LORA_RANK,
+            lora_alpha=V2_LORA_ALPHA,
+            lora_dropout=V2_LORA_DROPOUT,
+        ).to(DEVICE)
+        state = torch.load(model_path, map_location=DEVICE, weights_only=False)
+        if isinstance(state, dict) and "model" in state and isinstance(state["model"], dict):
+            state = state["model"]
+        elif isinstance(state, dict) and "model_state" in state:
+            state = state["model_state"]
+        elif isinstance(state, dict) and "model_state_dict" in state:
+            state = state["model_state_dict"]
 
-    if not state:
-        print("  [WARNING] Loaded empty state dict. This is a dummy weight.")
+        if not state:
+            print("  [WARNING] Loaded empty state dict. This is a dummy weight.")
+        else:
+            mil_model.load_state_dict(state, strict=True)
+
+        mil_model.eval()
+
+        # 3. Load LoRA-only checkpoint (optional — merges into model)
+        lora_path = ARTIFACTS_DIR / WEIGHT_FILES["lora"]
+        if lora_path.exists():
+            print(f"  [LoRA] Loading {lora_path.name}...")
+            lora_state = torch.load(lora_path, map_location=DEVICE, weights_only=False)
+            if isinstance(lora_state, dict):
+                mil_model.load_state_dict(lora_state, strict=False)
     else:
-        mil_model.load_state_dict(state, strict=True)
-        
-    mil_model.eval()
-
-    # 3. Load LoRA-only checkpoint (optional — merges into model)
-    lora_path = ARTIFACTS_DIR / WEIGHT_FILES["lora"]
-    if lora_path.exists():
-        print(f"  [LoRA] Loading {lora_path.name}...")
-        lora_state = torch.load(lora_path, map_location=DEVICE, weights_only=False)
-        if isinstance(lora_state, dict):
-            mil_model.load_state_dict(lora_state, strict=False)
+        print(f"  [MIL] Weights not found at {model_path} — running in ViT-only mode.")
 
     MODEL_CACHE.update({
         "v2_loaded": True,
         "encoder": encoder,
         "mil": mil_model,
     })
-    print("[OK] V2 models loaded (VideoMAE + MIL). ViT teachers loaded on first use.")
+    mode = "VideoMAE + MIL" if mil_model else "VideoMAE only (ViT-only mode)"
+    print(f"[OK] V2 models loaded ({mode}). ViT teachers loaded on first use.")
 
 
 def load_vit_models():
@@ -287,6 +294,348 @@ def normalize01(x: np.ndarray) -> np.ndarray:
 
 
 # ═══════════════════════════════════════════════════════════════
+# SPIKE PATTERN DETECTOR: VIOLENCE EVIDENCE ANALYSIS
+# ═══════════════════════════════════════════════════════════════
+
+
+def compute_violence_evidence(scores: np.ndarray) -> tuple:
+    """Analyze score curve shape around peak to distinguish real violence from noise.
+
+    Real violence creates a characteristic pattern: high peak with warm neighbors
+    (windup/follow-through). Noise/flash creates isolated spikes with cold neighbors.
+
+    Args:
+        scores: gore_scores_resampled [16]
+
+    Returns:
+        (evidence_score 0-1, pattern_type string)
+    """
+    peak = float(scores.max())
+    peak_idx = int(scores.argmax())
+    T = len(scores)
+
+    # Neighborhood ±2 frames around peak
+    left = scores[max(0, peak_idx - 2):peak_idx]
+    right = scores[peak_idx + 1:min(T, peak_idx + 3)]
+    neighbors = np.concatenate([left, right])
+
+    if len(neighbors) == 0:
+        return peak * 0.3, "no_context"
+
+    neighbor_mean = float(neighbors.mean())
+    neighbor_max = float(neighbors.max())
+
+    # Pattern 1 — Fast action violence (quick strike)
+    # Extremely high peak + at least 1 neighbor > 0.12 (windup / follow-through)
+    if peak >= 0.78 and neighbor_max >= 0.12:
+        return peak * 0.92, "fast_action"
+
+    # Pattern 2 — Sustained action (prolonged fight, many frames)
+    elif peak >= 0.65 and neighbor_mean >= 0.18:
+        return peak * 0.80, "sustained_action"
+
+    # Pattern 3 — Isolated spike (camera flash, compression artifact)
+    # High peak but neighbors are ice cold
+    elif peak >= 0.65 and neighbor_max < 0.12:
+        return peak * 0.25, "isolated_spike"
+
+    # Pattern 4 — Weak signal (insufficient evidence)
+    else:
+        return peak * 0.40, "weak_signal"
+
+
+# ═══════════════════════════════════════════════════════════════
+# HEURISTIC GATES: FALSE POSITIVE REDUCTION
+# ═══════════════════════════════════════════════════════════════
+
+
+def _get_resolution_penalty(w: int, h: int) -> tuple:
+    """Tiered resolution penalty. Higher penalty for lower resolution."""
+    pixels = w * h
+    if pixels <= 144 * 176:
+        return 0.20, "extreme_low_res_144p"
+    elif pixels <= 360 * 480:
+        return 0.12, "low_res_360p"
+    elif pixels <= 640 * 480:
+        return 0.08, "low_res_480p"
+    return 0.0, "normal_res"
+
+
+def analyze_luminance(frames: list, max_frames: int = 8) -> dict:
+    """H1: Detect dark ambient scenes (birthday, bar, club).
+
+    Vectorized OpenCV approach: resize to 64x64 first, use INTER_AREA as
+    block mean calculator. ~50-100x faster than nested-loop version.
+    """
+    step = max(1, len(frames) // max_frames)
+    sampled = frames[::step][:max_frames]
+
+    luma_stats = []
+    local_contrast_scores = []
+
+    for frame in sampled:
+        # Spatial subsampling: 64x64 preserves luminance characteristics
+        small = cv2.resize(frame, (64, 64), interpolation=cv2.INTER_AREA)
+        gray = cv2.cvtColor(small, cv2.COLOR_RGB2GRAY).astype(np.float32)
+
+        luma_stats.append(float(gray.mean()))
+
+        # Magic trick: resize to 16x16 with INTER_AREA = block means in C++
+        # Each pixel = mean of a 4x4 block. Std of 16x16 grid = local contrast.
+        tiny = cv2.resize(gray, (16, 16), interpolation=cv2.INTER_AREA)
+        local_contrast_scores.append(float(np.std(tiny)))
+
+    mean_luma = float(np.mean(luma_stats))
+    mean_contrast = float(np.mean(local_contrast_scores))
+
+    return {
+        "mean_luma": mean_luma,
+        "mean_local_contrast": mean_contrast,
+        "is_dark_ambient": (mean_luma < 55) and (mean_contrast < 25),
+    }
+
+
+def analyze_red_distribution(frames: list, max_frames: int = 8) -> dict:
+    """H2: Distinguish localized red spikes (blood) from distributed warm tones (social).
+
+    Vectorized: resize to 64x64, use INTER_AREA for block means.
+    Blood = high red ratio + high CV (localized). Social = low CV (spread evenly).
+    """
+    step = max(1, len(frames) // max_frames)
+    sampled = frames[::step][:max_frames]
+
+    red_ratios = []
+    cv_reds = []
+
+    for frame in sampled:
+        # Spatial subsampling
+        small = cv2.resize(frame, (64, 64), interpolation=cv2.INTER_AREA)
+        r = small[:, :, 0].astype(np.float32)
+        g = small[:, :, 1].astype(np.float32)
+        b = small[:, :, 2].astype(np.float32)
+
+        # Red dominance mask
+        red_dominant = (r > g + 30) & (r > b + 30) & (r > 100)
+        red_ratios.append(float(red_dominant.mean()))
+
+        # Block red means via INTER_AREA resize to 8x8 grid
+        r_tiny = cv2.resize(r, (8, 8), interpolation=cv2.INTER_AREA)
+        mean_r = float(r_tiny.mean())
+        cv_reds.append(float(np.std(r_tiny) / (mean_r + 1e-8)))
+
+    mean_red_ratio = float(np.mean(red_ratios))
+    mean_cv_red = float(np.mean(cv_reds))
+
+    return {
+        "mean_red_ratio": mean_red_ratio,
+        "mean_cv_red": mean_cv_red,
+        "is_social_warm": (mean_red_ratio < 0.15) and (mean_cv_red < 0.35),
+    }
+
+
+def detect_composite_video(frames: list, max_frames: int = 6) -> dict:
+    """H3: Detect split-screen / composite video layouts (TikTok style).
+
+    Vectorized: resize to 128x128, use Sobel on small image.
+    Looks for full-width horizontal dividing lines.
+    """
+    step = max(1, len(frames) // max_frames)
+    sampled = frames[::step][:max_frames]
+
+    composite_scores = []
+
+    for frame in sampled:
+        # Spatial subsampling for speed
+        small = cv2.resize(frame, (128, 128), interpolation=cv2.INTER_AREA)
+        gray = cv2.cvtColor(small, cv2.COLOR_RGB2GRAY).astype(np.float32)
+        h, w = gray.shape
+
+        # Horizontal gradient (detects horizontal dividing lines)
+        sobel_y = cv2.Sobel(gray, cv2.CV_64F, 0, 1, ksize=3)
+        row_gradient = np.abs(sobel_y).mean(axis=1)  # [H]
+
+        # A composite line has gradient >> surrounding rows
+        threshold = row_gradient.mean() + 2.5 * row_gradient.std()
+        strong_rows = np.where(row_gradient > threshold)[0]
+
+        # Check if any strong row spans >80% of width (full divider)
+        found = False
+        for r_idx in strong_rows:
+            row_pixels = np.abs(sobel_y[r_idx])
+            if (row_pixels > row_pixels.mean()).mean() > 0.7:
+                composite_scores.append(1)
+                found = True
+                break
+        if not found:
+            composite_scores.append(0)
+
+    ratio = float(np.mean(composite_scores))
+    return {
+        "composite_frame_ratio": ratio,
+        "is_composite": ratio > 0.4,
+    }
+
+
+# ═══════════════════════════════════════════════════════════════
+# AUTO-CROP: 5-SECOND STATIC BACKGROUND DETECTION
+# ═══════════════════════════════════════════════════════════════
+
+
+def _detect_static_background_crop(video_path: str, window_sec: float = 5.0) -> tuple:
+    """Detect static background regions using a continuous 5-second buffer.
+
+    Algorithm (5-Second Continuous Buffer):
+    1. Extract a continuous 5-second segment (e.g., 150 frames at 30fps)
+    2. Use the first frame as baseline, compare all subsequent frames against it
+    3. Pixels that remain identical (or below microscopic noise threshold) across
+       ALL 5 seconds are flagged as static background (letterboxing, black padding,
+       fixed CCTV timestamps, static overlays)
+    4. Pixels that exhibit any change (motion, lighting shifts) are the active ROI
+    5. Generate bounding box tightly wrapping only the dynamic area
+    6. Permanently discard outer static pixels for the rest of the pipeline
+
+    The 5-second requirement prevents false crops on subjects standing still briefly.
+
+    Returns:
+        (x, y, w, h) crop coordinates in original resolution, or None if no crop needed.
+    """
+    cap = cv2.VideoCapture(video_path)
+    if not cap.isOpened():
+        return None
+
+    orig_w = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+    orig_h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+    fps = cap.get(cv2.CAP_PROP_FPS) or 30.0
+
+    if total_frames <= 0 or orig_w <= 0 or orig_h <= 0:
+        cap.release()
+        return None
+
+    # Step 1: Extract continuous 5-second buffer
+    window_frames = int(fps * window_sec)
+    # Take from the start of the video (where letterboxing/watermarks are most consistent)
+    # If video is shorter than 5 seconds, use all frames
+    frames_to_read = min(window_frames, total_frames)
+    if frames_to_read < int(fps * 2):  # need at least 2 seconds for meaningful detection
+        cap.release()
+        return None
+
+    # Downscale for speed while maintaining pixel-level comparison validity
+    scale = 256.0 / max(orig_w, orig_h)
+    if scale >= 1.0:
+        scale = 0.5
+    ds_w = int(orig_w * scale)
+    ds_h = int(orig_h * scale)
+
+    # Step 1: Read all frames in the 5-second buffer (continuous, no gaps)
+    buffer_frames = []
+    for i in range(frames_to_read):
+        ok, frame = cap.read()
+        if not ok:
+            break
+        small = cv2.resize(frame, (ds_w, ds_h), interpolation=cv2.INTER_AREA)
+        gray = cv2.cvtColor(small, cv2.COLOR_BGR2GRAY)
+        buffer_frames.append(gray)
+    cap.release()
+
+    if len(buffer_frames) < int(fps * 2):
+        return None
+
+    # Step 2: Sequential frame comparison — use first frame as baseline
+    baseline = buffer_frames[0].astype(np.float32)
+
+    # Accumulate absolute difference against baseline across all frames
+    # A pixel is "static" only if it barely changes across ALL frames in 5 seconds
+    max_diff_map = np.zeros((ds_h, ds_w), dtype=np.float32)
+
+    for i in range(1, len(buffer_frames)):
+        diff = np.abs(buffer_frames[i].astype(np.float32) - baseline)
+        max_diff_map = np.maximum(max_diff_map, diff)
+
+    # Step 3: Absolute static validation — strict microscopic noise threshold
+    # If a pixel's max deviation across 5 seconds is <= 3 gray levels, it's static
+    STATIC_THRESHOLD = 3.0
+    content_mask = (max_diff_map > STATIC_THRESHOLD).astype(np.uint8)
+
+    # Morphological cleanup: close small gaps in content, remove isolated noise
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5))
+    content_mask = cv2.morphologyEx(content_mask, cv2.MORPH_CLOSE, kernel, iterations=2)
+    content_mask = cv2.morphologyEx(content_mask, cv2.MORPH_OPEN, kernel, iterations=1)
+
+    # Step 4: Bounding box generation — tight wrap around active ROI
+    contours, _ = cv2.findContours(content_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    if not contours:
+        return None
+
+    all_points = np.vstack(contours)
+    x, y, w, h = cv2.boundingRect(all_points)
+
+    # Scale back to original resolution
+    x_orig = max(0, int(x / scale))
+    y_orig = max(0, int(y / scale))
+    w_orig = max(1, min(int(w / scale), orig_w - x_orig))
+    h_orig = max(1, min(int(h / scale), orig_h - y_orig))
+
+    # Only crop if it actually removes meaningful static area (at least 5% of frame)
+    content_ratio = (w_orig * h_orig) / (orig_w * orig_h)
+    if content_ratio >= 0.95:
+        return None  # virtually no static area to remove
+
+    return (x_orig, y_orig, w_orig, h_orig)
+
+
+def auto_crop_frames(frames_tensor: torch.Tensor, video_path: str) -> torch.Tensor:
+    """Apply auto-crop to frames tensor if static background is detected.
+
+    The crop coordinates from the 5-second static detection are mapped to the
+    model's input resolution (224x224), applied to all frames, then resized back.
+    This effectively "zooms in" on the active ROI, giving the ViT denser signal.
+
+    Args:
+        frames_tensor: [T, C, H, W] tensor in [0, 1]
+        video_path: path to original video for resolution detection
+
+    Returns:
+        Cropped and re-resized frames tensor [T, C, H, W]
+    """
+    crop = _detect_static_background_crop(video_path)
+    if crop is None:
+        return frames_tensor
+
+    x, y, w, h = crop
+    T, C, H, W = frames_tensor.shape
+
+    # Get original video dimensions once
+    cap = cv2.VideoCapture(video_path)
+    orig_w = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+    orig_h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    cap.release()
+
+    # Convert to numpy for cropping
+    frames_np = frames_tensor.permute(0, 2, 3, 1).cpu().numpy()  # [T, H, W, C]
+    frames_np = (frames_np * 255).clip(0, 255).astype(np.uint8)
+
+    # Scale crop coordinates from original resolution to tensor space (224x224)
+    sx = W / orig_w
+    sy = H / orig_h
+    cx = max(0, int(x * sx))
+    cy = max(0, int(y * sy))
+    cw = max(1, min(int(w * sx), W - cx))
+    ch = max(1, min(int(h * sy), H - cy))
+
+    # Apply crop to all frames and resize back to model input size
+    cropped_frames = []
+    for i in range(T):
+        cropped = frames_np[i, cy:cy+ch, cx:cx+cw]
+        resized = cv2.resize(cropped, (W, H), interpolation=cv2.INTER_LINEAR)
+        cropped_frames.append(resized)
+
+    result = np.stack(cropped_frames, axis=0).astype(np.float32) / 255.0
+    return torch.from_numpy(result).permute(0, 3, 1, 2)
+
+
+# ═══════════════════════════════════════════════════════════════
 # VIT TEACHER INFERENCE (replaces ResNet teachers)
 # ═══════════════════════════════════════════════════════════════
 
@@ -341,18 +690,13 @@ def run_v2_inference(
     load_v2_models()
 
     encoder = MODEL_CACHE["encoder"]
-    mil_model = MODEL_CACHE["mil"]
+    mil_model = MODEL_CACHE.get("mil")
 
     # 1. Read video frames
     frames_tensor = read_video_frames(video_path, V2_SAMPLING_FRAMES, V2_IMAGE_SIZE)
 
-    # 2. Extract VideoMAE features
-    features_np = encoder.encode_sequence(
-        frames=frames_tensor,
-        clip_frames=V2_CLIP_FRAMES,
-        clip_stride=V2_CLIP_STRIDE,
-        target_frames=V2_NUM_FRAMES,
-    )
+    # 1b. Auto-crop static background (borders, watermarks, overlays)
+    frames_tensor = auto_crop_frames(frames_tensor, video_path)
 
     # 3. Run ViT teachers (replaces ResNet gore/NSFW)
     gore_scores_raw, nsfw_scores_raw = run_vit_on_frames(frames_tensor)
@@ -360,15 +704,29 @@ def run_v2_inference(
     # Resample teacher scores to match model's num_frames
     gore_scores_resampled = _resample_1d(gore_scores_raw, V2_NUM_FRAMES)
     nsfw_scores_resampled = _resample_1d(nsfw_scores_raw, V2_NUM_FRAMES)
-    aux_np = np.stack([gore_scores_resampled, nsfw_scores_resampled], axis=1).astype(np.float32)
 
-    # 4. Run MIL model (for attention visualization only)
-    feats_t = torch.from_numpy(features_np).unsqueeze(0).to(DEVICE)
-    aux_t = torch.from_numpy(aux_np).unsqueeze(0).to(DEVICE)
-    out = mil_model(feats_t, aux_t)
+    if mil_model is not None:
+        # 2. Extract VideoMAE features (only needed for MIL model)
+        features_np = encoder.encode_sequence(
+            frames=frames_tensor,
+            clip_frames=V2_CLIP_FRAMES,
+            clip_stride=V2_CLIP_STRIDE,
+            target_frames=V2_NUM_FRAMES,
+        )
+        aux_np = np.stack([gore_scores_resampled, nsfw_scores_resampled], axis=1).astype(np.float32)
 
-    v_attn = out["v_attn"].squeeze(0).squeeze(-1).cpu().numpy().astype(np.float32)
-    n_attn = out["n_attn"].squeeze(0).squeeze(-1).cpu().numpy().astype(np.float32)
+        # 4. Run MIL model
+        feats_t = torch.from_numpy(features_np).unsqueeze(0).to(DEVICE)
+        aux_t = torch.from_numpy(aux_np).unsqueeze(0).to(DEVICE)
+        out = mil_model(feats_t, aux_t)
+
+        v_attn = out["v_attn"].squeeze(0).squeeze(-1).cpu().numpy().astype(np.float32)
+        n_attn = out["n_attn"].squeeze(0).squeeze(-1).cpu().numpy().astype(np.float32)
+    else:
+        # ViT-only mode: use ViT scores as attention proxies
+        out = None
+        v_attn = gore_scores_resampled.copy()
+        n_attn = nsfw_scores_resampled.copy()
 
     # 5. CLIP activity context: classify peak violence frames as sports or violence
     top_k_indices = np.argsort(gore_scores_raw)[-6:]  # top 6 highest violence frames
@@ -386,18 +744,94 @@ def run_v2_inference(
     v_peak_raw = float(gore_scores_raw.max())
     v_peak = float(gore_scores_suppressed.max())
 
-    # 6. Final verdict using ViT scores + CLIP context
+    # 5b. CLIP-based NSFW score adjustments (sport only — anime NSFW is already accurate)
+    nsfw_scores_adjusted = nsfw_scores_raw.copy()
+    nsfw_adj_detail = []
+    if activity.get("is_sports", False):
+        sport_nsfw_adj = round(1.0 - activity["suppress_factor"], 2)
+        nsfw_scores_adjusted = np.maximum(0.0, nsfw_scores_adjusted - sport_nsfw_adj)
+        nsfw_adj_detail.append(f"sport -{sport_nsfw_adj}")
+
+    # 5c. Prepare sampled frames for heuristic analysis
+    cap_res = cv2.VideoCapture(video_path)
+    vid_w = int(cap_res.get(cv2.CAP_PROP_FRAME_WIDTH))
+    vid_h = int(cap_res.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    total_f = int(cap_res.get(cv2.CAP_PROP_FRAME_COUNT))
+    sample_indices_h = np.linspace(0, max(0, total_f - 1), min(8, total_f), dtype=int)
+    sampled_frames = []
+    for si in sample_indices_h:
+        cap_res.set(cv2.CAP_PROP_POS_FRAMES, int(si))
+        ok, fr = cap_res.read()
+        if ok:
+            sampled_frames.append(cv2.cvtColor(fr, cv2.COLOR_BGR2RGB))
+    cap_res.release()
+
+    # 5d. Spike pattern detector — analyze score curve shape
+    evidence_score, spike_pattern = compute_violence_evidence(gore_scores_resampled)
+
+    # 5e. Heuristic penalty chain (stacking all applicable penalties)
+    v_peak_adjusted = evidence_score
+    v_peak_adj_detail = [f"pattern={spike_pattern} (evidence={evidence_score:.3f})"]
+    penalty_applied = []
+
+    # H4 — Resolution tier penalty
+    res_penalty, res_label = _get_resolution_penalty(vid_w, vid_h)
+    if res_penalty > 0:
+        v_peak_adjusted = max(0.0, v_peak_adjusted - res_penalty)
+        v_peak_adj_detail.append(f"{res_label} -{res_penalty}")
+
+    # Anime penalty
+    if activity.get("is_anime", False):
+        v_peak_adjusted = max(0.0, v_peak_adjusted - 0.15)
+        v_peak_adj_detail.append("anime -0.15")
+
+    # H1 — Luminance gate (dark ambient: birthday, bar, club)
+    luma_info = analyze_luminance(sampled_frames) if sampled_frames else {"is_dark_ambient": False, "mean_luma": 128, "mean_local_contrast": 50}
+    if luma_info["is_dark_ambient"]:
+        v_peak_adjusted = max(0.0, v_peak_adjusted - 0.12)
+        v_peak_adj_detail.append(f"dark_ambient -0.12 (luma={luma_info['mean_luma']:.0f})")
+        penalty_applied.append("dark")
+
+    # H2 — Red distribution gate (social warm tone vs blood)
+    red_info = analyze_red_distribution(sampled_frames) if sampled_frames else {"is_social_warm": False}
+    if red_info["is_social_warm"] and luma_info["mean_luma"] < 80:
+        v_peak_adjusted = max(0.0, v_peak_adjusted - 0.10)
+        v_peak_adj_detail.append(f"social_warm -0.10 (cv_red={red_info['mean_cv_red']:.2f})")
+        penalty_applied.append("warm")
+
+    # H3 — Composite/split-screen detection (TikTok style)
+    composite_info = detect_composite_video(sampled_frames) if sampled_frames else {"is_composite": False}
+    if composite_info["is_composite"]:
+        v_peak_adjusted = max(0.0, v_peak_adjusted - 0.20)
+        v_peak_adj_detail.append(f"composite -0.20 (ratio={composite_info['composite_frame_ratio']:.2f})")
+        penalty_applied.append("composite")
+
+    # Sports: raise the bar — penalty + higher threshold
     thresh_v = thresholds.get("violence", 0.5)
     thresh_n = thresholds.get("nsfw", 0.5)
+    if activity.get("is_sports", False):
+        v_peak_adjusted = max(0.0, v_peak_adjusted - 0.15)
+        v_peak_adj_detail.append("sport -0.15")
+        thresh_v = 0.65
 
-    # Violence: peak (suppressed) ViT score + multi-frame requirement
-    v_high_frames_raw = int(np.sum(gore_scores_raw > 0.7))
-    v_high_frames = int(np.sum(gore_scores_suppressed > 0.7))
+    # Safety bypass: sustained high scores override penalties
+    v_high_frames_raw = int(np.sum(gore_scores_resampled > 0.7))
+    penalties_bypassed = False
+    if v_high_frames_raw >= 6 and penalty_applied:
+        v_peak_adjusted = evidence_score  # restore pre-penalty
+        v_peak_adj_detail.append(f"SAFETY BYPASS ({v_high_frames_raw} high frames)")
+        penalties_bypassed = True
+
+    # Verdict: simple threshold — pattern detector handles frame quality
+    v_peak = v_peak_adjusted
     v_prob = v_peak
-    v_flag = (v_peak >= thresh_v) and (v_high_frames >= 2)
+    v_flag = (v_peak >= thresh_v)
 
-    # NSFW: use MIL model output with ban/blur thresholds
-    n_prob = float(torch.sigmoid(out["n_logit"]).squeeze(0).item())
+    # NSFW: use MIL model output if available, else fall back to ViT NSFW scores
+    if out is not None:
+        n_prob = float(torch.sigmoid(out["n_logit"]).squeeze(0).item())
+    else:
+        n_prob = float(nsfw_scores_adjusted.max())
     n_action = "safe"
     if n_prob >= 0.80:
         n_action = "ban"
@@ -450,21 +884,50 @@ def run_v2_inference(
         context_info = (
             f"\n- **Sports context detected** "
             f"(sports_p={activity['sports_probability']:.2f}, "
-            f"suppress={activity['suppress_factor']:.2f})"
+            f"suppress={activity['suppress_factor']:.2f}) — "
+            f"threshold raised to {thresh_v:.2f}, need {required_high_frames} high frames"
         )
     elif activity["violence_confidence"] > activity["sports_confidence"]:
         context_info = (
             f"\n- **Violence context confirmed** "
             f"(violence_p={1 - activity['sports_probability']:.2f})"
         )
+    if activity.get("is_anime", False):
+        context_info += (
+            f"\n- **Anime detected** "
+            f"(anime_p={activity['anime_probability']:.2f})"
+        )
+    # Heuristic gate diagnostics
+    if luma_info.get("is_dark_ambient"):
+        context_info += (
+            f"\n- **Dark ambient** (luma={luma_info['mean_luma']:.0f}, "
+            f"contrast={luma_info['mean_local_contrast']:.0f})"
+        )
+    if red_info.get("is_social_warm"):
+        context_info += (
+            f"\n- **Social warm tone** (red_ratio={red_info['mean_red_ratio']:.3f}, "
+            f"cv_red={red_info['mean_cv_red']:.2f})"
+        )
+    if composite_info.get("is_composite"):
+        context_info += (
+            f"\n- **Composite/split-screen** (ratio={composite_info['composite_frame_ratio']:.2f})"
+        )
+    if v_peak_adj_detail:
+        context_info += f"\n- **ViT peak adj:** {', '.join(v_peak_adj_detail)}"
+    if nsfw_adj_detail:
+        context_info += f"\n- **NSFW score adj:** {', '.join(nsfw_adj_detail)}"
+    if penalties_bypassed:
+        context_info += f"\n- **SAFETY BYPASS** — {v_high_frames_raw} high frames override all penalties"
+    context_info += f"\n- **Resolution:** {vid_w}x{vid_h}"
     score_md = (
         "### V2 Pipeline (ViT + CLIP context)\n"
-        f"- Violence peak: **{v_prob:.4f}** (raw={v_peak_raw:.4f}, threshold={thresh_v:.4f}) {'FLAGGED' if v_flag else 'OK'}\n"
+        f"- Violence peak: **{v_peak:.4f}** (evidence={evidence_score:.4f}, threshold={thresh_v:.4f}) {'FLAGGED' if v_flag else 'OK'}\n"
+        f"- Spike pattern: **{spike_pattern}** (raw peak={v_peak_raw:.4f})\n"
         f"- NSFW prob: **{n_prob:.4f}** → {n_action.upper()} (ban>=0.80, blur>=0.70)\n"
         f"- V peak frame: **{int(np.argmax(v_attn_clipped))}** (attn={v_attn_clipped.max():.4f})\n"
         f"- N peak frame: **{int(np.argmax(n_attn_clipped))}** (attn={n_attn_clipped.max():.4f})\n"
         f"- ViT violence max: **{v_peak_raw:.4f}** | ViT NSFW max: **{nsfw_scores_raw.max():.4f}**\n"
-        f"- V high frames (>0.7): **{v_high_frames}** raw={v_high_frames_raw} (need >=2 to flag)\n"
+        f"- V high frames (>0.7): **{v_high_frames_raw}** (resampled)\n"
         f"- Frames used: **{V2_NUM_FRAMES}** (sampled from {V2_SAMPLING_FRAMES})\n"
         f"- Device: **{DEVICE.type}**\n"
         f"- Runtime: **{elapsed:.2f}s**"
@@ -745,6 +1208,152 @@ def process_images_batch(image_paths: list[str], batch_size: int = 64) -> list[t
 
 
 # ═══════════════════════════════════════════════════════════════
+# PARALLEL VIDEO PROCESSING
+# ═══════════════════════════════════════════════════════════════
+
+
+def _process_single_video_wrapper(video_path: str, thresholds: dict) -> dict:
+    """Wrapper for single video processing — returns compact result dict."""
+    try:
+        t0 = time.time()
+        result = run_v2_inference(video_path, thresholds, top_k=6)
+        elapsed = time.time() - t0
+        return {
+            "path": video_path,
+            "verdict": result[0],
+            "scores": result[1],
+            "elapsed": elapsed,
+            "error": None,
+        }
+    except Exception as e:
+        return {
+            "path": video_path,
+            "verdict": f"## Error\n`{e}`",
+            "scores": "",
+            "elapsed": 0,
+            "error": str(e),
+        }
+
+
+def process_videos_parallel(video_paths: list, thresholds: dict, max_workers: int = 4) -> list:
+    """Process multiple videos in parallel using thread pool.
+
+    GPU inference is sequential per thread (CUDA doesn't benefit from concurrent kernels),
+    but frame reading + CPU preprocessing runs in parallel. With 4 workers:
+    - Worker 1: GPU inference on video A
+    - Worker 2: Reading + preprocessing frames for video B
+    - Worker 3: Heuristic analysis for video C
+    - Worker 4: Reading frames for video D
+
+    This keeps the GPU fed at all times instead of waiting for I/O.
+    """
+    if not video_paths:
+        return []
+
+    # Pre-load models so all threads share cached models
+    load_v2_models()
+    load_vit_models()
+
+    results = [None] * len(video_paths)
+
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        future_to_idx = {
+            executor.submit(_process_single_video_wrapper, path, thresholds): i
+            for i, path in enumerate(video_paths)
+        }
+        for future in as_completed(future_to_idx):
+            idx = future_to_idx[future]
+            try:
+                results[idx] = future.result()
+            except Exception as e:
+                results[idx] = {
+                    "path": video_paths[idx],
+                    "verdict": f"## Error\n`{e}`",
+                    "scores": "",
+                    "elapsed": 0,
+                    "error": str(e),
+                }
+
+    return results
+
+
+def _run_batch_videos(video_files, thresh_v, thresh_n, max_workers):
+    """Gradio handler for batch video processing."""
+    if not video_files:
+        return "### No videos uploaded", ""
+
+    # Normalize paths
+    paths = []
+    for f in video_files:
+        p = f if isinstance(f, str) else f.get("path", "") or f.get("name", "")
+        if p:
+            paths.append(p)
+
+    if not paths:
+        return "### No valid video files", ""
+
+    thresholds = {"violence": float(thresh_v), "nsfw": float(thresh_n)}
+    t0 = time.time()
+    results = process_videos_parallel(paths, thresholds, max_workers=int(max_workers))
+    total_time = time.time() - t0
+
+    # Build summary table
+    summary_lines = [
+        f"## Batch Results ({len(results)} videos, {total_time:.1f}s total)\n",
+        "| # | File | Verdict | Violence | NSFW | Pattern | Time |",
+        "|---|------|---------|----------|------|---------|------|",
+    ]
+
+    detail_lines = ["\n---\n## Detailed Results\n"]
+    for i, r in enumerate(results):
+        name = Path(r["path"]).name
+        # Parse key info from score markdown
+        score_text = r["scores"]
+        v_peak = "?"
+        n_prob = "?"
+        pattern = "?"
+        for line in score_text.split("\n"):
+            if "Violence peak:" in line:
+                parts = line.split("**")
+                if len(parts) >= 2:
+                    v_peak = parts[1]
+            if "NSFW prob:" in line:
+                parts = line.split("**")
+                if len(parts) >= 2:
+                    n_prob = parts[1]
+            if "Spike pattern:" in line:
+                parts = line.split("**")
+                if len(parts) >= 2:
+                    pattern = parts[1]
+
+        verdict_short = "SAFE" if "SAFE" in r["verdict"] else "FLAGGED" if "FLAGGED" in r["verdict"] else "ERROR"
+        emoji = "OK" if verdict_short == "SAFE" else "!!" if verdict_short == "FLAGGED" else "??"
+
+        summary_lines.append(
+            f"| {i+1} | `{name}` | {emoji} {verdict_short} | {v_peak} | {n_prob} | {pattern} | {r['elapsed']:.1f}s |"
+        )
+
+        detail_lines.append(f"### Video {i+1}: `{name}`")
+        detail_lines.append(r["verdict"])
+        detail_lines.append(r["scores"])
+        detail_lines.append("")
+
+    summary_md = "\n".join(summary_lines) + "\n" + "\n".join(detail_lines)
+    throughput = len(results) / total_time if total_time > 0 else 0
+    stats_md = (
+        f"### Batch Statistics\n"
+        f"- Videos processed: **{len(results)}**\n"
+        f"- Total time: **{total_time:.1f}s**\n"
+        f"- Throughput: **{throughput:.2f} videos/sec**\n"
+        f"- Workers: **{int(max_workers)}**\n"
+        f"- Device: **{DEVICE.type}**\n"
+        f"- Errors: **{sum(1 for r in results if r['error'])}**"
+    )
+
+    return summary_md, stats_md
+
+
+# ═══════════════════════════════════════════════════════════════
 # GRADIO UI
 # ═══════════════════════════════════════════════════════════════
 
@@ -810,6 +1419,31 @@ with gr.Blocks(title="Video & Image Moderation (V2 MHCM-MIL)") as demo:
                 fn=process_image_vit,
                 inputs=[image_input],
                 outputs=[img_verdict_out, img_score_out, img_preview_out],
+            )
+
+        # ─── BATCH VIDEO TAB ──────────────────────────────────────
+        with gr.Tab("Batch Video (Parallel)"):
+            gr.Markdown("Upload multiple videos for parallel GPU processing.")
+            with gr.Row():
+                with gr.Column(scale=1):
+                    batch_video_input = gr.File(
+                        label="Upload videos", file_count="multiple",
+                        file_types=["video"],
+                    )
+                    batch_thresh_v = gr.Slider(0.0, 1.0, value=0.5, step=0.01, label="Violence threshold")
+                    batch_thresh_n = gr.Slider(0.0, 1.0, value=0.5, step=0.01, label="NSFW threshold")
+                    batch_workers = gr.Slider(1, 8, value=4, step=1, label="Parallel workers")
+                    batch_run_btn = gr.Button("Run Batch Inference", variant="primary")
+
+                with gr.Column(scale=1):
+                    batch_stats_out = gr.Markdown()
+
+            batch_results_out = gr.Markdown()
+
+            batch_run_btn.click(
+                fn=_run_batch_videos,
+                inputs=[batch_video_input, batch_thresh_v, batch_thresh_n, batch_workers],
+                outputs=[batch_results_out, batch_stats_out],
             )
 
 

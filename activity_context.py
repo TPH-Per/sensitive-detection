@@ -47,6 +47,19 @@ VIOLENCE_CONTEXT_PROMPTS = [
     "someone pulling a weapon on another person",
 ]
 
+ANIME_CONTEXT_PROMPTS = [
+    "anime character with big eyes and colorful hair",
+    "Japanese anime cartoon scene",
+    "manga style illustration with cel shading",
+    "animated anime girl or boy character",
+    "anime fight scene with special effects",
+    "2D anime drawing or digital art",
+    "cartoon anime character in Japanese style",
+    "anime screenshot from a TV show or movie",
+    "chibi or kawaii anime character",
+    "anime art with vibrant colors and outlines",
+]
+
 
 class ActivityContextClassifier:
     """CLIP zero-shot classifier for sports vs violence context."""
@@ -78,6 +91,13 @@ class ActivityContextClassifier:
         self.violence_feat = violence_out.pooler_output if hasattr(violence_out, 'pooler_output') else violence_out
         self.violence_feat = self.violence_feat / self.violence_feat.norm(dim=-1, keepdim=True)
 
+        anime_inputs = self.processor(
+            text=ANIME_CONTEXT_PROMPTS, return_tensors="pt", padding=True
+        ).to(DEVICE)
+        anime_out = self.model.get_text_features(**anime_inputs)
+        self.anime_feat = anime_out.pooler_output if hasattr(anime_out, 'pooler_output') else anime_out
+        self.anime_feat = self.anime_feat / self.anime_feat.norm(dim=-1, keepdim=True)
+
     @torch.no_grad()
     def classify(self, peak_frames: List[Image.Image]) -> dict:
         """
@@ -102,9 +122,12 @@ class ActivityContextClassifier:
                 "violence_confidence": 0.0,
                 "sports_probability": 0.0,
                 "suppress_factor": 1.0,
+                "is_anime": False,
+                "anime_confidence": 0.0,
+                "anime_probability": 0.0,
             }
 
-        sports_sims, violence_sims = [], []
+        sports_sims, violence_sims, anime_sims = [], [], []
 
         for frame in peak_frames:
             inputs = self.processor(images=frame, return_tensors="pt").to(DEVICE)
@@ -114,18 +137,28 @@ class ActivityContextClassifier:
 
             s_sim = (img_feat @ self.sports_feat.T).max().item()
             v_sim = (img_feat @ self.violence_feat.T).max().item()
+            a_sim = (img_feat @ self.anime_feat.T).max().item()
             sports_sims.append(s_sim)
             violence_sims.append(v_sim)
+            anime_sims.append(a_sim)
 
         sports_conf = float(np.mean(sports_sims))
         violence_conf = float(np.mean(violence_sims))
+        anime_conf = float(np.mean(anime_sims))
 
         # Softmax to get probability (temperature=20 for sharper separation)
         exp_s = np.exp(sports_conf * 20)
         exp_v = np.exp(violence_conf * 20)
         p_sports = exp_s / (exp_s + exp_v)
 
+        # Anime probability: compare anime vs real-life (sports + violence average)
+        real_life_conf = (sports_conf + violence_conf) / 2.0
+        exp_a = np.exp(anime_conf * 20)
+        exp_r = np.exp(real_life_conf * 20)
+        p_anime = exp_a / (exp_a + exp_r)
+
         is_sports = p_sports > 0.55
+        is_anime = p_anime > 0.55
 
         # Suppress factor: smoothly reduce violence score based on sports confidence
         if is_sports:
@@ -139,6 +172,9 @@ class ActivityContextClassifier:
             "violence_confidence": violence_conf,
             "sports_probability": p_sports,
             "suppress_factor": suppress_factor,
+            "is_anime": is_anime,
+            "anime_confidence": anime_conf,
+            "anime_probability": p_anime,
         }
 
 
