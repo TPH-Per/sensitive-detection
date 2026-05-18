@@ -361,118 +361,98 @@ def _get_resolution_penalty(w: int, h: int) -> tuple:
     return 0.0, "normal_res"
 
 
-def analyze_luminance(frames: list, max_frames: int = 8) -> dict:
-    """H1: Detect dark ambient scenes (birthday, bar, club).
+import torch.nn.functional as F
 
-    Vectorized OpenCV approach: resize to 64x64 first, use INTER_AREA as
-    block mean calculator. ~50-100x faster than nested-loop version.
+@torch.no_grad()
+def run_heuristics_gpu(frames_tensor: torch.Tensor) -> dict:
     """
-    step = max(1, len(frames) // max_frames)
-    sampled = frames[::step][:max_frames]
-
-    luma_stats = []
-    local_contrast_scores = []
-
-    for frame in sampled:
-        # Spatial subsampling: 64x64 preserves luminance characteristics
-        small = cv2.resize(frame, (64, 64), interpolation=cv2.INTER_AREA)
-        gray = cv2.cvtColor(small, cv2.COLOR_RGB2GRAY).astype(np.float32)
-
-        luma_stats.append(float(gray.mean()))
-
-        # Magic trick: resize to 16x16 with INTER_AREA = block means in C++
-        # Each pixel = mean of a 4x4 block. Std of 16x16 grid = local contrast.
-        tiny = cv2.resize(gray, (16, 16), interpolation=cv2.INTER_AREA)
-        local_contrast_scores.append(float(np.std(tiny)))
-
-    mean_luma = float(np.mean(luma_stats))
-    mean_contrast = float(np.mean(local_contrast_scores))
-
-    return {
-        "mean_luma": mean_luma,
-        "mean_local_contrast": mean_contrast,
-        "is_dark_ambient": (mean_luma < 55) and (mean_contrast < 25),
-    }
-
-
-def analyze_red_distribution(frames: list, max_frames: int = 8) -> dict:
-    """H2: Distinguish localized red spikes (blood) from distributed warm tones (social).
-
-    Vectorized: resize to 64x64, use INTER_AREA for block means.
-    Blood = high red ratio + high CV (localized). Social = low CV (spread evenly).
+    Run heuristics purely on GPU using PyTorch tensors.
+    Replaces analyze_luminance, analyze_red_distribution, and detect_composite_video.
+    frames_tensor: [T, 3, H, W] in range [0, 1]
     """
-    step = max(1, len(frames) // max_frames)
-    sampled = frames[::step][:max_frames]
-
-    red_ratios = []
-    cv_reds = []
-
-    for frame in sampled:
-        # Spatial subsampling
-        small = cv2.resize(frame, (64, 64), interpolation=cv2.INTER_AREA)
-        r = small[:, :, 0].astype(np.float32)
-        g = small[:, :, 1].astype(np.float32)
-        b = small[:, :, 2].astype(np.float32)
-
-        # Red dominance mask
-        red_dominant = (r > g + 30) & (r > b + 30) & (r > 100)
-        red_ratios.append(float(red_dominant.mean()))
-
-        # Block red means via INTER_AREA resize to 8x8 grid
-        r_tiny = cv2.resize(r, (8, 8), interpolation=cv2.INTER_AREA)
-        mean_r = float(r_tiny.mean())
-        cv_reds.append(float(np.std(r_tiny) / (mean_r + 1e-8)))
-
-    mean_red_ratio = float(np.mean(red_ratios))
-    mean_cv_red = float(np.mean(cv_reds))
-
-    return {
-        "mean_red_ratio": mean_red_ratio,
-        "mean_cv_red": mean_cv_red,
-        "is_social_warm": (mean_red_ratio < 0.15) and (mean_cv_red < 0.35),
-    }
-
-
-def detect_composite_video(frames: list, max_frames: int = 6) -> dict:
-    """H3: Detect split-screen / composite video layouts (TikTok style).
-
-    Vectorized: resize to 128x128, use Sobel on small image.
-    Looks for full-width horizontal dividing lines.
-    """
-    step = max(1, len(frames) // max_frames)
-    sampled = frames[::step][:max_frames]
-
+    T = frames_tensor.shape[0]
+    
+    # Use max 8 frames for luma & red
+    step = max(1, T // 8)
+    sampled = frames_tensor[::step][:8].to(DEVICE) * 255.0  # scale to [0, 255]
+    
+    # Convert to grayscale: 0.299 R + 0.587 G + 0.114 B
+    r = sampled[:, 0]
+    g = sampled[:, 1]
+    b = sampled[:, 2]
+    gray = 0.299 * r + 0.587 * g + 0.114 * b  # [T, H, W]
+    
+    # 1. Luminance & Contrast
+    gray_64 = F.interpolate(gray.unsqueeze(1), size=(64, 64), mode='area').squeeze(1)
+    mean_luma = float(gray_64.mean().item())
+    
+    gray_16 = F.interpolate(gray.unsqueeze(1), size=(16, 16), mode='area').squeeze(1)
+    stds = gray_16.view(gray_16.shape[0], -1).std(dim=1)
+    mean_contrast = float(stds.mean().item())
+    
+    # 2. Red distribution
+    r_64 = F.interpolate(r.unsqueeze(1), size=(64, 64), mode='area').squeeze(1)
+    g_64 = F.interpolate(g.unsqueeze(1), size=(64, 64), mode='area').squeeze(1)
+    b_64 = F.interpolate(b.unsqueeze(1), size=(64, 64), mode='area').squeeze(1)
+    
+    red_dominant = (r_64 > g_64 + 30) & (r_64 > b_64 + 30) & (r_64 > 100)
+    mean_red_ratio = float(red_dominant.float().mean().item())
+    
+    r_8 = F.interpolate(r.unsqueeze(1), size=(8, 8), mode='area').view(-1, 64)
+    r_8_mean = r_8.mean(dim=1)
+    r_8_std = r_8.std(dim=1)
+    cv_reds = r_8_std / (r_8_mean + 1e-8)
+    mean_cv_red = float(cv_reds.mean().item())
+    
+    # 3. Composite/split-screen
+    # Use max 6 frames
+    step_comp = max(1, T // 6)
+    sampled_comp = frames_tensor[::step_comp][:6].to(DEVICE) * 255.0
+    gray_comp = 0.299 * sampled_comp[:, 0] + 0.587 * sampled_comp[:, 1] + 0.114 * sampled_comp[:, 2]
+    gray_128 = F.interpolate(gray_comp.unsqueeze(1), size=(128, 128), mode='area').squeeze(1) # [T, 128, 128]
+    
+    # Sobel Y filter
+    sobel_kernel = torch.tensor([[-1., -2., -1.],
+                                 [ 0.,  0.,  0.],
+                                 [ 1.,  2.,  1.]], device=DEVICE).view(1, 1, 3, 3)
+    sobel_y = F.conv2d(gray_128.unsqueeze(1), sobel_kernel, padding=1).squeeze(1)
+    
+    sobel_abs = sobel_y.abs()
+    row_gradient = sobel_abs.mean(dim=2) # [T, 128]
+    
     composite_scores = []
-
-    for frame in sampled:
-        # Spatial subsampling for speed
-        small = cv2.resize(frame, (128, 128), interpolation=cv2.INTER_AREA)
-        gray = cv2.cvtColor(small, cv2.COLOR_RGB2GRAY).astype(np.float32)
-        h, w = gray.shape
-
-        # Horizontal gradient (detects horizontal dividing lines)
-        sobel_y = cv2.Sobel(gray, cv2.CV_64F, 0, 1, ksize=3)
-        row_gradient = np.abs(sobel_y).mean(axis=1)  # [H]
-
-        # A composite line has gradient >> surrounding rows
-        threshold = row_gradient.mean() + 2.5 * row_gradient.std()
-        strong_rows = np.where(row_gradient > threshold)[0]
-
-        # Check if any strong row spans >80% of width (full divider)
+    for i in range(len(gray_128)):
+        rg = row_gradient[i]
+        threshold = rg.mean() + 2.5 * rg.std()
+        strong_rows = torch.where(rg > threshold)[0]
+        
         found = False
         for r_idx in strong_rows:
-            row_pixels = np.abs(sobel_y[r_idx])
-            if (row_pixels > row_pixels.mean()).mean() > 0.7:
+            row_pixels = sobel_abs[i, r_idx]
+            if (row_pixels > row_pixels.mean()).float().mean() > 0.7:
                 composite_scores.append(1)
                 found = True
                 break
         if not found:
             composite_scores.append(0)
-
-    ratio = float(np.mean(composite_scores))
+            
+    ratio = float(sum(composite_scores) / len(composite_scores)) if composite_scores else 0.0
+    
     return {
-        "composite_frame_ratio": ratio,
-        "is_composite": ratio > 0.4,
+        "luma": {
+            "mean_luma": mean_luma,
+            "mean_local_contrast": mean_contrast,
+            "is_dark_ambient": (mean_luma < 55) and (mean_contrast < 25)
+        },
+        "red": {
+            "mean_red_ratio": mean_red_ratio,
+            "mean_cv_red": mean_cv_red,
+            "is_social_warm": (mean_red_ratio < 0.15) and (mean_cv_red < 0.35)
+        },
+        "composite": {
+            "composite_frame_ratio": ratio,
+            "is_composite": ratio > 0.4
+        }
     }
 
 
@@ -752,24 +732,22 @@ def run_v2_inference(
         nsfw_scores_adjusted = np.maximum(0.0, nsfw_scores_adjusted - sport_nsfw_adj)
         nsfw_adj_detail.append(f"sport -{sport_nsfw_adj}")
 
-    # 5c. Prepare sampled frames for heuristic analysis
-    cap_res = cv2.VideoCapture(video_path)
-    vid_w = int(cap_res.get(cv2.CAP_PROP_FRAME_WIDTH))
-    vid_h = int(cap_res.get(cv2.CAP_PROP_FRAME_HEIGHT))
-    total_f = int(cap_res.get(cv2.CAP_PROP_FRAME_COUNT))
-    sample_indices_h = np.linspace(0, max(0, total_f - 1), min(8, total_f), dtype=int)
-    sampled_frames = []
-    for si in sample_indices_h:
-        cap_res.set(cv2.CAP_PROP_POS_FRAMES, int(si))
-        ok, fr = cap_res.read()
-        if ok:
-            sampled_frames.append(cv2.cvtColor(fr, cv2.COLOR_BGR2RGB))
-    cap_res.release()
-
     # 5d. Spike pattern detector — analyze score curve shape
     evidence_score, spike_pattern = compute_violence_evidence(gore_scores_resampled)
 
-    # 5e. Heuristic penalty chain (stacking all applicable penalties)
+    # 5e. ALL heuristic gates in ONE GPU pass — no video re-read, no CPU loops
+    h_gpu = run_heuristics_gpu(frames_tensor)
+    luma_info = h_gpu["luma"]
+    red_info = h_gpu["red"]
+    composite_info = h_gpu["composite"]
+
+    # Resolution from original video (for penalty — source quality, not crop)
+    cap_res = cv2.VideoCapture(video_path)
+    vid_w = int(cap_res.get(cv2.CAP_PROP_FRAME_WIDTH))
+    vid_h = int(cap_res.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    cap_res.release()
+
+    # 5f. Heuristic penalty chain (stacking all applicable penalties)
     v_peak_adjusted = evidence_score
     v_peak_adj_detail = [f"pattern={spike_pattern} (evidence={evidence_score:.3f})"]
     penalty_applied = []
@@ -786,21 +764,18 @@ def run_v2_inference(
         v_peak_adj_detail.append("anime -0.15")
 
     # H1 — Luminance gate (dark ambient: birthday, bar, club)
-    luma_info = analyze_luminance(sampled_frames) if sampled_frames else {"is_dark_ambient": False, "mean_luma": 128, "mean_local_contrast": 50}
     if luma_info["is_dark_ambient"]:
         v_peak_adjusted = max(0.0, v_peak_adjusted - 0.12)
         v_peak_adj_detail.append(f"dark_ambient -0.12 (luma={luma_info['mean_luma']:.0f})")
         penalty_applied.append("dark")
 
     # H2 — Red distribution gate (social warm tone vs blood)
-    red_info = analyze_red_distribution(sampled_frames) if sampled_frames else {"is_social_warm": False}
     if red_info["is_social_warm"] and luma_info["mean_luma"] < 80:
         v_peak_adjusted = max(0.0, v_peak_adjusted - 0.10)
         v_peak_adj_detail.append(f"social_warm -0.10 (cv_red={red_info['mean_cv_red']:.2f})")
         penalty_applied.append("warm")
 
     # H3 — Composite/split-screen detection (TikTok style)
-    composite_info = detect_composite_video(sampled_frames) if sampled_frames else {"is_composite": False}
     if composite_info["is_composite"]:
         v_peak_adjusted = max(0.0, v_peak_adjusted - 0.20)
         v_peak_adj_detail.append(f"composite -0.20 (ratio={composite_info['composite_frame_ratio']:.2f})")
@@ -885,7 +860,7 @@ def run_v2_inference(
             f"\n- **Sports context detected** "
             f"(sports_p={activity['sports_probability']:.2f}, "
             f"suppress={activity['suppress_factor']:.2f}) — "
-            f"threshold raised to {thresh_v:.2f}, need {required_high_frames} high frames"
+            f"threshold raised to {thresh_v:.2f}"
         )
     elif activity["violence_confidence"] > activity["sports_confidence"]:
         context_info = (
@@ -943,6 +918,12 @@ def run_v2_inference(
         "vit_violence": _resample_1d(gore_scores_raw, V2_NUM_FRAMES),
         "vit_nsfw": _resample_1d(nsfw_scores_raw, V2_NUM_FRAMES),
     })
+
+    # Free GPU VRAM after inference
+    del frames_tensor, gore_scores_raw, nsfw_scores_raw
+    if 'feats_t' in dir():
+        del feats_t, aux_t
+    torch.cuda.empty_cache()
 
     return verdict_md, score_md, timeline, v_gallery, n_gallery
 
@@ -1050,6 +1031,9 @@ def process_image_vit(image_path: str):
             f"{nsfw_scores_str}\n"
             f"- Runtime: **{time.time() - t0:.2f}s**"
         )
+
+        # Free GPU VRAM after inference
+        torch.cuda.empty_cache()
 
         return verdict_md, score_md, img
 
@@ -1226,6 +1210,8 @@ def _process_single_video_wrapper(video_path: str, thresholds: dict) -> dict:
             "error": None,
         }
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         return {
             "path": video_path,
             "verdict": f"## Error\n`{e}`",
@@ -1273,6 +1259,9 @@ def process_videos_parallel(video_paths: list, thresholds: dict, max_workers: in
                     "elapsed": 0,
                     "error": str(e),
                 }
+
+    # Free GPU VRAM after batch processing
+    torch.cuda.empty_cache()
 
     return results
 
