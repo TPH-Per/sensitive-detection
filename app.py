@@ -23,8 +23,6 @@ ROOT = Path(__file__).resolve().parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from src.models.mil_v2 import MultiTaskMILModel
-from src.models.v2_videomae_encoder import VideoMAESmallEncoder
 from nsfw_classifier_v2 import classify_nsfw_v2
 from activity_context import get_activity_classifier
 
@@ -65,69 +63,6 @@ MODEL_CACHE: dict = {}
 # ═══════════════════════════════════════════════════════════════
 # MODEL LOADING
 # ═══════════════════════════════════════════════════════════════
-
-
-def load_v2_models():
-    """Load V2 pipeline models: VideoMAE encoder + main MIL model.
-    ViT teachers are loaded separately via load_vit_models().
-    MIL model is optional — pipeline falls back to ViT-only if weights missing.
-    """
-    if MODEL_CACHE.get("v2_loaded", False):
-        return
-
-    print("[LOAD] Loading V2 pipeline models...")
-
-    # 1. VideoMAE encoder
-    print(f"  [VideoMAE] Loading {VIDEOMAE_CHECKPOINT}...")
-    encoder = VideoMAESmallEncoder(
-        checkpoint=VIDEOMAE_CHECKPOINT, device=DEVICE, frozen=True
-    )
-
-    # 2. Main MIL model (optional — skip if weights not found)
-    mil_model = None
-    model_path = ARTIFACTS_DIR / WEIGHT_FILES["model"]
-    if model_path.exists():
-        print(f"  [MIL] Loading {model_path.name}...")
-        mil_model = MultiTaskMILModel(
-            dim=V2_FEATURE_DIM,
-            attn_dim=V2_ATTN_DIM,
-            lora_rank=V2_LORA_RANK,
-            lora_alpha=V2_LORA_ALPHA,
-            lora_dropout=V2_LORA_DROPOUT,
-        ).to(DEVICE)
-        state = torch.load(model_path, map_location=DEVICE, weights_only=False)
-        if isinstance(state, dict) and "model" in state and isinstance(state["model"], dict):
-            state = state["model"]
-        elif isinstance(state, dict) and "model_state" in state:
-            state = state["model_state"]
-        elif isinstance(state, dict) and "model_state_dict" in state:
-            state = state["model_state_dict"]
-
-        if not state:
-            print("  [WARNING] Loaded empty state dict. This is a dummy weight.")
-        else:
-            mil_model.load_state_dict(state, strict=True)
-
-        mil_model.eval()
-
-        # 3. Load LoRA-only checkpoint (optional — merges into model)
-        lora_path = ARTIFACTS_DIR / WEIGHT_FILES["lora"]
-        if lora_path.exists():
-            print(f"  [LoRA] Loading {lora_path.name}...")
-            lora_state = torch.load(lora_path, map_location=DEVICE, weights_only=False)
-            if isinstance(lora_state, dict):
-                mil_model.load_state_dict(lora_state, strict=False)
-    else:
-        print(f"  [MIL] Weights not found at {model_path} — running in ViT-only mode.")
-
-    MODEL_CACHE.update({
-        "v2_loaded": True,
-        "encoder": encoder,
-        "mil": mil_model,
-    })
-    mode = "VideoMAE + MIL" if mil_model else "VideoMAE only (ViT-only mode)"
-    print(f"[OK] V2 models loaded ({mode}). ViT teachers loaded on first use.")
-
 
 def load_vit_models():
     """Load ViT violence + NSFW classifiers for image moderation."""
@@ -665,12 +600,9 @@ def run_v2_inference(
     thresholds: dict,
     top_k: int = 6,
 ) -> tuple:
-    """Run V2 MHCM-MIL pipeline on a video."""
+    """Run pure ViT + GPU Heuristics pipeline on a video."""
     t0 = time.time()
-    load_v2_models()
-
-    encoder = MODEL_CACHE["encoder"]
-    mil_model = MODEL_CACHE.get("mil")
+    load_vit_models()
 
     # 1. Read video frames
     frames_tensor = read_video_frames(video_path, V2_SAMPLING_FRAMES, V2_IMAGE_SIZE)
@@ -678,35 +610,16 @@ def run_v2_inference(
     # 1b. Auto-crop static background (borders, watermarks, overlays)
     frames_tensor = auto_crop_frames(frames_tensor, video_path)
 
-    # 3. Run ViT teachers (replaces ResNet gore/NSFW)
+    # 3. Run ViT teachers
     gore_scores_raw, nsfw_scores_raw = run_vit_on_frames(frames_tensor)
 
     # Resample teacher scores to match model's num_frames
     gore_scores_resampled = _resample_1d(gore_scores_raw, V2_NUM_FRAMES)
     nsfw_scores_resampled = _resample_1d(nsfw_scores_raw, V2_NUM_FRAMES)
 
-    if mil_model is not None:
-        # 2. Extract VideoMAE features (only needed for MIL model)
-        features_np = encoder.encode_sequence(
-            frames=frames_tensor,
-            clip_frames=V2_CLIP_FRAMES,
-            clip_stride=V2_CLIP_STRIDE,
-            target_frames=V2_NUM_FRAMES,
-        )
-        aux_np = np.stack([gore_scores_resampled, nsfw_scores_resampled], axis=1).astype(np.float32)
-
-        # 4. Run MIL model
-        feats_t = torch.from_numpy(features_np).unsqueeze(0).to(DEVICE)
-        aux_t = torch.from_numpy(aux_np).unsqueeze(0).to(DEVICE)
-        out = mil_model(feats_t, aux_t)
-
-        v_attn = out["v_attn"].squeeze(0).squeeze(-1).cpu().numpy().astype(np.float32)
-        n_attn = out["n_attn"].squeeze(0).squeeze(-1).cpu().numpy().astype(np.float32)
-    else:
-        # ViT-only mode: use ViT scores as attention proxies
-        out = None
-        v_attn = gore_scores_resampled.copy()
-        n_attn = nsfw_scores_resampled.copy()
+    # ViT-only mode: use ViT scores as attention proxies
+    v_attn = gore_scores_resampled.copy()
+    n_attn = nsfw_scores_resampled.copy()
 
     # 5. CLIP activity context: classify peak violence frames as sports or violence
     top_k_indices = np.argsort(gore_scores_raw)[-6:]  # top 6 highest violence frames
