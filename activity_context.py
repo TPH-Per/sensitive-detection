@@ -60,6 +60,26 @@ ANIME_CONTEXT_PROMPTS = [
     "anime art with vibrant colors and outlines",
 ]
 
+# ─── Gore prompts: extreme violence, blood, weapons → BAN ─────────
+GORE_PROMPTS = [
+    "a person bleeding heavily from graphic injuries",
+    "a victim of a brutal stabbing or shooting with blood",
+    "graphic gore with dismemberment or severe wounds",
+    "a violent crime scene with blood splatter",
+    "someone being attacked with a weapon causing blood",
+    "a severely beaten person with visible bloody injuries",
+]
+
+# ─── Brawl prompts: physical fight, street violence → BLUR ───────
+BRAWL_PROMPTS = [
+    "people in a physical street fight or brawl",
+    "a person punching and kicking another person in a fight",
+    "a violent confrontation with people hitting each other",
+    "a group of people fighting aggressively on the street",
+    "someone being beaten in a real physical altercation",
+    "a domestic violence assault with physical force",
+]
+
 
 class ActivityContextClassifier:
     """CLIP zero-shot classifier for sports vs violence context."""
@@ -97,6 +117,22 @@ class ActivityContextClassifier:
         anime_out = self.model.get_text_features(**anime_inputs)
         self.anime_feat = anime_out.pooler_output if hasattr(anime_out, 'pooler_output') else anime_out
         self.anime_feat = self.anime_feat / self.anime_feat.norm(dim=-1, keepdim=True)
+
+        # Gore prompts: extreme violence, blood, weapons → BAN
+        gore_inputs = self.processor(
+            text=GORE_PROMPTS, return_tensors="pt", padding=True
+        ).to(DEVICE)
+        gore_out = self.model.get_text_features(**gore_inputs)
+        self.gore_feat = gore_out.pooler_output if hasattr(gore_out, 'pooler_output') else gore_out
+        self.gore_feat = self.gore_feat / self.gore_feat.norm(dim=-1, keepdim=True)
+
+        # Brawl prompts: physical fight, street violence → BLUR
+        brawl_inputs = self.processor(
+            text=BRAWL_PROMPTS, return_tensors="pt", padding=True
+        ).to(DEVICE)
+        brawl_out = self.model.get_text_features(**brawl_inputs)
+        self.brawl_feat = brawl_out.pooler_output if hasattr(brawl_out, 'pooler_output') else brawl_out
+        self.brawl_feat = self.brawl_feat / self.brawl_feat.norm(dim=-1, keepdim=True)
 
     @torch.no_grad()
     def classify(self, peak_frames: List[Image.Image]) -> dict:
@@ -175,6 +211,66 @@ class ActivityContextClassifier:
             "is_anime": is_anime,
             "anime_confidence": anime_conf,
             "anime_probability": p_anime,
+        }
+
+    @torch.no_grad()
+    def classify_violence_subtype(self, peak_frames: List[Image.Image]) -> dict:
+        """
+        Classify violence into gore (ban) vs brawl (blur) using CLIP.
+
+        Only called when ViT already flagged violence above threshold.
+        Returns is_gore and is_brawl to decide ban vs blur.
+
+        Returns:
+            {
+                "is_gore": bool,          # True → ban (blood, weapons, graphic)
+                "is_brawl": bool,         # True → blur (street fight, physical)
+                "gore_confidence": float,  # raw CLIP similarity to gore prompts
+                "brawl_confidence": float, # raw CLIP similarity to brawl prompts
+                "gore_prob": float,        # softmax probability gore vs brawl
+            }
+        """
+        if not peak_frames:
+            return {
+                "is_gore": False,
+                "is_brawl": False,
+                "gore_confidence": 0.0,
+                "brawl_confidence": 0.0,
+                "gore_prob": 0.0,
+            }
+
+        gore_sims, brawl_sims = [], []
+
+        for frame in peak_frames:
+            inputs = self.processor(images=frame, return_tensors="pt").to(DEVICE)
+            img_out = self.model.get_image_features(**inputs)
+            img_feat = img_out.pooler_output if hasattr(img_out, 'pooler_output') else img_out
+            img_feat = img_feat / img_feat.norm(dim=-1, keepdim=True)
+
+            gore_sim = (img_feat @ self.gore_feat.T).max().item()
+            brawl_sim = (img_feat @ self.brawl_feat.T).max().item()
+            gore_sims.append(gore_sim)
+            brawl_sims.append(brawl_sim)
+
+        gore_conf = float(np.mean(gore_sims))
+        brawl_conf = float(np.mean(brawl_sims))
+
+        # Softmax with temperature=25 for separation
+        exp_g = np.exp(gore_conf * 25)
+        exp_b = np.exp(brawl_conf * 25)
+        p_gore = exp_g / (exp_g + exp_b)
+
+        # is_gore: CLIP must clearly favor gore over brawl (prob > 0.60)
+        # is_brawl: brawl confidence is higher OR both are similar (prob <= 0.60)
+        is_gore = p_gore > 0.60
+        is_brawl = brawl_conf > 0.22  # minimum similarity to count as brawl
+
+        return {
+            "is_gore": is_gore,
+            "is_brawl": is_brawl,
+            "gore_confidence": gore_conf,
+            "brawl_confidence": brawl_conf,
+            "gore_prob": p_gore,
         }
 
 

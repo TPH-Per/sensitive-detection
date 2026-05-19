@@ -632,6 +632,9 @@ def run_v2_inference(
 
     activity = get_activity_classifier().classify(peak_frames_pil)
 
+    # 5a. CLIP violence subtype verification: real violence vs staged/mild action
+    violence_subtype = get_activity_classifier().classify_violence_subtype(peak_frames_pil)
+
     # Apply context-aware suppression to violence scores
     gore_scores_suppressed = gore_scores_raw * activity["suppress_factor"]
     v_peak_raw = float(gore_scores_raw.max())
@@ -715,11 +718,20 @@ def run_v2_inference(
     v_prob = v_peak
     v_flag = (v_peak >= thresh_v)
 
-    # NSFW: use MIL model output if available, else fall back to ViT NSFW scores
-    if out is not None:
-        n_prob = float(torch.sigmoid(out["n_logit"]).squeeze(0).item())
-    else:
-        n_prob = float(nsfw_scores_adjusted.max())
+    # Violence action: three-tier with CLIP gore/brawl verification
+    v_action = "safe"
+    if v_flag:
+        if activity.get("is_sports", False):
+            v_action = "safe"  # sports misclassified as violence → ignore
+        elif violence_subtype["is_gore"]:
+            v_action = "ban"   # blood, weapons, graphic → delete
+        elif violence_subtype["is_brawl"]:
+            v_action = "blur"  # street fight, physical altercation → blur
+        else:
+            v_action = "blur"  # fallback: CLIP unsure, play safe → blur
+
+    # NSFW: fall back to ViT NSFW scores (max over frames)
+    n_prob = float(nsfw_scores_adjusted.max())
     n_action = "safe"
     if n_prob >= 0.80:
         n_action = "ban"
@@ -728,8 +740,10 @@ def run_v2_inference(
     n_flag = n_action != "safe"
 
     verdict_flags = []
-    if v_flag:
-        verdict_flags.append("Violence")
+    if v_action == "ban":
+        verdict_flags.append("Violence (BAN)")
+    elif v_action == "blur":
+        verdict_flags.append("Violence (BLUR)")
     if n_flag:
         verdict_flags.append(f"NSFW ({n_action})")
 
@@ -784,6 +798,15 @@ def run_v2_inference(
         context_info += (
             f"\n- **Anime detected** "
             f"(anime_p={activity['anime_probability']:.2f})"
+        )
+    # CLIP violence subtype verification
+    if v_flag:
+        vs = violence_subtype
+        subtype_label = "GORE (ban)" if vs["is_gore"] else "BRAWL (blur)" if vs["is_brawl"] else "uncertain (blur)"
+        context_info += (
+            f"\n- **Violence subtype:** {subtype_label} "
+            f"(gore_p={vs['gore_prob']:.2f}, "
+            f"gore_conf={vs['gore_confidence']:.3f}, brawl_conf={vs['brawl_confidence']:.3f}) → {v_action}"
         )
     # Heuristic gate diagnostics
     if luma_info.get("is_dark_ambient"):
@@ -1150,7 +1173,6 @@ def process_videos_parallel(video_paths: list, thresholds: dict, max_workers: in
         return []
 
     # Pre-load models so all threads share cached models
-    load_v2_models()
     load_vit_models()
 
     results = [None] * len(video_paths)
