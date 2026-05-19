@@ -1,0 +1,308 @@
+========================================================================================
+            SENSITIVE DETECTION PIPELINE — ARCHITECTURE CHÍNH XÁC THEO CODE
+========================================================================================
+
+[ VIDEO ĐẦU VÀO ]  (.mp4, .avi, .mov, .mkv, .webm)
+       |
+       v
++--------------------------------------------------------------------------+
+|                     STAGE A: ĐỌC & TIỀN XỬ LÝ FRAME                     |
+|                                                                          |
+|  Công cụ: OpenCV (cv2)                                                   |
+|  Phương pháp: Linspace sampling — lấy 32 frame đều khắp video            |
+|  (KHÔNG phải 1fps — phân bố đều từ đầu đến cuối video)                  |
+|                                                                          |
+|  Xử lý:                                                                 |
+|    - Đọc frame từ video bằng cv2.VideoCapture                           |
+|    - Chuyển BGR → RGB                                                    |
+|    - Resize về 224x224 pixel                                             |
+|    - Chuẩn hóa về khoảng [0.0, 1.0] (chia 255)                          |
+|                                                                          |
+|  Output: frames_tensor [32, 3, 224, 224] trong khoảng [0, 1]            |
++--------------------------------------------------------------------------+
+       |
+       v
++--------------------------------------------------------------------------+
+|                     STAGE A2: AUTO-CROP (Tùy chọn)                       |
+|                                                                          |
+|  Mục đích: Loại bỏ viền tĩnh (letterbox, watermark, timestamp CCTV)     |
+|                                                                          |
+|  Thuật toán (5-Second Continuous Buffer):                                |
+|    1. Đọc liên tục 5 giây đầu video (tối thiểu 2 giây)                 |
+|    2. So sánh từng pixel với frame đầu tiên (baseline)                   |
+|    3. Pixel nào max_diff <= 3 gray levels → vùng tĩnh                    |
+|    4. Morphological cleanup (close + open)                               |
+|    5. Bounding box quanh vùng nội dung động                              |
+|    6. Chỉ crop nếu loại bỏ >= 5% diện tích frame                        |
+|                                                                          |
+|  Áp dụng: Cắt tất cả 32 frame theo tọa độ tìm được,                     |
+|           resize lại về 224x224                                          |
+|                                                                          |
+|  Output: frames_tensor đã crop (nếu có vùng tĩnh)                       |
++--------------------------------------------------------------------------+
+       |
+       +-------------------------------------------------------------------+
+       |                                                                   |
+       v                                                                   v
++------------------------------------------------------------------+  +---------------------------+
+|  STAGE B1: VIT VIOLENCE MODEL                                    |  |  STAGE B2: VIT NSFW MODEL |
+|  (jaranohaal/vit-base-violence-detection)                         |  |  (AdamCodd/vit-base-nsfw)  |
+|                                                                   |  |                           |
+|  Input: 32 frames (batch GPU)                                     |  |  Input: 32 frames          |
+|  Output: gore_scores_raw[32] — điểm bạo lực mỗi frame [0.0-1.0] |  |  Output: nsfw_scores[32]   |
++------------------------------------------------------------------+  +---------------------------+
+       |                                                                   |
+       +-------------------------------------------------------------------+
+       |
+       v
++--------------------------------------------------------------------------+
+|  STAGE C: RESAMPLE                                                      |
+|                                                                          |
+|  Resample gore_scores_raw[32] → gore_scores_resampled[16]              |
+|  Resample nsfw_scores_raw[32]  → nsfw_scores_resampled[16]             |
+|  (Linear interpolation — khớp với số frame pipeline tiếp theo)         |
++--------------------------------------------------------------------------+
+       |
+       v
++--------------------------------------------------------------------------+
+|                     STAGE D: CLIP ACTIVITY CONTEXT                       |
+|  (openai/clip-vit-base-patch32)                                          |
+|                                                                          |
+|  Lấy 6 frame có điểm bạo lực cao nhất (top-6)                           |
+|  Chạy 3 phân loại CLIP zero-shot:                                       |
+|                                                                          |
+|  ┌─────────────────────────────────────────────────────────────────┐     |
+|  │ D1. SPORTS vs VIOLENCE (14 prompts vs 9 prompts)                │     |
+|  │     - So sánh cosine similarity ảnh vs text embeddings          │     |
+|  │     - Softmax temperature=20                                    │     |
+|  │     - is_sports = p_sports > 0.55                               │     |
+|  │     - Nếu is_sports → suppress_factor = max(0.15, 1 - p_sports)│     |
+|  │     - suppress_factor nhân vào gore_scores_raw                  │     |
+|  └─────────────────────────────────────────────────────────────────┘     |
+|                                                                          |
+|  ┌─────────────────────────────────────────────────────────────────┐     |
+|  │ D2. ANIME DETECTION (10 prompts anime vs real-life)             │     |
+|  │     - Softmax temperature=20                                    │     |
+|  │     - is_anime = p_anime > 0.55                                 │     |
+|  │     - Nếu is_anime → phạt -0.15 điểm                          │     |
+|  │     - Anime KHÔNG BAO GIỜ bị BAN, chỉ BLUR tối đa             │     |
+|  └─────────────────────────────────────────────────────────────────┘     |
+|                                                                          |
+|  ┌─────────────────────────────────────────────────────────────────┐     |
+|  │ D3. GORE vs BRAWL VERIFICATION (6 prompts vs 6 prompts)        │     |
+|  │     - Chỉ chạy khi ViT đã flag bạo lực (>= threshold)          │     |
+|  │     - Softmax temperature=25                                    │     |
+|  │     - is_gore  = p_gore > 0.60  (máu me, vũ khí, chém giết)   │     |
+|  │     - is_brawl = brawl_conf > 0.22 (đánh nhau đường phố)       │     |
+|  └─────────────────────────────────────────────────────────────────┘     |
++--------------------------------------------------------------------------+
+       |
+       v
++--------------------------------------------------------------------------+
+|                     STAGE E: GPU HEURISTICS                              |
+|  (Chạy trên GPU bằng PyTorch — không đọc lại video)                      |
+|                                                                          |
+|  ┌─────────────────────────────────────────────────────────────────┐     |
+|  │ E1. LUMA GATE (Kiểm tra ánh sáng)                              │     |
+|  │     - Chuyển grayscale, resize 64x64                           │     |
+|  │     - mean_luma < 55 VÀ mean_contrast < 25                     │     |
+|  │     → is_dark_ambient = True → phạt -0.12                     │     |
+|  │     (Sinh nhật, quán bar, câu lạc bộ, CCTV tối)               │     |
+|  └─────────────────────────────────────────────────────────────────┘     |
+|                                                                          |
+|  ┌─────────────────────────────────────────────────────────────────┐     |
+|  │ E2. RED DISTRIBUTION (Kiểm tra tông màu đỏ)                    │     |
+|  │     - Resize 64x64, tính pixel đỏ trội                        │     |
+|  │     - mean_red_ratio < 0.15 VÀ mean_cv_red < 0.35             │     |
+|  │     → is_social_warm = True → phạt -0.10 (nếu luma < 80)     │     |
+|  │     (Tông màu ấm xã hội, không phải máu)                      │     |
+|  └─────────────────────────────────────────────────────────────────┘     |
+|                                                                          |
+|  ┌─────────────────────────────────────────────────────────────────┐     |
+|  │ E3. COMPOSITE / SPLIT-SCREEN (Kiểm tra TikTok style)           │     |
+|  │     - Resize 128x128, Sobel Y filter                           │     |
+|  │     - Tìm hàng có gradient mạnh (mean + 2.5*std)              │     |
+|  │     - composite_frame_ratio > 0.40                             │     |
+|  │     → is_composite = True → phạt -0.20                        │     |
+|  └─────────────────────────────────────────────────────────────────┘     |
++--------------------------------------------------------------------------+
+       |
+       v
++--------------------------------------------------------------------------+
+|  STAGE F: RESOLUTION PENALTY                                             |
+|                                                                          |
+|  Đọc phân giải gốc từ video (không phải frame đã resize)                |
+|                                                                          |
+|  pixels = width × height:                                                |
+|    <= 144×176   → phạt -0.20  (extreme_low_res_144p)                    |
+|    <= 360×480   → phạt -0.12  (low_res_360p)                           |
+|    <= 640×480   → phạt -0.08  (low_res_480p)                           |
+|    > 640×480    → 0           (normal_res)                              |
++--------------------------------------------------------------------------+
+       |
+       v
++--------------------------------------------------------------------------+
+|            STAGE G: PENALTY CHAIN (Cộng dồn tất cả phạt)                |
+|                                                                          |
+|  Điểm bắt đầu: v_peak_raw = max(gore_scores_raw)                        |
+|                                                                          |
+|  Bước 1: Trừ resolution penalty          (ví dụ: -0.08)                |
+|  Bước 2: Trừ anime penalty (nếu có)      (-0.15)                       |
+|  Bước 3: Trừ dark ambient (nếu có)       (-0.12)                       |
+|  Bước 4: Trừ social warm (nếu có)        (-0.10)                       |
+|  Bước 5: Trừ composite (nếu có)          (-0.20)                       |
+|  Bước 6: Trừ sports penalty (nếu có)     (-0.15)                       |
+|                                                                          |
+|  Tất cả phạt cộng dồn, điểm không giảm dưới 0.0                        |
++--------------------------------------------------------------------------+
+       |
+       v
++--------------------------------------------------------------------------+
+|            STAGE G2: SAFETY BYPASS (An toàn khi có nhiều frame cao)      |
+|                                                                          |
+|  Nếu >= 6 frame trong gore_scores_resampled[16] có điểm > 0.7          |
+|  VÀ có ít nhất 1 phạt được áp dụng:                                    |
+|                                                                          |
+|  → Khôi phục lại v_peak_raw (bỏ qua tất cả phạt)                       |
+|  → Lý do: Video bạo lực thật thường có nhiều frame cao liên tục         |
++--------------------------------------------------------------------------+
+       |
+       v
++--------------------------------------------------------------------------+
+|            STAGE H: QUYẾT ĐỊNH CUỐI CÙNG                                |
+|                                                                          |
+|  Kiểm tra v_peak >= threshold (mặc định 0.50):                          |
+|                                                                          |
+|  Nếu VƯỢT threshold:                                                    |
+|    ┌─────────────────────────────────────────────────────────────┐       |
+|    │ Ưu tiên 1: is_sports == True?                               │       |
+|    │   → SAFE (thể thao bị nhận nhầm → bỏ qua hoàn toàn)       │       |
+|    ├─────────────────────────────────────────────────────────────┤       |
+|    │ Ưu tiên 2: is_anime == True?                                │       |
+|    │   → BLUR (anime → tối đa blur, KHÔNG BAO GIỜ ban)         │       |
+|    ├─────────────────────────────────────────────────────────────┤       |
+|    │ Ưu tiên 3: is_gore == True?                                 │       |
+|    │   → BAN (máu me, vũ khí, chém giết, vết thương)           │       |
+|    ├─────────────────────────────────────────────────────────────┤       |
+|    │ Ưu tiên 4: is_brawl == True?                                │       │
+|    │   → BLUR (đánh nhau đường phố, ẩu đả, không máu)          │       │
+|    ├─────────────────────────────────────────────────────────────┤       │
+|    │ Mặc định: CLIP không xác định                               │       │
+|    │   → BLUR (fallback an toàn)                                │       │
+|    └─────────────────────────────────────────────────────────────┘       |
+|                                                                          |
+|  Nếu KHÔNG vượt threshold:                                              |
+|    → SAFE                                                                |
+|                                                                          |
+|  ─────────────────────────────────────────────────────────────────────── │
+|  NSFW (chạy song song):                                                  |
+|    n_prob = max(nsfw_scores_adjusted)                                    |
+|    n_prob >= 0.80 → BAN                                                 |
+|    n_prob >= 0.70 → BLUR                                                |
+|    Còn lại       → SAFE                                                 |
++--------------------------------------------------------------------------+
+       |
+       v
++--------------------------------------------------------------------------+
+|            KẾT QUẢ CUỐI CÙNG                                            |
+|                                                                          |
+|  Verdict: SAFE / BLUR / BAN                                              |
+|  Chi tiết:                                                               |
+|    - Violence peak (điểm sau phạt)                                       |
+|    - Raw peak (điểm gốc ViT)                                             |
+|    - NSFW prob                                                           |
+|    - CLIP context (sports, anime, gore, brawl)                           |
+|    - Heuristic gates (luma, red, composite)                              |
+|    - Resolution                                                          |
+|    - Safety bypass (nếu có)                                              |
+|    - Per-frame scores (16 frame)                                         |
+|    - Top-K key frames gallery                                            |
++--------------------------------------------------------------------------+
+
+
+========================================================================================
+            SƠ ĐỒ TÓM TẮT (BLOCK DIAGRAM)
+========================================================================================
+
+  ┌──────────────┐
+  │ VIDEO INPUT  │
+  └──────┬───────┘
+         │
+         v
+  ┌──────────────────────────────────────────────┐
+  │  Đọc 32 frame + Resize 224x224 + Normalize   │
+  └──────┬───────────────────────────────────────┘
+         │
+         v
+  ┌──────────────────────────────────────────────┐
+  │  Auto-crop (loại viền tĩnh, watermark)        │
+  └──────┬───────────────────────────────────────┘
+         │
+         ├──┬────────────────────────────────────┐
+         │  │                                    │
+         v  v                                    v
+  ┌──────────────┐  ┌──────────────┐  ┌─────────────────────┐
+  │ ViT Violence │  │  ViT NSFW    │  │ CLIP Context        │
+  │ (32 frames)  │  │  (32 frames) │  │ (6 peak frames)     │
+  │              │  │              │  │                     │
+  │ → v_scores   │  │  → n_scores  │  │ → is_sports         │
+  └──────┬───────┘  └──────┬───────┘  │ → is_anime          │
+         │                 │          │ → is_gore / is_brawl │
+         │                 │          └─────────┬───────────┘
+         │                 │                    │
+         v                 v                    │
+  ┌─────────────────────────────────────────────┴──┐
+  │            GPU HEURISTICS                       │
+  │  Luma gate | Red distribution | Composite       │
+  └──────┬─────────────────────────────────────────┘
+         │
+         v
+  ┌──────────────────────────────────────────────────┐
+  │            PENALTY CHAIN                          │
+  │  Resolution + Anime + Dark + Warm + Composite    │
+  │  + Sports + Safety Bypass                         │
+  └──────┬───────────────────────────────────────────┘
+         │
+         v
+  ┌──────────────────────────────────────────────────┐
+  │            DECISION                               │
+  │                                                  │
+  │  Sports?  → SAFE                                 │
+  │  Anime?   → BLUR                                 │
+  │  Gore?    → BAN                                  │
+  │  Brawl?   → BLUR                                 │
+  │  Unsure?  → BLUR                                 │
+  │                                                  │
+  │  NSFW: ban(>=0.80) | blur(>=0.70) | safe        │
+  └──────┬───────────────────────────────────────────┘
+         │
+         v
+  ┌──────────────────────────────────────────────────┐
+  │  RESULT: SAFE / BLUR / BAN                       │
+  │  + Scores + Gallery + Timeline + Diagnostics     │
+  └──────────────────────────────────────────────────┘
+
+
+========================================================================================
+            MÔ HÌNH SỬ DỤNG
+========================================================================================
+
+  1. jaranohaal/vit-base-violence-detection   — Phát hiện bạo lực (ViT-Base)
+  2. AdamCodd/vit-base-nsfw-detector          — Phát hiện NSFW (ViT-Base)
+  3. openai/clip-vit-base-patch32             — Phân loại ngữ cảnh (CLIP)
+  4. NudeNet                                  — Phát hiện khỏa thân (chỉ ảnh)
+
+========================================================================================
+            NGƯỠNG (THRESHOLDS)
+========================================================================================
+
+  Violence default:    0.50
+  Violence sports:     0.65 (nâng lên khi phát hiện thể thao)
+  NSFW ban:            0.80
+  NSFW blur:           0.70
+  Anime probability:   0.55
+  Sports probability:  0.55
+  Gore probability:    0.60
+  Brawl confidence:    0.22
+
+========================================================================================
