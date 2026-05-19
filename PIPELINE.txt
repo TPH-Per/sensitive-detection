@@ -1,0 +1,226 @@
+╔══════════════════════════════════════════════════════════════════════════════╗
+║  PIPELINE PHÁT HIỆN NỘI DUNG BẠO LỰC & NHẠY CẢM — Video & Ảnh            ║
+║  sensitive-detection — V2 ViT + CLIP + Heuristics                           ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+═══════════════════════════════════════════════════════════════════════════════
+ TỔNG QUAN
+═══════════════════════════════════════════════════════════════════════════════
+
+Pipeline phát hiện bạo lực (Violence) và nội dung nhạy cảm (NSFW) trong video
+và ảnh. Sử dụng mô hình ViT (Vision Transformer) kết hợp CLIP zero-shot và
+các heuristic GPU để giảm false positive.
+
+Mục tiêu:
+  - Phát hiện bạo lực thật (đánh nhau, máu me, vũ khí) → BAN
+  - Phát hiện bạo lực nhẹ (đánh nhau đường phố, không máu) → BLUR
+  - Bỏ qua nội dung bị nhận nhầm (thể thao, anime, phim) → SAFE hoặc BLUR
+  - Phát hiện nội dung nhạy cảm (NSFW) → BLUR hoặc BAN
+
+═══════════════════════════════════════════════════════════════════════════════
+ PIPELINE CHI TIẾT — VIDEO
+═══════════════════════════════════════════════════════════════════════════════
+
+Đầu vào: File video (.mp4, .avi, .mov, .mkv, .webm)
+Đầu ra:  Verdict (SAFE / BLUR / BAN) + chi tiết phân tích
+
+───────────────────────────────────────────────────────────────────────────────
+BƯỚC 1: Đọc và tiền xử lý frame
+───────────────────────────────────────────────────────────────────────────────
+  - Đọc video bằng OpenCV
+  - Lấy mẫu 32 frame đều khắp video (linspace sampling)
+  - Resize mỗi frame về 224x224 pixel
+  - Chuyển sang tensor [T, C, H, W] trong khoảng [0, 1]
+
+───────────────────────────────────────────────────────────────────────────────
+BƯỚC 2: Auto-crop — Loại bỏ viền tĩnh
+───────────────────────────────────────────────────────────────────────────────
+  - Phát hiện vùng tĩnh (letterbox, watermark, timestamp CCTV) trong 5 giây đầu
+  - So sánh từng pixel với frame đầu tiên qua toàn bộ buffer
+  - Pixel nào không thay đổi (max diff <= 3 gray levels) → vùng tĩnh
+  - Tạo bounding box quanh vùng nội dung động
+  - Cắt và resize lại về 224x224 → tăng mật độ tín hiệu cho ViT
+
+───────────────────────────────────────────────────────────────────────────────
+BƯỚC 3: ViT Teacher — Chấm điểm bạo lực & NSFW
+───────────────────────────────────────────────────────────────────────────────
+  Mô hình bạo lực: jaranohaal/vit-base-violence-detection
+  Mô hình NSFW:    AdamCodd/vit-base-nsfw-detector
+
+  - Chạy ViT trên tất cả 32 frame (batch GPU)
+  - Đầu ra: gore_scores_raw[32] và nsfw_scores_raw[32]
+  - Resample về 16 frame (để khớp với pipeline tiếp theo)
+
+───────────────────────────────────────────────────────────────────────────────
+BƯỚC 4: CLIP Activity Context — Phân loại ngữ cảnh
+───────────────────────────────────────────────────────────────────────────────
+  Mô hình: openai/clip-vit-base-patch32
+
+  Lấy 6 frame có điểm bạo lực cao nhất → phân loại bằng CLIP zero-shot:
+
+  a) Sports vs Violence (14 prompts vs 9 prompts):
+     - Nếu là thể thao → suppress_factor giảm điểm bạo lực
+     - is_sports = True → đánh dấu SAFE (bỏ qua)
+
+  b) Anime Detection (10 prompts anime vs real-life):
+     - is_anime = True → phạt thêm -0.15 điểm
+     - Anime KHÔNG BAO GIỜ bị BAN, chỉ BLUR tối đa
+
+  c) Gore vs Brawl Verification (6 prompts gore vs 6 prompts brawl):
+     - Chỉ chạy khi ViT đã flag bạo lực (>= threshold)
+     - is_gore (máu me, vũ khí, chém giết) → BAN
+     - is_brawl (đánh nhau đường phố, ẩu đả) → BLUR
+     - Cả hai đều thấp → BLUR (fallback an toàn)
+
+───────────────────────────────────────────────────────────────────────────────
+BƯỚC 5: GPU Heuristics — Các cổng kiểm tra giả positive
+───────────────────────────────────────────────────────────────────────────────
+  Chạy trên GPU bằng PyTorch (không đọc lại video):
+
+  H1 — Luma Gate (kiểm tra ánh sáng):
+     - Nếu video tối (mean_luma < 55) và contrast thấp (< 25)
+     → Giảm -0.12 điểm (sinh nhật, quán bar, câu lạc bộ)
+
+  H2 — Red Distribution (kiểm tra tông màu đỏ):
+     - Nếu đỏ phân bố đều (social warm tone) và luma < 80
+     → Giảm -0.10 điểm (tông màu ấm xã hội, không phải máu)
+
+  H3 — Composite/Split-screen (kiểm tra TikTok style):
+     - Dùng Sobel Y để phát hiện đường chia frame mạnh
+     - Nếu > 40% frame có đường chia rõ
+     → Giảm -0.20 điểm
+
+───────────────────────────────────────────────────────────────────────────────
+BƯỚC 6: Penalty Chain — Chuỗi phạt cộng dồn
+───────────────────────────────────────────────────────────────────────────────
+  Bắt đầu từ raw peak score, cộng dồn tất cả phạt:
+
+  1. Resolution Penalty (phạt video phân giải thấp):
+     - 144p hoặc thấp hơn → -0.20
+     - 360p → -0.12
+     - 480p → -0.08
+     - Bình thường → 0
+
+  2. Anime Penalty:
+     - Nếu is_anime → -0.15
+
+  3. Dark Ambient (H1):
+     - Nếu is_dark_ambient → -0.12
+
+  4. Social Warm (H2):
+     - Nếu is_social_warm và luma < 80 → -0.10
+
+  5. Composite (H3):
+     - Nếu is_composite → -0.20
+
+  6. Sports Penalty:
+     - Nếu is_sports → -0.15 + nâng threshold lên 0.65
+
+───────────────────────────────────────────────────────────────────────────────
+BƯỚC 7: Safety Bypass — An toàn khi có nhiều frame cao
+───────────────────────────────────────────────────────────────────────────────
+  - Nếu >= 6 frame có điểm > 0.7 VÀ có phạt được áp dụng
+  → Khôi phục lại raw peak (bỏ qua tất cả phạt)
+  - Lý do: video bạo lực thật thường có nhiều frame cao liên tục
+
+───────────────────────────────────────────────────────────────────────────────
+BƯỚC 8: Quyết định cuối cùng — Ban / Blur / Safe
+───────────────────────────────────────────────────────────────────────────────
+  Kiểm tra v_peak >= threshold (mặc định 0.50):
+
+  Nếu VƯỢT threshold:
+    1. is_sports?      → SAFE   (thể thao bị nhận nhầm → bỏ qua)
+    2. is_anime?       → BLUR   (anime → tối đa blur, không ban)
+    3. is_gore?        → BAN    (máu me, vũ khí, chém giết)
+    4. is_brawl?       → BLUR   (đánh nhau đường phố)
+    5. Không xác định? → BLUR   (fallback an toàn)
+
+  Nếu KHÔNG vượt threshold:
+    → SAFE
+
+  NSFW:
+    - n_prob >= 0.80 → BAN
+    - n_prob >= 0.70 → BLUR
+    - Còn lại → SAFE
+
+═══════════════════════════════════════════════════════════════════════════════
+ PIPELINE CHI TIẾT — ẢNH
+═══════════════════════════════════════════════════════════════════════════════
+
+Đầu vào: File ảnh (.jpg, .png, .webp, .bmp)
+Đầu ra:  Verdict (SAFE / BLUR / BAN) + chi tiết
+
+  1. Chạy ViT Violence → v_prob (0-1)
+  2. Chạy ViT NSFW → nsfw_score (0-1)
+  3. Nếu NSFW >= 0.90 → chạy NudeNet để quyết định ban/blur
+  4. Quyết định:
+     - v_prob >= 0.80 → Violence (ban)
+     - v_prob >= 0.60 → Violence (blur)
+     - nsfw_action = "ban" → NSFW (ban)
+     - nsfw_action = "blur" → NSFW (blur)
+
+═══════════════════════════════════════════════════════════════════════════════
+ SƠ ĐỒ TÓM TẮT
+═══════════════════════════════════════════════════════════════════════════════
+
+  VIDEO
+    │
+    ▼
+  Đọc 32 frame → Resize 224x224
+    │
+    ▼
+  Auto-crop (loại viền tĩnh, watermark)
+    │
+    ▼
+  ViT Violence + NSFW (32 frame, batch GPU)
+    │
+    ▼
+  CLIP Activity Context
+    ├── Sports? → SAFE (bỏ qua)
+    ├── Anime? → BLUR (tối đa)
+    └── Gore/Brawl? → phân loại ban/blur
+    │
+    ▼
+  GPU Heuristics (luma, red, composite)
+    │
+    ▼
+  Penalty Chain (resolution, anime, dark, warm, composite, sports)
+    │
+    ▼
+  Safety Bypass (>=6 frame cao → khôi phục)
+    │
+    ▼
+  Quyết định: SAFE / BLUR / BAN
+
+═══════════════════════════════════════════════════════════════════════════════
+ CẤU TRÚC FILE
+═══════════════════════════════════════════════════════════════════════════════
+
+  app.py                  — Gradio UI + pipeline chính
+  activity_context.py     — CLIP zero-shot classifier (sports, anime, gore, brawl)
+  nsfw_classifier_v2.py   — NSFW classifier helper
+  benchmark_video.py      — Benchmark video trên dataset
+  kaggle_video_benchmark.py — Benchmark tự động trên Kaggle
+
+═══════════════════════════════════════════════════════════════════════════════
+ NGƯỠNG (THRESHOLDS)
+═══════════════════════════════════════════════════════════════════════════════
+
+  Violence threshold:  0.50 (mặc định)
+  Sports threshold:    0.65 (nâng lên khi phát hiện thể thao)
+  NSFW ban:            0.80
+  NSFW blur:           0.70
+  Gore probability:    0.60 (CLIP softmax)
+  Anime probability:   0.55 (CLIP softmax)
+  Sports probability:  0.55 (CLIP softmax)
+
+═══════════════════════════════════════════════════════════════════════════════
+ MÔ HÌNH SỬ DỤNG
+═══════════════════════════════════════════════════════════════════════════════
+
+  1. jaranohaal/vit-base-violence-detection  — Phát hiện bạo lực (ViT)
+  2. AdamCodd/vit-base-nsfw-detector         — Phát hiện NSFW (ViT)
+  3. openai/clip-vit-base-patch32            — Phân loại ngữ cảnh (CLIP)
+  4. NudeNet                                 — Phát hiện khỏa thân (ảnh)
+
+═══════════════════════════════════════════════════════════════════════════════
