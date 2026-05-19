@@ -263,7 +263,7 @@ def compute_violence_evidence(scores: np.ndarray) -> tuple:
     # Pattern 1 — Fast action violence (quick strike)
     # Extremely high peak + at least 1 neighbor > 0.12 (windup / follow-through)
     if peak >= 0.78 and neighbor_max >= 0.12:
-        return peak * 0.92, "fast_action"
+        return peak * 0.65, "fast_action"
 
     # Pattern 2 — Sustained action (prolonged fight, many frames)
     elif peak >= 0.65 and neighbor_mean >= 0.18:
@@ -648,9 +648,6 @@ def run_v2_inference(
         nsfw_scores_adjusted = np.maximum(0.0, nsfw_scores_adjusted - sport_nsfw_adj)
         nsfw_adj_detail.append(f"sport -{sport_nsfw_adj}")
 
-    # 5d. Spike pattern detector — analyze score curve shape
-    evidence_score, spike_pattern = compute_violence_evidence(gore_scores_resampled)
-
     # 5e. ALL heuristic gates in ONE GPU pass — no video re-read, no CPU loops
     h_gpu = run_heuristics_gpu(frames_tensor)
     luma_info = h_gpu["luma"]
@@ -664,8 +661,8 @@ def run_v2_inference(
     cap_res.release()
 
     # 5f. Heuristic penalty chain (stacking all applicable penalties)
-    v_peak_adjusted = evidence_score
-    v_peak_adj_detail = [f"pattern={spike_pattern} (evidence={evidence_score:.3f})"]
+    v_peak_adjusted = v_peak_raw
+    v_peak_adj_detail = [f"raw_peak={v_peak_raw:.3f}"]
     penalty_applied = []
 
     # H4 — Resolution tier penalty
@@ -709,7 +706,7 @@ def run_v2_inference(
     v_high_frames_raw = int(np.sum(gore_scores_resampled > 0.7))
     penalties_bypassed = False
     if v_high_frames_raw >= 6 and penalty_applied:
-        v_peak_adjusted = evidence_score  # restore pre-penalty
+        v_peak_adjusted = v_peak_raw  # restore pre-penalty
         v_peak_adj_detail.append(f"SAFETY BYPASS ({v_high_frames_raw} high frames)")
         penalties_bypassed = True
 
@@ -723,6 +720,8 @@ def run_v2_inference(
     if v_flag:
         if activity.get("is_sports", False):
             v_action = "safe"  # sports misclassified as violence → ignore
+        elif activity.get("is_anime", False):
+            v_action = "blur"  # anime violence → max blur, never ban
         elif violence_subtype["is_gore"]:
             v_action = "ban"   # blood, weapons, graphic → delete
         elif violence_subtype["is_brawl"]:
@@ -832,8 +831,7 @@ def run_v2_inference(
     context_info += f"\n- **Resolution:** {vid_w}x{vid_h}"
     score_md = (
         "### V2 Pipeline (ViT + CLIP context)\n"
-        f"- Violence peak: **{v_peak:.4f}** (evidence={evidence_score:.4f}, threshold={thresh_v:.4f}) {'FLAGGED' if v_flag else 'OK'}\n"
-        f"- Spike pattern: **{spike_pattern}** (raw peak={v_peak_raw:.4f})\n"
+        f"- Violence peak: **{v_peak:.4f}** (raw peak={v_peak_raw:.4f}, threshold={thresh_v:.4f}) {'FLAGGED' if v_flag else 'OK'}\n"
         f"- NSFW prob: **{n_prob:.4f}** → {n_action.upper()} (ban>=0.80, blur>=0.70)\n"
         f"- V peak frame: **{int(np.argmax(v_attn_clipped))}** (attn={v_attn_clipped.max():.4f})\n"
         f"- N peak frame: **{int(np.argmax(n_attn_clipped))}** (attn={n_attn_clipped.max():.4f})\n"
@@ -1372,4 +1370,4 @@ with gr.Blocks(title="Video & Image Moderation (V2 MHCM-MIL)") as demo:
 
 
 if __name__ == "__main__":
-    demo.launch(server_name="0.0.0.0", server_port=7870, share=False, theme=gr.themes.Soft())
+    demo.launch(server_name="0.0.0.0", share=False, theme=gr.themes.Soft())
