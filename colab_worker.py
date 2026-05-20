@@ -279,6 +279,11 @@ def process_all(items):
                 print(f"[VIDEO] ERROR: {e}")
             torch.cuda.empty_cache()
 
+    # Chat: blur only (level 1 max), never ban
+    for item in items:
+        if item.source == 'message' and item.level > 1:
+            item.level = 1
+
     # Cleanup temp files
     for item in items:
         if item.temp_path and os.path.exists(item.temp_path):
@@ -447,7 +452,8 @@ def apply_results(items):
                         has_violation = True
                         media_list[idx]['isSensitive'] = True
                         media_list[idx]['moderationReason'] = item.reason
-                        print(f"[CHAT] {conv_id}/{msg_id} media[{idx}]: {item.reason}")
+                        # Chat: blur only, never ban
+                        print(f"[CHAT] {conv_id}/{msg_id} media[{idx}]: BLUR - {item.reason}")
                     else:
                         print(f"[CHAT] {conv_id}/{msg_id} media[{idx}]: An toàn")
 
