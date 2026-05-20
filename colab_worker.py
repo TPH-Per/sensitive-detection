@@ -4,9 +4,10 @@ import firebase_admin
 from firebase_admin import credentials, firestore, db as rtdb
 import time
 import re
+import torch
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-from app import run_v2_inference, process_images_batch, load_vit_models, load_v2_models
+from app import run_v2_inference, process_images_batch, load_vit_models
 
 # Khởi tạo Firebase Admin
 cred = credentials.Certificate('firebase_credentials.json')
@@ -235,12 +236,12 @@ def process_all(items):
     image_items = [item for item in items if not item.is_video and item.temp_path]
     video_items = [item for item in items if item.is_video and item.temp_path]
 
-    # Batch process images through ViT
+    # Batch process images through ViT (large batch for GPU saturation)
     if image_items:
         print(f"[BATCH] Processing {len(image_items)} images through ViT...")
         image_paths = [item.temp_path for item in image_items]
         try:
-            results = process_images_batch(image_paths, batch_size=8)
+            results = process_images_batch(image_paths, batch_size=64)
             for item, (level, reason) in zip(image_items, results):
                 item.level = level
                 item.reason = reason
@@ -250,41 +251,33 @@ def process_all(items):
                 item.level = 0
                 item.reason = str(e)
 
-    # Process videos in parallel through V2 pipeline
-    def _process_video(item):
-        print(f"[VIDEO] Processing: {item.url[:80]}...")
-        try:
-            thresholds = {"violence": 0.5, "nsfw": 0.5}
-            verdict_md, score_md, _, _, _ = run_v2_inference(
-                video_path=item.temp_path,
-                thresholds=thresholds,
-                top_k=6,
-            )
-            if "FLAGGED" in verdict_md:
-                reason_match = re.search(r'Reason:\s*(.*)', verdict_md)
-                reason = reason_match.group(1).strip() if reason_match else "Vi phạm nội dung"
-                item.level = 2
-                item.reason = "Phát hiện nội dung: " + reason
-                print(f"[VIDEO] FLAGGED: {item.reason}")
-            else:
-                item.level = 0
-                item.reason = ""
-                print(f"[VIDEO] SAFE")
-        except Exception as e:
-            item.level = 0
-            item.reason = str(e)
-            print(f"[VIDEO] ERROR: {e}")
-
+    # Process videos serially (one at a time to avoid GPU OOM)
     if video_items:
-        print(f"[VIDEO] Processing {len(video_items)} videos in parallel (15 workers)...")
-        video_futures = {executor.submit(_process_video, item): item for item in video_items}
-        for f in as_completed(video_futures):
+        print(f"[VIDEO] Processing {len(video_items)} videos serially...")
+        for i, item in enumerate(video_items):
+            print(f"[VIDEO] ({i+1}/{len(video_items)}) Processing: {item.url[:80]}...")
             try:
-                f.result()
+                thresholds = {"violence": 0.5, "nsfw": 0.5}
+                verdict_md, score_md, _, _, _ = run_v2_inference(
+                    video_path=item.temp_path,
+                    thresholds=thresholds,
+                    top_k=6,
+                )
+                if "FLAGGED" in verdict_md:
+                    reason_match = re.search(r'Reason:\s*(.*)', verdict_md)
+                    reason = reason_match.group(1).strip() if reason_match else "Vi phạm nội dung"
+                    item.level = 2
+                    item.reason = "Phát hiện nội dung: " + reason
+                    print(f"[VIDEO] FLAGGED: {item.reason}")
+                else:
+                    item.level = 0
+                    item.reason = ""
+                    print(f"[VIDEO] SAFE")
             except Exception as e:
-                item = video_futures[f]
                 item.level = 0
                 item.reason = str(e)
+                print(f"[VIDEO] ERROR: {e}")
+            torch.cuda.empty_cache()
 
     # Cleanup temp files
     for item in items:
@@ -519,7 +512,6 @@ def mark_processed(items):
 
 # Pre-load all models at startup
 print("Dang tai tat ca model (V2 pipeline)...")
-load_v2_models()
 load_vit_models()
 print("Tat ca model da san sang!")
 print(f"V2 thresholds: V=0.5 | N=0.5")
