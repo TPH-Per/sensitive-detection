@@ -88,7 +88,8 @@ def collect_pending_media():
             if doc.id in processed_posts:
                 continue
             data = doc.to_dict()
-            if data.get('status') != 'active':
+            status = data.get('status')
+            if status not in ['active', 'pending']:
                 processed_posts.add(doc.id)
                 continue
             media_list = data.get('media', [])
@@ -115,7 +116,8 @@ def collect_pending_media():
             if doc.id in processed_comments:
                 continue
             data = doc.to_dict()
-            if data.get('status') != 'active':
+            status = data.get('status')
+            if status not in ['active', 'pending']:
                 processed_comments.add(doc.id)
                 continue
             image = data.get('image', None)
@@ -374,10 +376,17 @@ def apply_results(items):
                         'actorAvatar': ''
                     })
             elif highest_level == 1:
-                print(f"[POST] Post {doc_id} -> BLUR")
-                doc.reference.update({'media': media_list})
+                print(f"[POST] Post {doc_id} -> BLUR & ACTIVE")
+                doc.reference.update({
+                    'status': 'active',
+                    'media': media_list
+                })
             else:
-                doc.reference.update({'media': media_list})
+                print(f"[POST] Post {doc_id} -> ACTIVE")
+                doc.reference.update({
+                    'status': 'active',
+                    'media': media_list
+                })
 
             processed_posts.add(doc_id)
         except Exception as e:
@@ -422,12 +431,19 @@ def apply_results(items):
                         'actorAvatar': ''
                     })
             elif item.level == 1:
-                print(f"[COMMENT] {item.doc_id} -> BLUR")
+                print(f"[COMMENT] {item.doc_id} -> BLUR & ACTIVE")
                 image['isSensitive'] = True
                 image['moderationReason'] = item.reason
-                doc.reference.update({'image': image})
+                doc.reference.update({
+                    'status': 'active',
+                    'image': image
+                })
             else:
-                doc.reference.update({'image': image})
+                print(f"[COMMENT] {item.doc_id} -> ACTIVE")
+                doc.reference.update({
+                    'status': 'active',
+                    'image': image
+                })
                 print(f"[COMMENT] {item.doc_id}: An toàn")
 
             processed_comments.add(item.doc_id)
