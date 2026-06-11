@@ -665,6 +665,15 @@ def run_v2_inference(
     v_peak_adj_detail = [f"raw_peak={v_peak_raw:.3f}"]
     penalty_applied = []
 
+    # Human presence check (zero out if no human elements found)
+    if not activity.get("has_human", True):
+        v_peak_raw = 0.0
+        v_peak_adjusted = 0.0
+        gore_scores_resampled = np.zeros_like(gore_scores_resampled)
+        v_peak_adj_detail.append("no_human -1.0")
+        nsfw_scores_adjusted = np.zeros_like(nsfw_scores_adjusted)
+        nsfw_adj_detail.append("no_human -1.0")
+
     # H4 — Resolution tier penalty
     res_penalty, res_label = _get_resolution_penalty(vid_w, vid_h)
     if res_penalty > 0:
@@ -955,13 +964,13 @@ def process_image_vit(image_path: str):
             "### Image Moderation (ViT + NudeNet Pipeline)\n"
             f"- **Violence: {v_prob:.4f}** (ban={thresh_v_ban}, blur={thresh_v_blur})\n"
             f"- **NSFW action: {nsfw_action}** — {nsfw_result['reason']}\n"
-            f"- NSFW score: {nsfw_result['nsfw_score']:.3f}\n"
+            f"- NSFW score: {nsfw_score:.3f}\n"
             + (f"- **NudeNet:** {nudenet_detail}\n" if nudenet_detail else "")
             + f"- ViT: {nsfw_result['sfw_score']:.3f} sfw | "
             f"SFW: {nsfw_result['sfw_score']:.3f}\n"
-            "### Violence detail\n"
+            "### Violence detail (Raw)\n"
             f"{violence_detail}\n"
-            "### NSFW scores (all labels)\n"
+            "### NSFW scores (Raw, all labels)\n"
             f"{nsfw_scores_str}\n"
             f"- Runtime: **{time.time() - t0:.2f}s**"
         )
@@ -1032,6 +1041,13 @@ def process_images_batch(image_paths: list[str], batch_size: int = 64) -> list[t
                     nsfw_score = item['score']
                 elif item['label'] == 'sfw':
                     sfw_score = item['score']
+            
+            # Human presence check for this frame in the batch
+            v_prob_raw = v_probs_list[start + idx]
+            activity = get_activity_classifier().classify([batch[idx]])
+            if not activity.get("has_human", True):
+                v_probs_list[start + idx] = 0.0
+                nsfw_score = 0.0
                     
             nsfw_result = {
                 "action": "safe",

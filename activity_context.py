@@ -81,6 +81,23 @@ BRAWL_PROMPTS = [
 ]
 
 
+# ─── Human prompts: detect if real humans are present ─────────
+HUMAN_PROMPTS = [
+    "a photograph of a real person",
+    "human beings in the scene",
+    "a realistic person or people",
+    "real human body or face",
+]
+
+NON_HUMAN_PROMPTS = [
+    "a photo of a document, paper, or text",
+    "a simple drawing of a stick figure",
+    "a computer generated abstract image",
+    "a photo of a blank wall or empty scenery",
+    "an image of an inanimate object",
+    "text on a screen or paper",
+]
+
 class ActivityContextClassifier:
     """CLIP zero-shot classifier for sports vs violence context."""
 
@@ -134,6 +151,21 @@ class ActivityContextClassifier:
         self.brawl_feat = brawl_out.pooler_output if hasattr(brawl_out, 'pooler_output') else brawl_out
         self.brawl_feat = self.brawl_feat / self.brawl_feat.norm(dim=-1, keepdim=True)
 
+        # Human vs Non-human prompts
+        human_inputs = self.processor(
+            text=HUMAN_PROMPTS, return_tensors="pt", padding=True
+        ).to(DEVICE)
+        human_out = self.model.get_text_features(**human_inputs)
+        self.human_feat = human_out.pooler_output if hasattr(human_out, 'pooler_output') else human_out
+        self.human_feat = self.human_feat / self.human_feat.norm(dim=-1, keepdim=True)
+
+        non_human_inputs = self.processor(
+            text=NON_HUMAN_PROMPTS, return_tensors="pt", padding=True
+        ).to(DEVICE)
+        non_human_out = self.model.get_text_features(**non_human_inputs)
+        self.non_human_feat = non_human_out.pooler_output if hasattr(non_human_out, 'pooler_output') else non_human_out
+        self.non_human_feat = self.non_human_feat / self.non_human_feat.norm(dim=-1, keepdim=True)
+
     @torch.no_grad()
     def classify(self, peak_frames: List[Image.Image]) -> dict:
         """
@@ -149,6 +181,11 @@ class ActivityContextClassifier:
                 "violence_confidence": float,
                 "sports_probability": float,
                 "suppress_factor": float,  # multiply violence score by this
+                "is_anime": bool,
+                "anime_confidence": float,
+                "anime_probability": float,
+                "has_human": bool,
+                "human_probability": float,
             }
         """
         if not peak_frames:
@@ -161,9 +198,12 @@ class ActivityContextClassifier:
                 "is_anime": False,
                 "anime_confidence": 0.0,
                 "anime_probability": 0.0,
+                "has_human": True, # Default to True to be safe
+                "human_probability": 1.0,
             }
 
         sports_sims, violence_sims, anime_sims = [], [], []
+        human_sims, non_human_sims = [], []
 
         for frame in peak_frames:
             inputs = self.processor(images=frame, return_tensors="pt").to(DEVICE)
@@ -174,13 +214,20 @@ class ActivityContextClassifier:
             s_sim = (img_feat @ self.sports_feat.T).max().item()
             v_sim = (img_feat @ self.violence_feat.T).max().item()
             a_sim = (img_feat @ self.anime_feat.T).max().item()
+            h_sim = (img_feat @ self.human_feat.T).max().item()
+            nh_sim = (img_feat @ self.non_human_feat.T).max().item()
+
             sports_sims.append(s_sim)
             violence_sims.append(v_sim)
             anime_sims.append(a_sim)
+            human_sims.append(h_sim)
+            non_human_sims.append(nh_sim)
 
         sports_conf = float(np.mean(sports_sims))
         violence_conf = float(np.mean(violence_sims))
         anime_conf = float(np.mean(anime_sims))
+        human_conf = float(np.mean(human_sims))
+        non_human_conf = float(np.mean(non_human_sims))
 
         # Softmax to get probability (temperature=20 for sharper separation)
         exp_s = np.exp(sports_conf * 20)
@@ -193,8 +240,14 @@ class ActivityContextClassifier:
         exp_r = np.exp(real_life_conf * 20)
         p_anime = exp_a / (exp_a + exp_r)
 
+        # Human probability
+        exp_h = np.exp(human_conf * 20)
+        exp_nh = np.exp(non_human_conf * 20)
+        p_human = exp_h / (exp_h + exp_nh)
+
         is_sports = p_sports > 0.55
         is_anime = p_anime > 0.55
+        has_human = p_human > 0.40 # Lean slightly towards true if uncertain
 
         # Suppress factor: smoothly reduce violence score based on sports confidence
         if is_sports:
