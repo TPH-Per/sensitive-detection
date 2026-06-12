@@ -13,10 +13,8 @@ from PIL import Image
 
 # Default thresholds for binary sfw/nsfw model
 DEFAULT_THRESHOLDS = {
-    "ban":   0.80,   # nsfw score above this → BAN (high confidence explicit)
-    "blur":  0.55,   # nsfw score above this → BLUR (moderate nsfw signal)
-    "review": 0.35,  # nsfw score above this → REVIEW (low signal, log only)
-    # below review → SAFE
+    "ban":   0.90,   # nsfw score above this → BAN (high confidence explicit)
+    "blur":  0.80,   # nsfw score above this → BLUR (moderate nsfw signal)
 }
 
 
@@ -31,7 +29,7 @@ def classify_nsfw_v2(image: Image.Image, nsfw_pipe, thresholds: dict = None) -> 
 
     Returns:
         {
-            "action":   "ban" | "blur" | "review" | "safe",
+            "action":   "ban" | "blur" | "safe",
             "reason":   str,
             "scores":   {label: score},
             "nsfw_score": float,
@@ -47,22 +45,26 @@ def classify_nsfw_v2(image: Image.Image, nsfw_pipe, thresholds: dict = None) -> 
     nsfw_score = scores.get("nsfw", 0.0)
     sfw_score = scores.get("sfw", scores.get("normal", 0.0))
 
+    # Confidence Margin Penalty: If the model is uncertain, reduce the score.
+    margin = nsfw_score - sfw_score
+    reason_prefix = ""
+    if margin < 0.4 and nsfw_score < 0.95:
+        penalty = 0.20
+        nsfw_score = max(0.0, nsfw_score - penalty)
+        reason_prefix = f"Margin penalty applied (-{penalty:.2f}). "
+
     # Decision logic (priority order — most severe first)
     if nsfw_score >= thresholds["ban"]:
         action = "ban"
-        reason = f"NSFW content detected (score={nsfw_score:.3f})"
+        reason = f"{reason_prefix}NSFW content detected (score={nsfw_score:.3f})"
 
     elif nsfw_score >= thresholds["blur"]:
         action = "blur"
-        reason = f"Moderate NSFW signal (score={nsfw_score:.3f})"
-
-    elif nsfw_score >= thresholds["review"]:
-        action = "review"
-        reason = f"Low NSFW signal (score={nsfw_score:.3f}) — flagged for review"
+        reason = f"{reason_prefix}Moderate NSFW signal (score={nsfw_score:.3f})"
 
     else:
         action = "safe"
-        reason = f"Safe (nsfw={nsfw_score:.3f})"
+        reason = f"{reason_prefix}Safe (nsfw={nsfw_score:.3f})"
 
     return {
         "action": action,

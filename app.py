@@ -897,7 +897,17 @@ def process_image_vit(image_path: str):
         with torch.no_grad():
             v_logits = violence_model(**v_inputs).logits
             v_probs = torch.softmax(v_logits, dim=1).squeeze()
+
         v_prob = float(v_probs[1].item())
+        nv_prob = float(v_probs[0].item())
+
+        # Confidence Margin Penalty: If the model is uncertain, reduce the score.
+        margin = v_prob - nv_prob
+        margin_detail = ""
+        if margin < 0.4 and v_prob < 0.95: # If gap is narrow (< 40%) and it's not absolutely certain
+            penalty = 0.20
+            v_prob = max(0.0, v_prob - penalty)
+            margin_detail = f"Margin penalty applied (-{penalty:.2f}) due to narrow gap ({margin:.2f})"
 
         # NSFW detection: ViT first, then NudeNet if high confidence
         nsfw_result = classify_nsfw_v2(img, MODEL_CACHE["vit_nsfw"])
@@ -905,7 +915,7 @@ def process_image_vit(image_path: str):
         nsfw_action = nsfw_result["action"]
         nudenet_detail = ""
 
-        # If ViT NSFW >= 0.9, run NudeNet for ban/blur decision
+        # If ViT NSFW >= 0.90, run NudeNet for ban/blur decision
         if nsfw_score >= 0.90:
             import tempfile, os
             tmp = tempfile.NamedTemporaryFile(suffix=".jpg", delete=False)
@@ -931,8 +941,8 @@ def process_image_vit(image_path: str):
                 nudenet_detail = f"NudeNet blur (no ban trigger, {len(detections)} detections)"
 
         # Violence thresholds
-        thresh_v_ban = 0.80
-        thresh_v_blur = 0.60
+        thresh_v_ban = 0.90
+        thresh_v_blur = 0.70
 
         # Build verdict
         verdict_parts = []
@@ -953,9 +963,13 @@ def process_image_vit(image_path: str):
         verdict_md = f"## {verdict_str}\n**Reason:** {reasons}"
 
         violence_detail = "\n".join(f"  - {r['label']}: {r['score']:.4f}" for r in [
-            {"label": "non-violence", "score": float(v_probs[0].item())},
-            {"label": "violence", "score": v_prob},
+            {"label": "non-violence", "score": nv_prob},
+            {"label": "violence (raw)", "score": float(v_probs[1].item())},
+            {"label": "violence (adjusted)", "score": v_prob},
         ])
+        if margin_detail:
+            violence_detail += f"\n  - *{margin_detail}*"
+
         nsfw_scores_str = "\n".join(
             f"  - {label}: {score:.4f}" for label, score in nsfw_result["scores"].items()
         )
@@ -968,7 +982,7 @@ def process_image_vit(image_path: str):
             + (f"- **NudeNet:** {nudenet_detail}\n" if nudenet_detail else "")
             + f"- ViT: {nsfw_result['sfw_score']:.3f} sfw | "
             f"SFW: {nsfw_result['sfw_score']:.3f}\n"
-            "### Violence detail (Raw)\n"
+            "### Violence detail\n"
             f"{violence_detail}\n"
             "### NSFW scores (Raw, all labels)\n"
             f"{nsfw_scores_str}\n"
@@ -994,9 +1008,9 @@ def process_images_batch(image_paths: list[str], batch_size: int = 64) -> list[t
     violence_proc = MODEL_CACHE["vit_violence_processor"]
     nsfw_pipe = MODEL_CACHE["vit_nsfw"]
 
-    thresh_v_ban = 0.80
+    thresh_v_ban = 0.90
     thresh_n_ban = 0.90
-    thresh_blur = 0.60
+    thresh_blur = 0.75
 
     results = []
     valid_indices = []
@@ -1027,7 +1041,16 @@ def process_images_batch(image_paths: list[str], batch_size: int = 64) -> list[t
         with torch.no_grad():
             logits = violence_model(**inputs).logits
             probs = torch.softmax(logits, dim=1)
-        v_probs_list.extend(probs[:, 1].cpu().tolist())
+            
+            # Confidence Margin Penalty: If the model is uncertain, reduce the score.
+            # v_prob is index 1, non_v_prob is index 0.
+            for j in range(probs.shape[0]):
+                v_p = float(probs[j, 1].item())
+                nv_p = float(probs[j, 0].item())
+                margin = v_p - nv_p
+                if margin < 0.4 and v_p < 0.95: # If gap is narrow (< 40%) and it's not absolutely certain
+                    v_p = max(0.0, v_p - 0.20)  # Penalize heavy
+                v_probs_list.append(v_p)
 
         # 2. GPU Batch NSFW (HuggingFace pipeline can handle lists of images natively and batch them)
         nsfw_batch_results = nsfw_pipe(batch, batch_size=batch_size)
@@ -1041,14 +1064,15 @@ def process_images_batch(image_paths: list[str], batch_size: int = 64) -> list[t
                     nsfw_score = item['score']
                 elif item['label'] == 'sfw':
                     sfw_score = item['score']
-            
-            # Human presence check for this frame in the batch
-            v_prob_raw = v_probs_list[start + idx]
-            activity = get_activity_classifier().classify([batch[idx]])
-            if not activity.get("has_human", True):
-                v_probs_list[start + idx] = 0.0
-                nsfw_score = 0.0
                     
+            # Confidence Margin Penalty for NSFW
+            margin = nsfw_score - sfw_score
+            reason_prefix = ""
+            if margin < 0.4 and nsfw_score < 0.95:
+                penalty = 0.20
+                nsfw_score = max(0.0, nsfw_score - penalty)
+                reason_prefix = f"Margin penalty applied (-{penalty:.2f}). "
+
             nsfw_result = {
                 "action": "safe",
                 "reason": "",
@@ -1056,15 +1080,15 @@ def process_images_batch(image_paths: list[str], batch_size: int = 64) -> list[t
                 "sfw_score": sfw_score
             }
             
-            if nsfw_score >= 0.80:
+            if nsfw_score >= 0.90:
                 nsfw_result["action"] = "ban"
-                nsfw_result["reason"] = f"Banned (nsfw={nsfw_score:.3f})"
-            elif nsfw_score >= 0.55:
+                nsfw_result["reason"] = f"{reason_prefix}Banned (nsfw={nsfw_score:.3f})"
+            elif nsfw_score >= 0.80:
                 nsfw_result["action"] = "blur"
-                nsfw_result["reason"] = f"Blurred (nsfw={nsfw_score:.3f})"
-            elif nsfw_score >= 0.35:
-                nsfw_result["action"] = "review"
-                nsfw_result["reason"] = f"Review (nsfw={nsfw_score:.3f})"
+                nsfw_result["reason"] = f"{reason_prefix}Blurred (nsfw={nsfw_score:.3f})"
+            else:
+                nsfw_result["action"] = "safe"
+                nsfw_result["reason"] = f"{reason_prefix}Safe (nsfw={nsfw_score:.3f})"
                 
             # Integration with NudeNet for high-confidence SFW/NSFW overlaps
             nude_detector = MODEL_CACHE.get("nude_detector")
