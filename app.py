@@ -888,7 +888,15 @@ def process_image_vit(image_path: str):
     try:
         t0 = time.time()
         load_vit_models()
-        img = Image.open(image_path).convert("RGB")
+        
+        raw_img = Image.open(image_path)
+        if raw_img.mode in ('RGBA', 'LA') or (raw_img.mode == 'P' and 'transparency' in raw_img.info):
+            bg = Image.new("RGB", raw_img.size, (255, 255, 255))
+            alpha = raw_img.convert('RGBA').split()[-1]
+            bg.paste(raw_img, mask=alpha)
+            img = bg
+        else:
+            img = raw_img.convert("RGB")
 
         # Violence detection
         violence_model = MODEL_CACHE["vit_violence_model"]
@@ -1018,7 +1026,14 @@ def process_images_batch(image_paths: list[str], batch_size: int = 64) -> list[t
 
     for i, path in enumerate(image_paths):
         try:
-            img = Image.open(path).convert("RGB")
+            raw_img = Image.open(path)
+            if raw_img.mode in ('RGBA', 'LA') or (raw_img.mode == 'P' and 'transparency' in raw_img.info):
+                bg = Image.new("RGB", raw_img.size, (255, 255, 255))
+                alpha = raw_img.convert('RGBA').split()[-1]
+                bg.paste(raw_img, mask=alpha)
+                img = bg
+            else:
+                img = raw_img.convert("RGB")
             valid_images.append(img)
             valid_indices.append(i)
         except Exception:
@@ -1141,16 +1156,16 @@ def process_images_batch(image_paths: list[str], batch_size: int = 64) -> list[t
             nsfw_action = nsfw_result["action"]
             if nsfw_action == "ban":
                 level = 2
-                reasons.append("khỏa thân / khiêu dâm")
+                reasons.append(f"khỏa thân / khiêu dâm ({nsfw_score:.3f})")
             elif nsfw_action == "blur":
                 level = max(level, 1)
-                reasons.append("nhạy cảm / sexy / bikini")
+                reasons.append(f"nhạy cảm / sexy / bikini ({nsfw_score:.3f})")
             if v_prob >= thresh_v_ban:
                 level = 2
-                reasons.append("bạo lực")
+                reasons.append(f"bạo lực ({v_prob:.3f})")
             elif v_prob >= thresh_blur:
                 level = max(level, 1)
-                reasons.append("bạo lực nhẹ")
+                reasons.append(f"bạo lực nhẹ ({v_prob:.3f})")
 
             if level == 2:
                 reason = "Phát hiện nội dung: " + ", ".join(reasons)
