@@ -1010,7 +1010,7 @@ def process_images_batch(image_paths: list[str], batch_size: int = 64) -> list[t
 
     thresh_v_ban = 0.90
     thresh_n_ban = 0.90
-    thresh_blur = 0.75
+    thresh_blur = 0.70
 
     results = []
     valid_indices = []
