@@ -83,6 +83,11 @@ def load_vit_models():
     ckpt_path = hf_hub_download(repo_id=VIT_VIOLENCE_MODEL, filename="model.safetensors")
     raw_ckpt = st_load_file(ckpt_path)
 
+    # Detect the prefix expected by the current transformers version
+    target_keys = set(violence_model.state_dict().keys())
+    uses_encoder_layer = any("vit.encoder.layer" in k for k in target_keys)
+    layer_prefix = "vit.encoder.layer" if uses_encoder_layer else "vit.layers"
+
     remapped = {}
     for k, v in raw_ckpt.items():
         if k.startswith("blocks."):
@@ -92,19 +97,26 @@ def load_vit_models():
             if rest.startswith("attn.qkv."):
                 suffix = rest.replace("attn.qkv.", "")
                 dim = v.shape[0] // 3
-                remapped[f"vit.encoder.layer.{idx}.attention.attention.query.{suffix}"] = v[:dim]
-                remapped[f"vit.encoder.layer.{idx}.attention.attention.key.{suffix}"] = v[dim:2*dim]
-                remapped[f"vit.encoder.layer.{idx}.attention.attention.value.{suffix}"] = v[2*dim:]
+                remapped[f"{layer_prefix}.{idx}.attention.attention.query.{suffix}"] = v[:dim]
+                remapped[f"{layer_prefix}.{idx}.attention.attention.key.{suffix}"] = v[dim:2*dim]
+                remapped[f"{layer_prefix}.{idx}.attention.attention.value.{suffix}"] = v[2*dim:]
+                # Fallback for alternative architecture names
+                remapped[f"{layer_prefix}.{idx}.attention.q_proj.{suffix}"] = v[:dim]
+                remapped[f"{layer_prefix}.{idx}.attention.k_proj.{suffix}"] = v[dim:2*dim]
+                remapped[f"{layer_prefix}.{idx}.attention.v_proj.{suffix}"] = v[2*dim:]
             elif rest.startswith("attn.proj."):
-                remapped[f"vit.encoder.layer.{idx}.attention.output.dense.{rest.replace('attn.proj.', '')}"] = v
+                remapped[f"{layer_prefix}.{idx}.attention.output.dense.{rest.replace('attn.proj.', '')}"] = v
+                remapped[f"{layer_prefix}.{idx}.attention.o_proj.{rest.replace('attn.proj.', '')}"] = v
             elif rest.startswith("norm1."):
-                remapped[f"vit.encoder.layer.{idx}.layernorm_before.{rest.replace('norm1.', '')}"] = v
+                remapped[f"{layer_prefix}.{idx}.layernorm_before.{rest.replace('norm1.', '')}"] = v
             elif rest.startswith("norm2."):
-                remapped[f"vit.encoder.layer.{idx}.layernorm_after.{rest.replace('norm2.', '')}"] = v
+                remapped[f"{layer_prefix}.{idx}.layernorm_after.{rest.replace('norm2.', '')}"] = v
             elif rest.startswith("mlp.fc1."):
-                remapped[f"vit.encoder.layer.{idx}.intermediate.dense.{rest.replace('mlp.fc1.', '')}"] = v
+                remapped[f"{layer_prefix}.{idx}.intermediate.dense.{rest.replace('mlp.fc1.', '')}"] = v
+                remapped[f"{layer_prefix}.{idx}.mlp.fc1.{rest.replace('mlp.fc1.', '')}"] = v
             elif rest.startswith("mlp.fc2."):
-                remapped[f"vit.encoder.layer.{idx}.output.dense.{rest.replace('mlp.fc2.', '')}"] = v
+                remapped[f"{layer_prefix}.{idx}.output.dense.{rest.replace('mlp.fc2.', '')}"] = v
+                remapped[f"{layer_prefix}.{idx}.mlp.fc2.{rest.replace('mlp.fc2.', '')}"] = v
         elif k == "patch_embed.proj.weight":
             remapped["vit.embeddings.patch_embeddings.projection.weight"] = v
         elif k == "patch_embed.proj.bias":
